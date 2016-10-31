@@ -976,31 +976,31 @@ class MainWindow(object):
 
         # Send periodic querries to field devices to get current status
         if self.close_pending is False:
-            if self.index > 11:
+            if self.index > 120:
                 self.index = 0
             if self.index == 0:
                 self.msg_out_queue.put_nowait("02,16,162,fylt1")
-            elif self.index == 1:
-                self.msg_out_queue.put_nowait("02,16,162,bylt1")
-            elif self.index == 2:
-                self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-            elif self.index == 3:
-                self.msg_out_queue.put_nowait("02,16,162,cclt1")
-            elif self.index == 4:
-                self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-            elif self.index == 5:
-                self.msg_out_queue.put_nowait("02,16,162,drlt1")
-            elif self.index == 6:
-                self.msg_out_queue.put_nowait("02,16,162,b1lt1")
-            elif self.index == 7:
-                self.msg_out_queue.put_nowait("02,16,162,b1lt2")
-            elif self.index == 8:
-                self.msg_out_queue.put_nowait("02,16,162,b2lt1")
-            elif self.index == 9:
-                self.msg_out_queue.put_nowait("02,16,162,b2lt2")
             elif self.index == 10:
+                self.msg_out_queue.put_nowait("02,16,162,bylt1")
+            elif self.index == 20:
+                self.msg_out_queue.put_nowait("02,16,162,ewlt1")
+            elif self.index == 30:
+                self.msg_out_queue.put_nowait("02,16,162,cclt1")
+            elif self.index == 40:
+                self.msg_out_queue.put_nowait("02,16,162,lrlt1")
+            elif self.index == 50:
+                self.msg_out_queue.put_nowait("02,16,162,drlt1")
+            elif self.index == 60:
+                self.msg_out_queue.put_nowait("02,16,162,b1lt1")
+            elif self.index == 70:
+                self.msg_out_queue.put_nowait("02,16,162,b1lt2")
+            elif self.index == 80:
+                self.msg_out_queue.put_nowait("02,16,162,b2lt1")
+            elif self.index == 90:
+                self.msg_out_queue.put_nowait("02,16,162,b2lt2")
+            elif self.index == 100:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt1")
-            elif self.index == 11:
+            elif self.index == 110:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt2")
             self.index += 1
         
