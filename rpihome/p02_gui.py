@@ -63,6 +63,7 @@ class MainWindow(object):
         self.msg_in = str()
         self.close_pending = False
         self.last_hb = time.time()
+        self.index = 0
 
         self.line = sum(1 for line in open(self.logfile)) - 50
         if self.line < 1:
@@ -398,7 +399,7 @@ class MainWindow(object):
         self.button050301b07c.grid(row=7, column=2, padx=2, pady=2)        
 
         self.button050301b08a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b08b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#2\nOVERHEAD LT", height=44, width=108)        
+        self.button050301b08b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#1\nOVERHEAD", height=44, width=108)        
         self.button050301b08c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
         self.button050301b08a.grid(row=1, column=3, padx=2, pady=2)
         self.button050301b08b.grid(row=1, column=4, padx=2, pady=2)
@@ -412,7 +413,7 @@ class MainWindow(object):
         self.button050301b09c.grid(row=2, column=5, padx=2, pady=2)        
         
         self.button050301b10a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b10b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#2\nOVERHEAD LT", height=44, width=108)        
+        self.button050301b10b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#2\nOVERHEAD", height=44, width=108)        
         self.button050301b10c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)   
         self.button050301b10a.grid(row=3, column=3, padx=2, pady=2)
         self.button050301b10b.grid(row=3, column=4, padx=2, pady=2)
@@ -426,7 +427,7 @@ class MainWindow(object):
         self.button050301b11c.grid(row=4, column=5, padx=2, pady=2)        
         
         self.button050301b12a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b12b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#3\nOVERHEAD LT", height=44, width=108)        
+        self.button050301b12b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#3\nOVERHEAD", height=44, width=108)        
         self.button050301b12c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)  
         self.button050301b12a.grid(row=5, column=3, padx=2, pady=2)
         self.button050301b12b.grid(row=5, column=4, padx=2, pady=2)
@@ -445,7 +446,6 @@ class MainWindow(object):
         self.button050301b14a.grid(row=7, column=3, padx=2, pady=2)
         self.button050301b14b.grid(row=7, column=4, padx=2, pady=2)
         self.button050301b14c.grid(row=7, column=5, padx=2, pady=2)         
-
 
 
     def frame0501_buttons(self):
@@ -914,7 +914,7 @@ class MainWindow(object):
                     elif self.msg_in[0:2] == "17":
                         self.button050301a08b.config(image=self.button_square_red_img)
                 
-                elif self.msg_in[6:9] == "164":
+                elif self.msg_in[6:9] == "163":
                     if self.msg_in[10:11] == "0":
                         if self.msg_in[12:] == "fylt1":
                             self.button050301b01b.config(image=self.button_square_red_img)
@@ -973,6 +973,35 @@ class MainWindow(object):
                 self.msg_out_queue.put_nowait(self.msg_in)
             pass  
             self.msg_in = str()
+
+        if self.index > 11:
+            self.index = 0
+        if self.index == 0:
+            self.msg_out_queue.put_nowait("02,16,162,fylt1")
+        elif self.index == 1:
+            self.msg_out_queue.put_nowait("02,16,162,bylt1")
+        elif self.index == 2:
+            self.msg_out_queue.put_nowait("02,16,162,ewlt1")
+        elif self.index == 3:
+            self.msg_out_queue.put_nowait("02,16,162,cclt1")
+        elif self.index == 4:
+            self.msg_out_queue.put_nowait("02,16,162,lrlt1")
+        elif self.index == 5:
+            self.msg_out_queue.put_nowait("02,16,162,drlt1")
+        elif self.index == 6:
+            self.msg_out_queue.put_nowait("02,16,162,b1lt1")
+        elif self.index == 7:
+            self.msg_out_queue.put_nowait("02,16,162,b1lt2")
+        elif self.index == 8:
+            self.msg_out_queue.put_nowait("02,16,162,b2lt1")
+        elif self.index == 9:
+            self.msg_out_queue.put_nowait("02,16,162,b2lt2")
+        elif self.index == 10:
+            self.msg_out_queue.put_nowait("02,16,162,b3lt1")
+        elif self.index == 11:
+            self.msg_out_queue.put_nowait("02,16,162,b3lt2")
+        self.index += 1
+        
               
 
         # If a close is pending, wait until all messages have been processed before closing down the window

@@ -1,9 +1,5 @@
 #!/usr/bin/python3
-""" occupancy.py: Human occupancy checker for the RPiHome application.  
-    When running, this application will periodically ping a list of specific devices that are identified in the system
-    database as the personal cell phones of the home's occupants.  The results of those pings, along with a timestamp
-    are written to the database each time to keep it up to date on who's home at any given time. 
-    Logging is handled via a common queue and log handler running as a separate process.  
+""" p13_home_away.py:   
 """
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
@@ -41,9 +37,9 @@ def home_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     close_pending = False
     last_hb = time.time()
 
-    user1home = home_user1.HomeUser1(msg_out_queue)
-    user2home = home_user2.HomeUser2(msg_out_queue)
-    user3home = home_user3.HomeUser3(msg_out_queue)
+    user1 = home_user1.HomeUser1(msg_out_queue)
+    user2 = home_user2.HomeUser2(msg_out_queue)
+    user3 = home_user3.HomeUser3(msg_out_queue)
 
 
     while True:
@@ -65,38 +61,38 @@ def home_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                 if msg_in[6:9] == "130":
                     logging.log(logging.DEBUG, "Setting home/away mode for %s to \"away\"" % msg_in[10:])
                     if msg_in[10:] == "user1":
-                        user1home.mode = 0
+                        user1.mode = 0
                     if msg_in[10:] == "user2":
-                        user2home.mode = 0
+                        user2.mode = 0
                     if msg_in[10:] == "user3":
-                        user3home.mode = 0                       
+                        user3.mode = 0                       
                 # 131 = Home-Away mode set to home (override)
                 if msg_in[6:9] == "131":
                     logging.log(logging.DEBUG, "Setting home/away mode for %s to \"home\"" % msg_in[10:])
                     if msg_in[10:] == "user1":
-                        user1home.mode = 1
+                        user1.mode = 1
                     if msg_in[10:] == "user2":
-                        user2home.mode = 1
+                        user2.mode = 1
                     if msg_in[10:] == "user3":
-                        user3home.mode = 1                
+                        user3.mode = 1                
                 # 132 = Home-Away mode set to auto (by schedule)
                 if msg_in[6:9] == "132":
                     logging.log(logging.DEBUG, "Setting home/away mode for %s to auto (by schedule)" % msg_in[10:])
                     if msg_in[10:] == "user1":
-                        user1home.mode = 2
+                        user1.mode = 2
                     if msg_in[10:] == "user2":
-                        user2home.mode = 2
+                        user2.mode = 2
                     if msg_in[10:] == "user3":
-                        user3home.mode = 2 
+                        user3.mode = 2 
                 # 133 = Home-Away mode set to auto (arp/ping-based)
                 if msg_in[6:9] == "133":
                     logging.log(logging.DEBUG, "Setting home/away mode for %s to auto (by arp/ping)" % msg_in[10:])
                     if msg_in[10:] == "user1":
-                        user1home.mode = 3
+                        user1.mode = 3
                     if msg_in[10:] == "user2":
-                        user2home.mode = 3
+                        user2.mode = 3
                     if msg_in[10:] == "user3":
-                        user3home.mode = 3                                  
+                        user3.mode = 3                                  
                 # 999 = Shutdown command from main
                 if msg_in[6:9] == "999":
                     logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
@@ -109,10 +105,10 @@ def home_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
             msg_in = str()            
                                 
 
-        # Check if user is home
-        user1home.by_mode(mode=4, ip="192.168.86.30")     
-        user2home.by_mode(mode=4, ip="192.168.86.32")        
-        user3home.by_mode(mode=4, ip="192.168.86.33")        
+        # Determine if user is home
+        user1.by_mode(mode=4, ip="192.168.86.30")     
+        user2.by_mode(mode=4, ip="192.168.86.32")        
+        user3.by_mode(mode=4, ip="192.168.86.33")        
 
 
 

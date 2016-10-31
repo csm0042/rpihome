@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" wemo_fylt1.py: Decision making engine for the RPi Home application  
+""" wemo_lrlt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************

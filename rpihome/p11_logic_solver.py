@@ -86,33 +86,82 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                     #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
                     last_hb = time.time()
                 elif msg_in[6:9] == "100":
-                    if msg_in[10:] == "adult":
+                    if msg_in[10:] == "dad":
                         homeArray[0] = False
-                        logging.log(logging.INFO, "adult is no longer home")
-                    elif msg_in[10:] == "kid1":
+                        logging.log(logging.INFO, "Dad is no longer home")
+                    elif msg_in[10:] == "aiden":
                         homeArray[1] = False
-                        logging.log(logging.INFO, "kid1 is no longer home")
-                    elif msg_in[10:] == "kid2":
+                        logging.log(logging.INFO, "Aiden is no longer home")
+                    elif msg_in[10:] == "sarah":
                         homeArray[2] = False  
-                        logging.log(logging.INFO, "kid2 is no longer home")                  
+                        logging.log(logging.INFO, "Sarah is no longer home")                  
                 elif msg_in[6:9] == "101":
-                    if msg_in[10:] == "adult":
+                    if msg_in[10:] == "dad":
                         homeArray[0] = True
                         homeTime[0] = datetime.datetime.now()
-                        logging.log(logging.INFO, "adult is home")
-                    elif msg_in[10:] == "kid1":
+                        logging.log(logging.INFO, "Dad is home")
+                    elif msg_in[10:] == "aiden":
                         homeArray[1] = True
                         homeTime[1] = datetime.datetime.now()
-                        logging.log(logging.INFO, "kid1 is home")
-                    elif msg_in[10:] == "kid2":
+                        logging.log(logging.INFO, "Aiden is home")
+                    elif msg_in[10:] == "sarah":
                         homeArray[2] = True
                         homeTime[2] = datetime.datetime.now() 
-                        logging.log(logging.INFO, "kid2 is home")  
+                        logging.log(logging.INFO, "Sarah is home")  
                     else:
                         pass
                     msg_out_queue.put_nowait("02,11,166,%s,%s" % (msg_in[10:11], msg_in[12:]))
                 elif msg_in[6:9] == "163":
-                    
+                    if msg_in[10:11] == "0":
+                        if msg_in[12:] == "fylt1":
+                            pass
+                        elif msg_in[12:] == "bylt1":
+                            pass
+                        elif msg_in[12:] == "ewlt1":
+                            pass
+                        elif msg_in[12:] == "cclt1":
+                            pass
+                        elif msg_in[12:] == "lrlt1":
+                            pass
+                        elif msg_in[12:] == "drlt1":
+                            pass
+                        elif msg_in[12:] == "b1lt1":
+                            pass
+                        elif msg_in[12:] == "b1lt2":
+                            pass
+                        elif msg_in[12:] == "b2lt1":
+                            pass
+                        elif msg_in[12:] == "b2lt2":
+                            pass
+                        elif msg_in[12:] == "b3lt1":
+                            pass
+                        elif msg_in[12:] == "b3lt2":
+                            pass
+                    elif msg_in[10:11] == "1":
+                        if msg_in[12:] == "fylt1":
+                            pass
+                        elif msg_in[12:] == "bylt1":
+                            pass
+                        elif msg_in[12:] == "ewlt1":
+                            pass
+                        elif msg_in[12:] == "cclt1":
+                            pass
+                        elif msg_in[12:] == "lrlt1":
+                            pass
+                        elif msg_in[12:] == "drlt1":
+                            pass
+                        elif msg_in[12:] == "b1lt1":
+                            pass
+                        elif msg_in[12:] == "b1lt2":
+                            pass
+                        elif msg_in[12:] == "b2lt1":
+                            pass
+                        elif msg_in[12:] == "b2lt2":
+                            pass
+                        elif msg_in[12:] == "b3lt1":
+                            pass
+                        elif msg_in[12:] == "b3lt2":
+                            pass
                 elif msg_in[6:9] == "999":
                     logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
                     close_pending = True
@@ -122,16 +171,14 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
             msg_in = str()
 
 
-        # UPDATE ON AND OFF TIME RULES - Outside
+        # UPDATE ON AND OFF TIME RULES
+        rpi_screen.check_rules(homeArray=homeArray)        
         wemo_fylt1.check_rules(homeArray=homeArray, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
         wemo_bylt1.check_rules(homeArray=homeArray, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        # UPDATE ON AND OFF TIME RULES - 1st Floor
-        rpi_screen.check_rules(homeArray=homeArray)
         wemo_ewlt1.check_rules(homeArray=homeArray, homeTime=homeTime, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
         wemo_cclt1.check_rules(homeArray=homeArray, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
         wemo_lrlt1.check_rules(homeArray=homeArray, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
         wemo_drlt1.check_rules(homeArray=homeArray, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
-        # UPDATE ON AND OFF TIME RULES - 2nd Floor
         wemo_b1lt1.check_rules(homeArray=homeArray)        
         wemo_b1lt2.check_rules(homeArray=homeArray)
         wemo_b2lt1.check_rules(homeArray=homeArray)        
@@ -153,9 +200,7 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
         wemo_b2lt2.command()
         wemo_b3lt1.command()
         wemo_b3lt2.command()     
-
-        
-               
+   
                                
          # Only close down process once incoming message queue is empty
         if (close_pending is True and len(msg_in) == 0 and msg_in_queue.empty() is True) or (time.time() > (last_hb + 30)):
