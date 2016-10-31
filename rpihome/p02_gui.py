@@ -974,33 +974,35 @@ class MainWindow(object):
             pass  
             self.msg_in = str()
 
-        if self.index > 11:
-            self.index = 0
-        if self.index == 0:
-            self.msg_out_queue.put_nowait("02,16,162,fylt1")
-        elif self.index == 1:
-            self.msg_out_queue.put_nowait("02,16,162,bylt1")
-        elif self.index == 2:
-            self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-        elif self.index == 3:
-            self.msg_out_queue.put_nowait("02,16,162,cclt1")
-        elif self.index == 4:
-            self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-        elif self.index == 5:
-            self.msg_out_queue.put_nowait("02,16,162,drlt1")
-        elif self.index == 6:
-            self.msg_out_queue.put_nowait("02,16,162,b1lt1")
-        elif self.index == 7:
-            self.msg_out_queue.put_nowait("02,16,162,b1lt2")
-        elif self.index == 8:
-            self.msg_out_queue.put_nowait("02,16,162,b2lt1")
-        elif self.index == 9:
-            self.msg_out_queue.put_nowait("02,16,162,b2lt2")
-        elif self.index == 10:
-            self.msg_out_queue.put_nowait("02,16,162,b3lt1")
-        elif self.index == 11:
-            self.msg_out_queue.put_nowait("02,16,162,b3lt2")
-        self.index += 1
+        # Send periodic querries to field devices to get current status
+        if self.close_pending is False:
+            if self.index > 11:
+                self.index = 0
+            if self.index == 0:
+                self.msg_out_queue.put_nowait("02,16,162,fylt1")
+            elif self.index == 1:
+                self.msg_out_queue.put_nowait("02,16,162,bylt1")
+            elif self.index == 2:
+                self.msg_out_queue.put_nowait("02,16,162,ewlt1")
+            elif self.index == 3:
+                self.msg_out_queue.put_nowait("02,16,162,cclt1")
+            elif self.index == 4:
+                self.msg_out_queue.put_nowait("02,16,162,lrlt1")
+            elif self.index == 5:
+                self.msg_out_queue.put_nowait("02,16,162,drlt1")
+            elif self.index == 6:
+                self.msg_out_queue.put_nowait("02,16,162,b1lt1")
+            elif self.index == 7:
+                self.msg_out_queue.put_nowait("02,16,162,b1lt2")
+            elif self.index == 8:
+                self.msg_out_queue.put_nowait("02,16,162,b2lt1")
+            elif self.index == 9:
+                self.msg_out_queue.put_nowait("02,16,162,b2lt2")
+            elif self.index == 10:
+                self.msg_out_queue.put_nowait("02,16,162,b3lt1")
+            elif self.index == 11:
+                self.msg_out_queue.put_nowait("02,16,162,b3lt2")
+            self.index += 1
         
               
 
@@ -1021,35 +1023,65 @@ class MainWindow(object):
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             # Kill p167(nest gateway)
-            self.msg_out_queue.put_nowait("02,17,999")
-            logging.log(logging.DEBUG, "Kill code sent to p17_nest_gateway process")
+            try:
+                self.msg_out_queue.put_nowait("02,17,999")
+                logging.log(logging.DEBUG, "Kill code sent to p17_nest_gateway process")
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p17_nest_gateway process.  Queue already closed")
             # Kill p16 (wemo gateway)
-            self.msg_out_queue.put_nowait("02,16,999")
-            logging.log(logging.DEBUG, "Kill code sent to p16_wemo_gateway process")            
+            try:
+                self.msg_out_queue.put_nowait("02,16,999")
+                logging.log(logging.DEBUG, "Kill code sent to p16_wemo_gateway process") 
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
             # Kill p15 (rpi screen)
-            self.msg_out_queue.put_nowait("02,15,999")
-            logging.log(logging.DEBUG, "Kill code sent to p15_rpi_screen process")  
+            try:
+                self.msg_out_queue.put_nowait("02,15,999")
+                logging.log(logging.DEBUG, "Kill code sent to p15_rpi_screen process")  
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
             # Kill p14 (motion detector)
-            self.msg_out_queue.put_nowait("02,14,999")
-            logging.log(logging.DEBUG, "Kill code sent to p14_motion process") 
+            try:
+                self.msg_out_queue.put_nowait("02,14,999")
+                logging.log(logging.DEBUG, "Kill code sent to p14_motion process") 
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p14_motion process.  Queue already closed")                
             # Kill p13 (home / away)
-            self.msg_out_queue.put_nowait("02,13,999")
-            logging.log(logging.DEBUG, "Kill code sent to p13_home_away process")   
+            try:
+                self.msg_out_queue.put_nowait("02,13,999")
+                logging.log(logging.DEBUG, "Kill code sent to p13_home_away process")   
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p13_home_away process.  Queue already closed")                
             # Kill p12 (db interface)
-            self.msg_out_queue.put_nowait("02,12,999")
-            logging.log(logging.DEBUG, "Kill code sent to p12_db_interface process")                                          
+            try:
+                self.msg_out_queue.put_nowait("02,12,999")
+                logging.log(logging.DEBUG, "Kill code sent to p12_db_interface process") 
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
             # Kill p11 (logic solver)
-            self.msg_out_queue.put_nowait("02,11,999")
-            logging.log(logging.DEBUG, "Kill code sent to p11_logic_solver process")
+            try:
+                self.msg_out_queue.put_nowait("02,11,999")
+                logging.log(logging.DEBUG, "Kill code sent to p11_logic_solver process")
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p11_logic_solver process.  Queue already closed")                
             # Kill p02 (gui)
-            self.msg_out_queue.put_nowait("02,02,999")
-            logging.log(logging.DEBUG, "Kill code sent to p02_gui process")  
+            try:
+                self.msg_out_queue.put_nowait("02,02,999")
+                logging.log(logging.DEBUG, "Kill code sent to p02_gui process")  
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p02_gui process.  Queue already closed")                
             # Kill p01 (log handler)
-            self.msg_out_queue.put_nowait("02,01,999")  
-            logging.log(logging.DEBUG, "Kill code sent to p01_logger process")                                
+            try:
+                self.msg_out_queue.put_nowait("02,01,999")  
+                logging.log(logging.DEBUG, "Kill code sent to p01_logger process")     
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p01_log_handler process.  Queue already closed")                                           
             # Kill p00 (main)
-            self.msg_out_queue.put_nowait("02,00,999")      
-            logging.log(logging.DEBUG, "Kill code sent to p00_main process")
+            try:
+                self.msg_out_queue.put_nowait("02,00,999")      
+                logging.log(logging.DEBUG, "Kill code sent to p00_main process")
+            except:
+                logging.log(logging.DEBUG, "Could not send kill-code to p00_main process.  Queue already closed")                
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window

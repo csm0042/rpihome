@@ -45,12 +45,11 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
         # Process incoming messages
         if len(msg_in) != 0:
             if msg_in[3:5] == "16":
+                # Process heartbeat message
                 if msg_in[6:9] == "001":
                     #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
                     last_hb = time.time()
-                elif msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
-                    close_pending = True
+                # Process wemo off commands
                 elif msg_in[6:9] == "160":
                     device, found = find_device_match(msg_in[10:], devices)
                     if found is True:
@@ -58,7 +57,8 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                         logging.log(logging.DEBUG, "OFF command sent to device: %s" % msg_in[10:])
                     else:
                         logging.log(logging.DEBUG, "Could not find device %s on the network" % msg_in[10:])
-                    pass                         
+                    pass  
+                # Process wemo on command                       
                 elif msg_in[6:9] == "161":
                     device, found = find_device_match(msg_in[10:], devices)
                     if found is True:
@@ -67,6 +67,7 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                     else:
                         logging.log(logging.DEBUG, "Could not find device %s on the network" % msg_in[10:])
                     pass 
+                # Process wemo state-request message
                 elif msg_in[6:9] == "162":
                     #logging.log(logging.DEBUG, "Requesting current status of device: %s" % msg_in[10:])
                     device, found = find_device_match(msg_in[10:], devices)
@@ -76,10 +77,16 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                         msg_out_queue.put_nowait(state_response)
                         logging.log(logging.DEBUG, "Response message [%s] sent for device: %s" % (state_response, msg_in[10:]))   
                     else:
-                        pass                             
+                        pass  
+                # Process "kill process" message
+                elif msg_in[6:9] == "999":
+                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
+                    close_pending = True                                                   
+            # Send mis-routed messages back to main
             else:
                 msg_out_queue.put_nowait(msg_in)
             pass
+            # Clear incoming message string to ready routine for next message
             msg_in = str()                                                                                                                                     
 
 

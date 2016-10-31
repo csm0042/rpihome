@@ -411,7 +411,6 @@ def main():
                 p17_process = start_process("p17_nest_gw", nest_func, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p17_process_modtime = os.path.getmtime(os.path.join(process_path, "p17_nest_gateway.py"))                                                                                              
 
-
         # Send periodic heartbeats to child processes so they don't time-out and shutdown
         if time.time() > (last_hb + 5):
             if p01_process.is_alive() is True:
