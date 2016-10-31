@@ -1,0 +1,7 @@
+mysql
+nest
+psutil
+pyserial
+python-nest
+pywemo
+RPi.GPIO
