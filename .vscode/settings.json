@@ -1,0 +1,28 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    // Controls after how many characters the editor will wrap to the next line. Setting this to 0 turns on viewport width wrapping (word wrapping). Setting this to -1 forces the editor to never wrap.
+    "editor.wrappingColumn": 0,
+
+    // Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).
+    "editor.wordWrap": true,
+
+    // Controls the indentation of wrapped lines. Can be one of 'none', 'same' or 'indent'.
+    "editor.wrappingIndent": "indent",
+
+    // Controls the delay in ms after which quick suggestions will show up
+    "editor.quickSuggestionsDelay": 1000,
+
+    // Controls if the editor should automatically close brackets after opening them
+    "editor.autoClosingBrackets": false,
+
+    // Unit Tests
+    "python.unitTest.pyEnabled": false,
+    "python.unitTest.unittestEnabled": true,
+    "python.unitTest.nosetestsEnabled": false,
+
+    "python.unitTest.unittestArgs": [
+        "-p *_test.py",
+        "-v",
+        "-s ./tests"
+    ]
+}

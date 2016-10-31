@@ -88,26 +88,26 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                 elif msg_in[6:9] == "100":
                     if msg_in[10:] == "dad":
                         homeArray[0] = False
-                        logging.log(logging.INFO, "Dad is no longer home")
+                        logging.log(logging.INFO, "User1 is no longer home")
                     elif msg_in[10:] == "aiden":
                         homeArray[1] = False
-                        logging.log(logging.INFO, "Aiden is no longer home")
+                        logging.log(logging.INFO, "User2 is no longer home")
                     elif msg_in[10:] == "sarah":
                         homeArray[2] = False  
-                        logging.log(logging.INFO, "Sarah is no longer home")                  
+                        logging.log(logging.INFO, "User3 is no longer home")                  
                 elif msg_in[6:9] == "101":
                     if msg_in[10:] == "dad":
                         homeArray[0] = True
                         homeTime[0] = datetime.datetime.now()
-                        logging.log(logging.INFO, "Dad is home")
+                        logging.log(logging.INFO, "User1 is home")
                     elif msg_in[10:] == "aiden":
                         homeArray[1] = True
                         homeTime[1] = datetime.datetime.now()
-                        logging.log(logging.INFO, "Aiden is home")
+                        logging.log(logging.INFO, "User2 is home")
                     elif msg_in[10:] == "sarah":
                         homeArray[2] = True
                         homeTime[2] = datetime.datetime.now() 
-                        logging.log(logging.INFO, "Sarah is home")  
+                        logging.log(logging.INFO, "User3 is home")  
                     else:
                         pass
                     msg_out_queue.put_nowait("02,11,166,%s,%s" % (msg_in[10:11], msg_in[12:]))
