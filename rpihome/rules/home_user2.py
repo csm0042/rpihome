@@ -44,7 +44,7 @@ class HomeUser2(home_general.HomeGeneral):
             if 2016 <= self.dt.date().isocalendar()[0] <= 2017:
                 # If even number week (non-custody week)
                 if self.dt.date().isocalendar()[1] % 2 == 0:
-                    if self.dt.time() < datetime.time(7,0,0):
+                    if self.dt.time() < datetime.time(7,0):
                         self.yes = True
                     else:
                         self.yes = False

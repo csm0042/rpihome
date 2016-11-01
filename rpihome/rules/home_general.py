@@ -271,21 +271,24 @@ class HomeGeneral(object):
             # If before 6 am, maintain "present" status regardless of ping
             if self.dt.time() < datetime.time(6,0):
                 self.yes = True
-            # Between 6am and 10pm, ping devices every 15 minutes to determine if they are still present
-            elif datetime.time(6,0) <= self.dt.time() < datetime.time(22,0):
-                if self.dt >= self.last_ping + datetime.timedelta(seconds=15):
+            # Between 6am and 6pm, ping devices every 30 seconds to determine if they are still present
+            elif datetime.time(6,0) <= self.dt.time() < datetime.time(18,0):
+                if self.dt >= self.last_ping + datetime.timedelta(seconds=30):
                     self.pingResponse = self.by_ping()
                     if self.pingResponse is True:
                         self.last_seen = self.dt
                     elif self.pingResponse is False:
                         if self.dt >= self.last_seen + datetime.timedelta(minutes=30):
                             self.yes = False
-            # If after 10pm, maintain present status regardless of ping
-            elif self.dt.time() >= datetime.time(22,0):
+            # If after 6pm, maintain present status regardless of ping
+            elif self.dt.time() >= datetime.time(18,0):
                 self.yes = True
-        # If device is not currently detected on the network, ping every 15 seconds looking for them
+        # If device is not currently detected on the network, ping every 30 seconds looking for them
         elif self.yes is False:
-            if self.dt >= self.last_ping + datetime.timedelta(seconds=15):
-                self.yes = self.by_ping()
+            if self.dt >= self.last_ping + datetime.timedelta(seconds=30):
+                self.pingResponse = self.by_ping()
+                if self.pingResponse is True:
+                    self.yes = True
+                    self.last_seen = self.dt
         # return results to main program
         return self.yes        
