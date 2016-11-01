@@ -79,37 +79,6 @@ class HomeUser1(home_general.HomeGeneral):
         else:
             self.yes = True 
         # Return result
-        return self.yes 
-
-
-    def by_mode(self, **kwargs):
-        # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()        
-        # Process input variables if present
-        if kwargs is not None:
-            for key, value in kwargs.items():
-                if key == "datetime":
-                    self.dt = value 
-                if key == "mode":
-                    self.mode = value 
-                if key == "mac":
-                    self.mac = value                                  
-                if key == "ip":
-                    self.ip = value   
-        # Use correct rule-set based on home/away decision mode
-        if self.mode == 0:
-            self.yes = False
-        elif self.mode == 1:
-            self.yes = True
-        elif self.mode == 2:
-            self.by_schedule()
-        elif self.mode == 3:
-            self.by_arp_and_ping(mac=self.mac, ip=self.ip)
-        elif self.mode == 4:
-            self.by_ping_with_delay(ip=self.ip)            
-        else:
-            logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
-        # Return result
         return self.yes  
 
 

@@ -36,7 +36,9 @@ class HomeGeneral(object):
         self.home_time = datetime.datetime.now() + datetime.timedelta(seconds=-30)
         self.last_seen = datetime.datetime.now() + datetime.timedelta(seconds=-30)
         self.last_arp = datetime.datetime.now() + datetime.timedelta(seconds=-30)
-        self.last_ping = datetime.datetime.now() + datetime.timedelta(seconds=-30)        
+        self.last_ping = datetime.datetime.now() + datetime.timedelta(seconds=-30) 
+        self.eveningCutoff = datetime.time(18,0)
+        self.morningCutoff = datetime.time(8,0)               
         self.dt = datetime.datetime.now()
         self.output = str()
         self.index = int()
@@ -259,7 +261,9 @@ class HomeGeneral(object):
 
     def by_ping_with_delay(self, **kwargs):         
         # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()        
+        self.dt = datetime.datetime.now() 
+        self.eveningCutoff = datetime.time(18,0)
+        self.morningCutoff = datetime.time(8,0)       
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -267,30 +271,52 @@ class HomeGeneral(object):
                     self.dt = value                                    
                 if key == "ip":
                     self.ip = value
-        # Evaluate home/away based on ping's.  
-        # If device is already present
-        if self.yes is True:
-            # If before 6 am, maintain "present" status regardless of ping
-            if self.dt.time() < datetime.time(6,0):
+        # Ping device every 30 seconds - If device found, set home status true
+        if self.dt.time() >= self.last_ping + datetime.timedelta(seconds=30):
+            self.pingResponse = self.by_ping()
+            if self.pingResponse is True:
                 self.yes = True
-            # Between 6am and 6pm, ping devices every 30 seconds to determine if they are still present
-            elif datetime.time(6,0) <= self.dt.time() < datetime.time(18,0):
-                if self.dt >= self.last_ping + datetime.timedelta(seconds=30):
-                    self.pingResponse = self.by_ping()
-                    if self.pingResponse is True:
-                        self.last_seen = self.dt
-                    elif self.pingResponse is False:
-                        if self.dt >= self.last_seen + datetime.timedelta(minutes=30):
-                            self.yes = False
-            # If after 6pm, maintain present status regardless of ping
-            elif self.dt.time() >= datetime.time(18,0):
+                self.last_seen = self.dt
+        # Determine if home during the day
+        if self.morningCutoff <= self.dt.time() <= self.eveningCutoff:
+            if self.yes is False and self.pingResponse is True:
                 self.yes = True
-        # If device is not currently detected on the network, ping every 30 seconds looking for them
-        elif self.yes is False:
-            if self.dt >= self.last_ping + datetime.timedelta(seconds=30):
-                self.pingResponse = self.by_ping()
-                if self.pingResponse is True:
-                    self.yes = True
-                    self.last_seen = self.dt
+            if self.yes is True and self.dt > self.last_seen + datetime.timedelta(minutes=30):
+                self.yes = False
+        # Determine if home during evening/early morning hours
+        if self.dt.time() > self.eveningCutoff or self.dt.time() < self.morningCutoff:
+            if self.yes is False and self.pingResponse is True:
+                self.yes = True
         # Return result
-        return self.yes       
+        return self.yes  
+
+
+    def by_mode(self, **kwargs):
+        # Update value stored in dt_now to current datetime
+        self.dt = datetime.datetime.now()        
+        # Process input variables if present
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "datetime":
+                    self.dt = value 
+                if key == "mode":
+                    self.mode = value 
+                if key == "mac":
+                    self.mac = value                                  
+                if key == "ip":
+                    self.ip = value   
+        # Use correct rule-set based on home/away decision mode
+        if self.mode == 0:
+            self.yes = False
+        elif self.mode == 1:
+            self.yes = True
+        elif self.mode == 2:
+            self.by_schedule()
+        elif self.mode == 3:
+            self.by_arp_and_ping(mac=self.mac, ip=self.ip)
+        elif self.mode == 4:
+            self.by_ping_with_delay(ip=self.ip)            
+        else:
+            logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
+        # Return result
+        return self.yes             
