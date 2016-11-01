@@ -40,18 +40,20 @@ __status__ = "Development"
 
 
 
-def start_process(name, func_name, args):
+def create_process(name, func_name, start, args):
     process = multiprocessing.Process(name=name, target=func_name, args=args)
     process.daemon = True
-    process.start()
+    if start is True:
+        process.start()
     return process
 
 
 def main():
-    # Set location of log file and crate subfolder if necessary
-    name="main"
-    logfilepathgen = log_path.LogFilePath()
-    logfile = logfilepathgen.return_path_and_name_combined(name=name, path=os.path.dirname(sys.argv[0]))
+    nestUsername = None
+    nestPassword = None
+    answer = input("Start as master or client application? (m/c): ")
+    nestUsername = input("NEST Username: ")
+    nestPassword = input("NEST Password: ")
 
     # Define queues for InterruptedError-process communication
     p00_queue = multiprocessing.Queue(-1)    
@@ -63,68 +65,104 @@ def main():
     p14_queue = multiprocessing.Queue(-1)
     p15_queue = multiprocessing.Queue(-1)
     p16_queue = multiprocessing.Queue(-1)
-    p17_queue = multiprocessing.Queue(-1)    
+    p17_queue = multiprocessing.Queue(-1)
 
+    # Set location of log file and crate subfolder if necessary
+    name="main"
+    logfilepathgen = log_path.LogFilePath()
+    logfile = logfilepathgen.return_path_and_name_combined(name=name, path=os.path.dirname(sys.argv[0]))
     process_path = os.path.dirname(sys.argv[0])
 
-    # Start global log handler process 
-    # This is a separate process that retrieves log messages from the shared log queue and writes them to a file
+    # Start global log handler process - This process retrieves log messages from the shared log queue and writes them to a file
+    if answer.lower() == "m" or answer.lower() == "c":
+        start = True
+    else:
+        start = False     
     p01_process_alive_mem = None
-    p01_process = start_process("p01_log_handler", listener_process, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
+    p01_process = create_process("p01_log_handler", listener_process, start, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
     p01_process_modtime = os.path.getmtime(os.path.join(process_path, "p01_log_handler.py"))
 
 
     # Start gui process to spawn the user interface
-    # This is the process that spawns and maintains updates to the application window
+    if answer.lower() == "m" or answer.lower() == "c":
+        start = True
+    else:
+        start = False     
     p02_process_alive_mem = None
-    p02_process = start_process("p02_gui", gui_func, (p02_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, logfile))
+    p02_process = create_process("p02_gui", gui_func, start, (p02_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, logfile))
     p02_process_modtime = os.path.getmtime(os.path.join(process_path, "p02_gui.py"))
    
 
-    # Start logic solver process 
-    # This process runs the automation engine that decides when to turn various devices on/off
+    # Start logic solver process - this process runs the automation engine that decides when to turn various devices on/off
+    if answer.lower() == "m":
+        start = True
+    else:
+        start = False        
     p11_process_alive_mem = None    
-    p11_process = start_process("p11_logic_solver", logic_func, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p11_process = create_process("p11_logic_solver", logic_func, start, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
    
 
     # Start db interface process 
     # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
+    if answer.lower() == "m":
+        start = True   
+    else:
+        start = False             
     p12_process_alive_mem = None
-    p12_process = start_process("p12_db_interface", db_func, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p12_process = create_process("p12_db_interface", db_func, start, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p12_process_modtime = os.path.getmtime(os.path.join(process_path, "p12_db_interface.py"))
     
 
     # Start home/away detection process 
     # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
+    if answer.lower() == "m":  
+        start = True  
+    else:
+        start = False                
     p13_process_alive_mem = None
-    p13_process = start_process("p13_home_away", home_func, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p13_process = create_process("p13_home_away", home_func, start, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p13_process_modtime = os.path.getmtime(os.path.join(process_path, "p13_home_away.py"))    
 
     # Start motion detector process 
     # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen 
+    if answer.lower() == "m":  
+        start = True   
+    else:
+        start = False                   
     p14_process_alive_mem = None
-    p14_process = start_process("p14_motion", motion_func, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p14_process = create_process("p14_motion", motion_func, start, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p14_process_modtime = os.path.getmtime(os.path.join(process_path, "p14_motion.py"))    
 
     # Start screen wake/sleep process 
     # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
+    if answer.lower() == "m":    
+        start = True   
+    else:
+        start = False             
     p15_process_alive_mem = None
-    p15_process = start_process("p15_rpi_screen", screen_func, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p15_process = create_process("p15_rpi_screen", screen_func, start, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p15_process_modtime = os.path.getmtime(os.path.join(process_path, "p15_rpi_screen.py"))
 
     # Start wemo gateway process 
-    # This process controls the interface to/from wemo devices on the network
+    # This process controls the interface to/from wemo devices on the network    
+    if answer.lower() == "m":  
+        start = True   
+    else:
+        start = False         
     p16_process_alive_mem = None
-    p16_process = start_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p16_process = create_process("p16_wemo_gw", wemo_func, start, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
     p16_process_modtime = os.path.getmtime(os.path.join(process_path, "p16_wemo_gateway.py"))
 
     # Start nest gateway process 
     # This process controls the interface to/from nest thermostats on the network
+    if answer.lower() == "m" and nestUsername != "" and nestPassword != "":  
+        start = True    
+    else:
+        start = False
     p17_process_alive_mem = None
-    p17_process = start_process("p17_nest_gw", nest_func, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+    p17_process = create_process("p17_nest_gw", nest_func, start, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, nestUsername, nestPassword))
     p17_process_modtime = os.path.getmtime(os.path.join(process_path, "p17_nest_gateway.py"))    
-
 
     msg_in = str()
     close_pending = False
@@ -148,9 +186,10 @@ def main():
             p01_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p01_process.is_alive() is False:
-                    p01_process = start_process("p01_log_handler", listener_process, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
+                    p01_process = create_process("p01_log_handler", listener_process, True, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
             if msg_in[6:9] == "999":
-                p01_process.join()
+                if p01_process.is_alive() is True:
+                    p01_process.join()
 
         # If message is destined for process p02, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "02":
@@ -158,9 +197,10 @@ def main():
                 p02_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p02_process.is_alive() is False:
-                    p02_process = start_process("p02_gui", gui_func, (p02_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, logfile))           
+                    p02_process = create_process("p02_gui", gui_func, True, (p02_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, logfile))           
             if msg_in[6:9] == "999":
-                p02_process.join()
+                if p02_process.is_alive() is True:                
+                    p02_process.join()
 
         # If message is destined for process p11, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "11":
@@ -168,9 +208,10 @@ def main():
                 p11_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p11_process.is_alive() is False:
-                    p11_process = start_process("p11_logic_solver", logic_func, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
+                    p11_process = create_process("p11_logic_solver", logic_func, True, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
             if msg_in[6:9] == "999":
-                p11_process.join()
+                if p11_process.is_alive() is True:                
+                    p11_process.join()
 
         # If message is destined for process p12, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "12":
@@ -178,9 +219,10 @@ def main():
                 p12_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p12_process.is_alive() is False:
-                    p12_process = start_process("p12_db_interface", db_func, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
+                    p12_process = create_process("p12_db_interface", db_func, True, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
             if msg_in[6:9] == "999":
-                p12_process.join()
+                if p12_process.is_alive() is True:                
+                    p12_process.join()
 
         # If message is destined for process p13, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "13":
@@ -188,9 +230,10 @@ def main():
                 p13_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p13_process.is_alive() is False:
-                    p13_process = start_process("p13_home_away", home_func, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
+                    p13_process = create_process("p13_home_away", home_func, True, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
             if msg_in[6:9] == "999":
-                p13_process.join()
+                if p13_process.is_alive() is True:                
+                    p13_process.join()
                
         # If message is destined for process p14, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "14":
@@ -198,9 +241,10 @@ def main():
                 p14_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p14_process.is_alive() is False:
-                    p14_process = start_process("p14_motion", motion_func, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
+                    p14_process = create_process("p14_motion", motion_func, True, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
             if msg_in[6:9] == "999":
-                p14_process.join()
+                if p14_process.is_alive() is True:                
+                    p14_process.join()
  
         # If message is destined for process p15, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "15":
@@ -208,9 +252,10 @@ def main():
                 p15_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p15_process.is_alive() is False:
-                    p15_process = start_process("p15_rpi_screen", screen_func, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                    p15_process = create_process("p15_rpi_screen", screen_func, True, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
             if msg_in[6:9] == "999":
-                p15_process.join()
+                if p15_process.is_alive() is True:                
+                    p15_process.join()
 
         # If message is destined for process p16, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "16":
@@ -218,11 +263,10 @@ def main():
                 p16_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p16_process.is_alive() is False:
-                    p16_process = start_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
-            elif msg_in[6:9] == "999":
-                p16_process.join()
-            else:
-                pass
+                    p16_process = create_process("p16_wemo_gw", wemo_func, True, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+            if msg_in[6:9] == "999":
+                if p16_process.is_alive() is True:                
+                    p16_process.join()
         
         # If message is destined for process p17, forward.  If message is kill-code for that process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "17":
@@ -230,9 +274,10 @@ def main():
                 p17_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p17_process.is_alive() is False:
-                    p17_process = start_process("p17_nest_gw", wemo_func, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
-            elif msg_in[6:9] == "999":
-                p17_process.join()   
+                    p17_process = create_process("p17_nest_gw", nest_func, True, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, nestUsername, nestPassword))
+            if msg_in[6:9] == "999":
+                if p17_process.is_alive() is True:                
+                    p17_process.join()   
         
         msg_in = str()                       
 
@@ -345,7 +390,7 @@ def main():
                 p01_queue.put_nowait("00,01,999")
                 p01_process.join()
                 time.sleep(1)
-                p01_process = start_process("p01_log_handler", listener_process, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
+                p01_process = create_process("p01_log_handler", listener_process, True, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
                 p01_process_modtime = os.path.getmtime(os.path.join(process_path, "p01_log_handler.py"))
 
         if p11_process.is_alive() is True:
@@ -354,7 +399,7 @@ def main():
                 p11_queue.put_nowait("00,11,999")
                 p11_process.join()
                 time.sleep(1)
-                p11_process = start_process("p11_logic_solver", logic_func, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p11_process = create_process("p11_logic_solver", logic_func, True, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
 
         if p12_process.is_alive() is True:
@@ -363,7 +408,7 @@ def main():
                 p12_queue.put_nowait("00,12,999")
                 p12_process.join()
                 time.sleep(1)
-                p12_process = start_process("p12_db_interface", db_func, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p12_process = create_process("p12_db_interface", db_func, True, (p12_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p12_process_modtime = os.path.getmtime(os.path.join(process_path, "p12_db_interface.py"))
 
         if p13_process.is_alive() is True:
@@ -372,7 +417,7 @@ def main():
                 p13_queue.put_nowait("00,13,999")
                 p13_process.join()
                 time.sleep(1)
-                p13_process = start_process("p13_home_away", home_func, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p13_process = create_process("p13_home_away", home_func, True, (p13_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p13_process_modtime = os.path.getmtime(os.path.join(process_path, "p13_home_away.py"))
 
         if p14_process.is_alive() is True:
@@ -381,7 +426,7 @@ def main():
                 p14_queue.put_nowait("00,14,999")
                 p14_process.join()
                 time.sleep(1)
-                p14_process = start_process("p14_motion", motion_func, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p14_process = create_process("p14_motion", motion_func, True, (p14_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p14_process_modtime = os.path.getmtime(os.path.join(process_path, "p14_motion.py"))
 
         if p15_process.is_alive() is True:
@@ -390,7 +435,7 @@ def main():
                 p15_queue.put_nowait("00,15,999")
                 p15_process.join()
                 time.sleep(1)
-                p15_process = start_process("p15_rpi_screen", screen_func, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p15_process = create_process("p15_rpi_screen", screen_func, True, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p15_process_modtime = os.path.getmtime(os.path.join(process_path, "p15_rpi_screen.py"))
 
         if p16_process.is_alive() is True:
@@ -399,7 +444,7 @@ def main():
                 p16_queue.put_nowait("00,16,999")
                 p16_process.join()
                 time.sleep(1)
-                p16_process = start_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p16_process = create_process("p16_wemo_gw", wemo_func, True, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p16_process_modtime = os.path.getmtime(os.path.join(process_path, "p16_wemo_gateway.py"))  
 
         if p17_process.is_alive() is True:
@@ -408,11 +453,11 @@ def main():
                 p17_queue.put_nowait("00,17,999")
                 p17_process.join()
                 time.sleep(1)
-                p17_process = start_process("p17_nest_gw", nest_func, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                p17_process = create_process("p17_nest_gw", nest_func, True, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
                 p17_process_modtime = os.path.getmtime(os.path.join(process_path, "p17_nest_gateway.py"))                                                                                              
 
         # Send periodic heartbeats to child processes so they don't time-out and shutdown
-        if time.time() > (last_hb + 5):
+        if time.time() > (last_hb + 5) and close_pending is False:
             if p01_process.is_alive() is True:
                 p01_queue.put_nowait("00,01,001")
             if p02_process.is_alive() is True:
@@ -434,8 +479,8 @@ def main():
             last_hb = time.time()
 
 
-        # If a close is pending, wait until all messages from the queue have been processed before ending the program
-        if close_pending is True and len(msg_in) == 0 and p00_queue.empty() is True:     
+        # If a close is pending, wait until all messages from the queue have been processed before ending the program     
+        if close_pending is True and p00_queue.empty() is True:            
             break            
 
         # Wait before next loop iteration

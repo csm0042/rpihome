@@ -1022,6 +1022,7 @@ class MainWindow(object):
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.close_pending = True
             # Kill p167(nest gateway)
             try:
                 self.msg_out_queue.put_nowait("02,17,999")

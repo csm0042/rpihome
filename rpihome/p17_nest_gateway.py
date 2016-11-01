@@ -21,7 +21,7 @@ __status__ = "Development"
 
 
 # Nest Gateway Process loop **************************************************************************
-def nest_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
+def nest_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, username, password):
     log_configurer(log_queue)
     name = multiprocessing.current_process().name
     logger = logging.getLogger("main")
@@ -30,8 +30,6 @@ def nest_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     msg_in = str()
     close_pending = False
     last_hb = time.time()
-    username = input("NEST Username: ")
-    password = input("NEST Password: ")
     napi = nest.Nest(username, password)
 
     while True:
