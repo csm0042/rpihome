@@ -202,6 +202,7 @@ class HomeGeneral(object):
         else:
             self.yes = False
             print("arp failed")
+        # Return result
         return self.yes
 
 
@@ -227,6 +228,7 @@ class HomeGeneral(object):
         else: 
             self.yes = False  
             print("ping failed")
+        # Return result
         return self.yes
 
 
@@ -251,7 +253,7 @@ class HomeGeneral(object):
                 if self.yes is False:
                     if self.dt > self.last_ping + datetime.timedelta(seconds=30):
                         self.yes = self.by_ping()
-        # return results to main program
+        # Return result
         return self.yes
 
 
@@ -290,5 +292,5 @@ class HomeGeneral(object):
                 if self.pingResponse is True:
                     self.yes = True
                     self.last_seen = self.dt
-        # return results to main program
-        return self.yes        
+        # Return result
+        return self.yes       

@@ -473,11 +473,11 @@ class MainWindow(object):
         # Processing logfile
         self.iter = 1
         while len(self.text) != 0 and self.iter < 1000:
-            if (self.text.find("p16_wemo_gw") < 0) or (self.text.find("Starting new HTTP connection") == -1 and self.text.find("POST /upnp/control") == -1 and self.text.find("GET /") == -1):
+            if (self.text.find("p16_wemo_gw") < 0):
                 self.text020301.insert(tk.END, self.text)
+                self.text020301.yview_pickplace("end")
             self.line += 1
             self.text = linecache.getline(self.logfile, self.line)
-            self.text020301.yview_pickplace("end")
             self.iter += 1
         linecache.clearcache()
 
@@ -976,31 +976,31 @@ class MainWindow(object):
 
         # Send periodic querries to field devices to get current status
         if self.close_pending is False:
-            if self.index > 120:
+            if self.index > 24:
                 self.index = 0
             if self.index == 0:
                 self.msg_out_queue.put_nowait("02,16,162,fylt1")
-            elif self.index == 10:
+            elif self.index == 2:
                 self.msg_out_queue.put_nowait("02,16,162,bylt1")
-            elif self.index == 20:
+            elif self.index == 4:
                 self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-            elif self.index == 30:
+            elif self.index == 6:
                 self.msg_out_queue.put_nowait("02,16,162,cclt1")
-            elif self.index == 40:
+            elif self.index == 8:
                 self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-            elif self.index == 50:
+            elif self.index == 10:
                 self.msg_out_queue.put_nowait("02,16,162,drlt1")
-            elif self.index == 60:
+            elif self.index == 12:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt1")
-            elif self.index == 70:
+            elif self.index == 14:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt2")
-            elif self.index == 80:
+            elif self.index == 16:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt1")
-            elif self.index == 90:
+            elif self.index == 18:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt2")
-            elif self.index == 100:
+            elif self.index == 20:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt1")
-            elif self.index == 110:
+            elif self.index == 22:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt2")
             self.index += 1
         

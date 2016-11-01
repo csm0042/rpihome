@@ -109,8 +109,8 @@ class HomeUser1(home_general.HomeGeneral):
             self.by_ping_with_delay(ip=self.ip)            
         else:
             logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
-        # Check for change of state to see if command needs to be sent
-        self.command()  
+        # Return result
+        return self.yes  
 
 
     def command(self):

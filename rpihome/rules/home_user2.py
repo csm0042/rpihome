@@ -103,57 +103,10 @@ class HomeUser2(home_general.HomeGeneral):
                     self.yes = False           
         # Invalid day
         else:
-            self.yes = False        # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()
-        # Process input variables if present
-        if kwargs is not None:
-            for key, value in kwargs.items():
-                if key == "datetime":
-                    self.dt = value
-                if key == "lastseen":
-                    self.ishome.last_seen = value                    
-        # Monday
-        if self.dt.weekday() == 0:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
-                self.yes = True
-            else:
-                self.yes = False
-        # Tuesday
-        elif self.dt.weekday() == 1:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
-                self.yes = True
-            else:
-                self.yes = False            
-        # Wednesday
-        elif self.dt.weekday() == 2:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
-                self.yes = True
-            else:
-                self.yes = False            
-        # Thursday
-        elif self.dt.weekday() == 3:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
-                self.yes = True
-            else:
-                self.yes = False            
-        # Friday
-        elif self.dt.weekday() == 4:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
-                self.yes = True
-            else:
-                self.yes = False            
-        # Saturday
-        elif self.dt.weekday() == 5:
-            self.yes = True           
-        # Sunday
-        elif self.dt.weekday() == 6:
-            self.yes = True          
-        # Invalid day
-        else:
-            self.yes = True 
+            self.yes = False
         # Return result
-        return self.yes            
-
+        return self.yes        
+                 
 
     def by_mode(self, **kwargs):
         # Update value stored in dt_now to current datetime
@@ -182,8 +135,8 @@ class HomeUser2(home_general.HomeGeneral):
             self.by_ping_with_delay(ip=self.ip)            
         else:
             logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
-        # Check for change of state to see if command needs to be sent
-        self.command()  
+        # Return result
+        return self.yes 
 
 
     def command(self):

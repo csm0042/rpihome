@@ -86,25 +86,25 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                     #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
                     last_hb = time.time()
                 elif msg_in[6:9] == "100":
-                    if msg_in[10:] == "dad":
+                    if msg_in[10:] == "user1":
                         homeArray[0] = False
                         logging.log(logging.INFO, "User1 is no longer home")
-                    elif msg_in[10:] == "aiden":
+                    elif msg_in[10:] == "user2":
                         homeArray[1] = False
                         logging.log(logging.INFO, "User2 is no longer home")
-                    elif msg_in[10:] == "sarah":
+                    elif msg_in[10:] == "user3":
                         homeArray[2] = False  
                         logging.log(logging.INFO, "User3 is no longer home")                  
                 elif msg_in[6:9] == "101":
-                    if msg_in[10:] == "dad":
+                    if msg_in[10:] == "user1":
                         homeArray[0] = True
                         homeTime[0] = datetime.datetime.now()
                         logging.log(logging.INFO, "User1 is home")
-                    elif msg_in[10:] == "aiden":
+                    elif msg_in[10:] == "user2":
                         homeArray[1] = True
                         homeTime[1] = datetime.datetime.now()
                         logging.log(logging.INFO, "User2 is home")
-                    elif msg_in[10:] == "sarah":
+                    elif msg_in[10:] == "user3":
                         homeArray[2] = True
                         homeTime[2] = datetime.datetime.now() 
                         logging.log(logging.INFO, "User3 is home")  
