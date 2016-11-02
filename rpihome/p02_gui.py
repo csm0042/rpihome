@@ -29,14 +29,14 @@ __status__ = "Development"
 
 
 # Main gui process loop **********************************************************************************************
-def gui_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile):
+def gui_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile, enable):
     log_configurer(log_queue)
     name = multiprocessing.current_process().name
     logger = logging.getLogger("main")
     logging.log(logging.DEBUG, "Logging handler for gui process started")
 
     # Create gui
-    gui = MainWindow(msg_in_queue, msg_out_queue, log_queue, logfile)
+    gui = MainWindow(msg_in_queue, msg_out_queue, log_queue, logfile, enable)
     logging.log(logging.DEBUG, "creating main window")
 
     # Schedule "after" process to run oncmsg_oute main window is generated (used for periodic screen updates)
@@ -54,9 +54,10 @@ def gui_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile):
 
 # Application GUI Class Definition *************************************************************************************
 class MainWindow(object):
-    def __init__(self, msg_in_queue, msg_out_queue, log_queue, logfile):
+    def __init__(self, msg_in_queue, msg_out_queue, log_queue, logfile, enable):
         self.log_queue = log_queue
         self.logfile = logfile
+        self.enable = enable
         self.text = str()
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
@@ -100,6 +101,12 @@ class MainWindow(object):
         self.frame0503b_content()
         self.frame050301b.pack_forget()
         self.frame050301b_packed = False
+        self.frame0503c_content()
+        self.frame050301c.pack_forget()
+        self.frame050301c_packed = False
+        self.frame0503d_content()
+        self.frame050301d.pack_forget()
+        self.frame050301d_packed = False                
     
     def gen_main_window(self):
         # CREATE PRIMARY (ROOT) WINDOW
@@ -196,7 +203,8 @@ class MainWindow(object):
         self.frame0402.pack_propagate(False)
 
         # split frame 5 into 3 sections along a vertical axis
-        self.frame0501 = tk.Frame(self.frame05, background="#2350b5", height=400, width=85)
+        #self.frame0501 = tk.Frame(self.frame05, background="#2350b5", height=400, width=85)
+        self.frame0501 = tk.Frame(self.frame05, background="black", height=400, width=85)
         self.frame0501.pack(side="left", fill="y", expand=False, padx=0, pady=0) 
         self.frame0501.pack_propagate(False)  
         self.frame0502 = tk.Frame(self.frame05, background="black", height=400, width=20)
@@ -273,71 +281,95 @@ class MainWindow(object):
         self.text020301.pack(side="left", fill="both", expand=True, padx=0, pady=10)
 
 
+    def frame0501_buttons(self):
+        """ FRAME 05 SCREEN SELECTOR BUTTONS """
+        self.button050101 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050101, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="SERVICES", height=3, width=10)
+        self.button050101.pack(side="top", fill="x", expand=False, padx=0, pady=1)
+        self.button050102 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050102, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="LIGHTING", height=3, width=10)
+        self.button050102.pack(side="top", fill="x", expand=False, padx=0, pady=1)
+        self.button050103 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050103, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="HOME/AWAY", height=3, width=10)
+        self.button050103.pack(side="top", fill="x", expand=False, padx=0, pady=1) 
+        self.button050104 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050104, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="ENVIRO", height=3, width=10)
+        self.button050104.pack(side="top", fill="x", expand=False, padx=0, pady=1)   
+        self.button0501xx = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", height=3, width=10)
+        self.button0501xx.pack(side="top", fill="both", expand=True, padx=0, pady=1)             
+
+
     def frame0503a_content(self):
+        """ SERVICE CONTROL SCREEN """
         # overlay frame on 0503 for content changing purposes
         self.frame050301a = tk.Frame(self.frame0503, background="black", borderwidth=0, relief="flat", height=300, width=400)
         self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)   
         self.frame050301a_packed = True
         self.frame050301a.pack_propagate(False)
-        # Add buttons to frame0404a    
-        self.button050301a01a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a01b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="LOG\nHANDLER", height=44, width=108)        
-        self.button050301a01c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a01a.grid(row=1, column=0, padx=0, pady=0)
-        self.button050301a01b.grid(row=1, column=1, padx=0, pady=0)        
-        self.button050301a01c.grid(row=1, column=2, padx=0, pady=0)
-
-        self.button050301a02a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a02b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="LOGIC\nSOLVER", height=44, width=108)  
-        self.button050301a02c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a02a.grid(row=2, column=0, padx=0, pady=0)
-        self.button050301a02b.grid(row=2, column=1, padx=0, pady=0)        
-        self.button050301a02c.grid(row=2, column=2, padx=0, pady=0)        
+        # Add buttons to frame050301a    
+        if self.enable[1] is True:
+            self.button050301a01a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a01b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="LOG\nHANDLER", height=44, width=108)        
+            self.button050301a01c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a01c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a01a.grid(row=1, column=0, padx=0, pady=0)
+            self.button050301a01b.grid(row=1, column=1, padx=0, pady=0)        
+            self.button050301a01c.grid(row=1, column=2, padx=0, pady=0)
         
-        self.button050301a03a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a03b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="DB\nINTERFACE", height=44, width=108)  
-        self.button050301a03c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a03a.grid(row=3, column=0, padx=0, pady=0)
-        self.button050301a03b.grid(row=3, column=1, padx=0, pady=0)        
-        self.button050301a03c.grid(row=3, column=2, padx=0, pady=0)        
+        if self.enable[11] is True:
+            self.button050301a02a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a02b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="LOGIC\nSOLVER", height=44, width=108)  
+            self.button050301a02c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a02c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a02a.grid(row=2, column=0, padx=0, pady=0)
+            self.button050301a02b.grid(row=2, column=1, padx=0, pady=0)        
+            self.button050301a02c.grid(row=2, column=2, padx=0, pady=0)        
+
+        if self.enable[12] is True:
+            self.button050301a03a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a03b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="DB\nINTERFACE", height=44, width=108)  
+            self.button050301a03c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a03c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a03a.grid(row=3, column=0, padx=0, pady=0)
+            self.button050301a03b.grid(row=3, column=1, padx=0, pady=0)        
+            self.button050301a03c.grid(row=3, column=2, padx=0, pady=0)        
         
-        self.button050301a04a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a04b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="HOME\nAWAY", height=44, width=108)  
-        self.button050301a04c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a04a.grid(row=4, column=0, padx=0, pady=0)
-        self.button050301a04b.grid(row=4, column=1, padx=0, pady=0)        
-        self.button050301a04c.grid(row=4, column=2, padx=0, pady=0)
+        if self.enable[13] is True:
+            self.button050301a04a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a04b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="HOME\nAWAY", height=44, width=108)  
+            self.button050301a04c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a04c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a04a.grid(row=4, column=0, padx=0, pady=0)
+            self.button050301a04b.grid(row=4, column=1, padx=0, pady=0)        
+            self.button050301a04c.grid(row=4, column=2, padx=0, pady=0)
 
-        self.button050301a05a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a05b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="MOTION\nDETECTION", height=44, width=108)  
-        self.button050301a05c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a05a.grid(row=5, column=0, padx=0, pady=0)
-        self.button050301a05b.grid(row=5, column=1, padx=0, pady=0)        
-        self.button050301a05c.grid(row=5, column=2, padx=0, pady=0)
-
-        self.button050301a06a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a06b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="RPI\nSCREEN", height=44, width=108)  
-        self.button050301a06c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a06a.grid(row=6, column=0, padx=0, pady=0)
-        self.button050301a06b.grid(row=6, column=1, padx=0, pady=0)        
-        self.button050301a06c.grid(row=6, column=2, padx=0, pady=0)
-
-        self.button050301a07a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a07b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="WEMO\nGATEWAY", height=44, width=108)  
-        self.button050301a07c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a07a.grid(row=7, column=0, padx=0, pady=0)
-        self.button050301a07b.grid(row=7, column=1, padx=0, pady=0)        
-        self.button050301a07c.grid(row=7, column=2, padx=0, pady=0)
-
-        self.button050301a08a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
-        self.button050301a08b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="NEST\nGATEWAY", height=44, width=108)  
-        self.button050301a08c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
-        self.button050301a08a.grid(row=8, column=0, padx=0, pady=0)
-        self.button050301a08b.grid(row=8, column=1, padx=0, pady=0)        
-        self.button050301a08c.grid(row=8, column=2, padx=0, pady=0)        
+        if self.enable[14] is True:
+            self.button050301a05a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a05b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="MOTION\nDETECTION", height=44, width=108)  
+            self.button050301a05c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a05c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a05a.grid(row=5, column=0, padx=0, pady=0)
+            self.button050301a05b.grid(row=5, column=1, padx=0, pady=0)        
+            self.button050301a05c.grid(row=5, column=2, padx=0, pady=0)
+        
+        if self.enable[15] is True:
+            self.button050301a06a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a06b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="RPI\nSCREEN", height=44, width=108)  
+            self.button050301a06c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a06c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a06a.grid(row=6, column=0, padx=0, pady=0)
+            self.button050301a06b.grid(row=6, column=1, padx=0, pady=0)        
+            self.button050301a06c.grid(row=6, column=2, padx=0, pady=0)
+        
+        if self.enable[16] is True:
+            self.button050301a07a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a07b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="WEMO\nGATEWAY", height=44, width=108)  
+            self.button050301a07c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a07c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a07a.grid(row=7, column=0, padx=0, pady=0)
+            self.button050301a07b.grid(row=7, column=1, padx=0, pady=0)        
+            self.button050301a07c.grid(row=7, column=2, padx=0, pady=0)
+        
+        if self.enable[17] is True:
+            self.button050301a08a = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="START", height=44, width=108)
+            self.button050301a08b = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="NEST\nGATEWAY", height=44, width=108)  
+            self.button050301a08c = tk.Button(self.frame050301a, anchor="se", background="black", borderwidth=0, command=self.action050301a08c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="STOP", height=44, width=108)
+            self.button050301a08a.grid(row=8, column=0, padx=0, pady=0)
+            self.button050301a08b.grid(row=8, column=1, padx=0, pady=0)        
+            self.button050301a08c.grid(row=8, column=2, padx=0, pady=0)        
 
 
     def frame0503b_content(self):
+        """ LIGHTING CONTROL SCREEN """
         # overlay frame on 0503 for content changing purposes
         self.frame050301b = tk.Frame(self.frame0503, background="black", borderwidth=0, relief="flat", height=300, width=600)
         self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)   
@@ -445,15 +477,44 @@ class MainWindow(object):
         self.button050301b14c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b14c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108) 
         self.button050301b14a.grid(row=7, column=3, padx=2, pady=2)
         self.button050301b14b.grid(row=7, column=4, padx=2, pady=2)
-        self.button050301b14c.grid(row=7, column=5, padx=2, pady=2)         
+        self.button050301b14c.grid(row=7, column=5, padx=2, pady=2)
 
 
-    def frame0501_buttons(self):
-        self.button050101 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="SERVICES", height=3, width=10)
-        self.button050101.pack(side="top", fill="x", expand=False, padx=0, pady=2)
-        self.button050102 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050102, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="WEMO", height=3, width=10)
-        self.button050102.pack(side="top", fill="x", expand=False, padx=0, pady=2)
-        
+    def frame0503c_content(self):
+        """ HOME/AWAY CONTROL SCREEN """
+        # overlay frame on 0503 for content changing purposes
+        self.frame050301c = tk.Frame(self.frame0503, background="black", borderwidth=0, relief="flat", height=300, width=600)
+        self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)   
+        self.frame050301c_packed = True
+        self.frame050301c.pack_propagate(False)
+        # Add text and buttons to frame0404a  
+        self.label050301c01 = tk.Label(self.frame050301c, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="USERS")
+        self.label050301c01.grid(row=0, column=0, columnspan=3, padx=4, pady=2, sticky="n")
+
+        self.button050301c01a = tk.Button(self.frame050301c, anchor="se", background="black", borderwidth=0, command=self.action050301c01a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="SET\nHOME", height=44, width=108)
+        self.button050301c01b = tk.Button(self.frame050301c, anchor="se", background="black", borderwidth=0, command=self.action050301c01b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="USER1\nHOME", height=44, width=108)  
+        self.button050301c01c = tk.Button(self.frame050301c, anchor="se", background="black", borderwidth=0, command=self.action050301c01c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="SET\nAWAY", height=44, width=108)
+        self.button050301c01a.grid(row=1, column=0, padx=2, pady=2)
+        self.button050301c01b.grid(row=1, column=1, padx=2, pady=2)
+        self.button050301c01c.grid(row=1, column=2, padx=2, pady=2)
+
+
+    def frame0503d_content(self):
+        """ HOME/AWAY CONTROL SCREEN """
+        # overlay frame on 0503 for content changing purposes
+        self.frame050301d = tk.Frame(self.frame0503, background="black", borderwidth=0, relief="flat", height=300, width=600)
+        self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)   
+        self.frame050301d_packed = True
+        self.frame050301d.pack_propagate(False)
+        # Add text and buttons to frame0404a  
+        self.label050301d01 = tk.Label(self.frame050301d, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="INTERNAL ENVIRONMENT")
+        self.label050301d02 = tk.Label(self.frame050301d, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="EXTERNAL ENVIRONMENT")
+        self.label050301d01.grid(row=0, column=0, columnspan=3, padx=4, pady=2, sticky="n")
+        self.label050301d02.grid(row=0, column=3, columnspan=3, padx=4, pady=2, sticky="n")
+
+                            
+
+    
 
     def update_alarm_window(self):
         # Determine size of logfile (number of lines)
@@ -508,6 +569,12 @@ class MainWindow(object):
         if self.frame050301b_packed is True:
             self.frame050301b.pack_forget()
             self.frame050301b_packed = False
+        if self.frame050301c_packed is True:
+            self.frame050301c.pack_forget()
+            self.frame050301c_packed = False 
+        if self.frame050301d_packed is True:
+            self.frame050301d.pack_forget()
+            self.frame050301d_packed = False             
         pass
 
     def action050102(self):
@@ -520,7 +587,49 @@ class MainWindow(object):
         if self.frame050301a_packed is True:
             self.frame050301a.pack_forget()
             self.frame050301a_packed = False
+        if self.frame050301c_packed is True:
+            self.frame050301c.pack_forget()
+            self.frame050301c_packed = False 
+        if self.frame050301d_packed is True:
+            self.frame050301d.pack_forget()
+            self.frame050301d_packed = False             
         pass
+
+    def action050103(self):
+        logging.log(logging.DEBUG, "Button 050103 was pressed")
+        if self.frame050301c_packed is False:
+            self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
+            self.frame050301c.pack_propagate(False)
+            self.frame050301c_packed = True 
+        pass           
+        if self.frame050301a_packed is True:
+            self.frame050301a.pack_forget()
+            self.frame050301a_packed = False
+        if self.frame050301b_packed is True:
+            self.frame050301b.pack_forget()
+            self.frame050301b_packed = False 
+        if self.frame050301d_packed is True:
+            self.frame050301d.pack_forget()
+            self.frame050301d_packed = False                       
+        pass   
+
+    def action050104(self):
+        logging.log(logging.DEBUG, "Button 050103 was pressed")
+        if self.frame050301d_packed is False:
+            self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
+            self.frame050301d.pack_propagate(False)
+            self.frame050301d_packed = True 
+        pass           
+        if self.frame050301a_packed is True:
+            self.frame050301a.pack_forget()
+            self.frame050301a_packed = False
+        if self.frame050301b_packed is True:
+            self.frame050301b.pack_forget()
+            self.frame050301b_packed = False 
+        if self.frame050301c_packed is True:
+            self.frame050301c.pack_forget()
+            self.frame050301c_packed = False                       
+        pass              
 
     def action050301a01a(self):
         logging.log(logging.DEBUG, "Button 050301a01a was pressed")
@@ -858,6 +967,19 @@ class MainWindow(object):
         self.button050301b13b.config(image=self.button_square_red_img)                       
 
 
+    def action050301c01a(self):
+        logging.log(logging.DEBUG, "Button 050301c01a was pressed")
+        #self.msg_out_queue.put_nowait("02,16,161,fylt1")
+        self.button050301c01b.config(image=self.button_square_green_img)
+
+    def action050301c01b(self):
+        logging.log(logging.DEBUG, "Button 050301c01b was pressed")
+        self.msg_out_queue.put_nowait("02,16,162,fylt1")
+
+    def action050301c01c(self):
+        logging.log(logging.DEBUG, "Button 050301c01C was pressed")
+        #self.msg_out_queue.put_nowait("02,16,160,fylt1") 
+        self.button050301c01b.config(image=self.button_square_red_img)    
 
 
     def after_tasks(self):
