@@ -1,10 +1,11 @@
+#!/usr/bin/python3
+""" sunrise.py:   
+"""
+
+# Import Required Libraries (Standard, Third Party, Local) ************************************************************
 from math import cos,sin,acos,asin,tan  
 from math import degrees as deg, radians as rad  
 from datetime import date,datetime,time, timezone, timedelta   
-
-#from timezone import LocalTimezone
-
-
 
 
 class sun:  
@@ -126,8 +127,8 @@ class sun:
         self.sunset_t   =self.solarnoon_t+hourangle*4/1440  
   
 if __name__ == "__main__":  
-    s = sun(lat=38.566267, long=-90.409886)  
-    #print(datetime.today())  
-    #print(s.sunrise(datetime.now()),s.solarnoon(datetime.now()),s.sunset(datetime.now())) 
-    print(datetime.now())  
-    print(s.sunrise(datetime.now(), -6),s.solarnoon(datetime.now(), -6),s.sunset(datetime.now(), -6))
+    s = sun(lat=38.566, long=-90.410)  
+    print("Current datetime: %s" % datetime.today())
+    print("Sunrise: %s" % s.sunrise(datetime.now(), -5))
+    print("Solarnoon: %s" % s.solarnoon(datetime.now(), -5))
+    print("Sunset: %s" % s.sunset(datetime.now(), -5))
