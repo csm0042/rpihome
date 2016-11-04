@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-""" main.py: Main entry-point into the RPiHome application.  
+""" main.py:
+    Main entry-point into the RPiHome application.
     When run, this application will create a log message queue and start a listener service which will monitor that queue
     and write to a file any log messages it finds.  This queue is shared with any sub-processes that are later called and
     allows all parts of this application to share a single log-file in a multi-processing-safe manner.
