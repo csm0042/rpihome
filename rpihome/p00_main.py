@@ -38,7 +38,7 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"  
 
 
-
+# Process Generator Helper Function ************************************************************************************
 def create_process(name, func_name, args):
     process = multiprocessing.Process(name=name, target=func_name, args=args)
     process.daemon = True
@@ -46,8 +46,8 @@ def create_process(name, func_name, args):
     return process
 
 
+# Main Routine *********************************************************************************************************
 def main():
-
     # Decide what processes to enable
     enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True,
               True, False]

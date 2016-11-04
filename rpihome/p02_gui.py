@@ -2,13 +2,12 @@
 """ gui.py:   
 """
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
+# Import Required Libraries (Standard, Third Party, Local) *************************************************************
 import copy
 import linecache
 import logging
 import multiprocessing
 import os
-import platform
 import sys
 import time
 import tkinter as tk
@@ -16,7 +15,7 @@ from tkinter import font
 from tkinter import messagebox
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info ******************************************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -27,27 +26,26 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-
-# Main gui process loop **********************************************************************************************
+# Main gui process loop ************************************************************************************************
 def gui_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile, enable):
     log_configurer(log_queue)
     name = multiprocessing.current_process().name
     logger = logging.getLogger("main")
-    logging.log(logging.DEBUG, "Logging handler for gui process started")
+    logger.log(logging.DEBUG, "Logging handler for gui process started")
 
     # Create gui
     gui = MainWindow(msg_in_queue, msg_out_queue, log_queue, logfile, enable)
-    logging.log(logging.DEBUG, "creating main window")
+    logger.log(logging.DEBUG, "creating main window")
 
     # Schedule "after" process to run oncmsg_oute main window is generated (used for periodic screen updates)
     gui.window.after(500, gui.after_tasks)
-    logging.log(logging.DEBUG, "scheduling initial \"after\" task")
+    logger.log(logging.DEBUG, "scheduling initial \"after\" task")
     
     # Start handler for window exit button
     gui.window.protocol("WM_DELETE_WINDOW", gui.on_closing)
 
     # Run mainloop() to activate gui and begin monitoring its inputs
-    logging.log(logging.DEBUG, "starting gui mainloop")
+    logger.log(logging.DEBUG, "starting gui mainloop")
     gui.window.mainloop()
 
 
@@ -116,7 +114,6 @@ class MainWindow(object):
         self.window.config(background="black") 
         logging.log(logging.DEBUG, "Main application window created")
 
-
     def define_fonts(self):
         # Define fonts used in the application
         self.helv08bold = font.Font(family="Helvetica", size=8, weight="bold")
@@ -124,7 +121,6 @@ class MainWindow(object):
         self.helv12bold = font.Font(family="Helvetica", size=12, weight="bold")
         self.helv16bold = font.Font(family="Helvetica", size=16, weight="bold")
         self.helv36 = font.Font(family="Helvetica", size=36, weight="bold")
-
 
     def define_images(self):
         # DEFINE IMAGES
@@ -141,12 +137,10 @@ class MainWindow(object):
         self.button_square_green_img = tk.PhotoImage(file=self.resourceDir + "button-square-green.png")
         self.button_square_red_img = tk.PhotoImage(file=self.resourceDir + "button-square-red.png")        
 
-
     def divide_screen(self):
         self.screen1 = tk.Frame(self.window, background="black")
         self.screen1.pack(side="top", fill="both", expand=True, padx=0, pady=0)
         logging.log(logging.DEBUG, "Overlayed 1 primary frame over-top of application (root) window")
-
         self.frame01 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame01.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame01.pack_propagate(False)
@@ -251,18 +245,15 @@ class MainWindow(object):
         self.frame060202 = tk.Frame(self.frame0602, background="#2350b5", height=17, width=695)
         self.frame060202.pack(side="top", fill="both", expand=True, padx=0, pady=0)   
 
-
     def top_divider_bar1(self):
         self.button010101 = tk.Button(self.frame0101, anchor="nw", background="black", borderwidth=0, command=self.action010101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_NW_img, justify="right", relief="flat", text="010101", height=50, width=105)
         self.button010101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
         self.label010202 = tk.Label(self.frame010202, anchor="e", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="APPLICATION LOG")
         self.label010202.pack(side="right", fill="both", expand=True, padx=10, pady=7)  
 
-
     def bottom_divider_bar1(self):
         self.button030101 = tk.Button(self.frame0301, anchor="sw", background="black", borderwidth=0, command=self.action030101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_SW_img, justify="right", relief="flat", text="030101", height=50, width=105)
         self.button030101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
-
 
     def top_divider_bar2(self):
         self.button040101 = tk.Button(self.frame0401, anchor="nw", background="black", borderwidth=0, command=self.action040101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_NW_img, justify="right", relief="flat", text="040101", height=50, width=105)
@@ -270,16 +261,13 @@ class MainWindow(object):
         self.label040202 = tk.Label(self.frame040202, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="CURRENT STATUS")
         self.label040202.pack(side="right", fill="none", expand=False, padx=10, pady=7) 
   
-
     def bottom_divider_bar2(self):
         self.button060101 = tk.Button(self.frame0601, anchor="sw", background="black", borderwidth=0, command=self.action060101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_SW_img, justify="right", relief="flat", text="060101", height=50, width=105)
         self.button060101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
 
-    
     def alarm_log_window(self):
         self.text020301 = tk.Text(self.frame0203, background="black", borderwidth=0, font=self.helv08bold, foreground="white", highlightthickness=0, height=10, width=12, wrap="word")
         self.text020301.pack(side="left", fill="both", expand=True, padx=0, pady=10)
-
 
     def frame0501_buttons(self):
         """ FRAME 05 SCREEN SELECTOR BUTTONS """
@@ -293,7 +281,6 @@ class MainWindow(object):
         self.button050104.pack(side="top", fill="x", expand=False, padx=0, pady=1)   
         self.button0501xx = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", height=3, width=10)
         self.button0501xx.pack(side="top", fill="both", expand=True, padx=0, pady=1)             
-
 
     def frame0503a_content(self):
         """ SERVICE CONTROL SCREEN """
@@ -366,7 +353,6 @@ class MainWindow(object):
             self.button050301a08a.grid(row=8, column=0, padx=0, pady=0)
             self.button050301a08b.grid(row=8, column=1, padx=0, pady=0)        
             self.button050301a08c.grid(row=8, column=2, padx=0, pady=0)        
-
 
     def frame0503b_content(self):
         """ LIGHTING CONTROL SCREEN """
@@ -479,7 +465,6 @@ class MainWindow(object):
         self.button050301b14b.grid(row=7, column=4, padx=2, pady=2)
         self.button050301b14c.grid(row=7, column=5, padx=2, pady=2)
 
-
     def frame0503c_content(self):
         """ HOME/AWAY CONTROL SCREEN """
         # overlay frame on 0503 for content changing purposes
@@ -498,7 +483,6 @@ class MainWindow(object):
         self.button050301c01b.grid(row=1, column=1, padx=2, pady=2)
         self.button050301c01c.grid(row=1, column=2, padx=2, pady=2)
 
-
     def frame0503d_content(self):
         """ HOME/AWAY CONTROL SCREEN """
         # overlay frame on 0503 for content changing purposes
@@ -511,10 +495,6 @@ class MainWindow(object):
         self.label050301d02 = tk.Label(self.frame050301d, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="EXTERNAL ENVIRONMENT")
         self.label050301d01.grid(row=0, column=0, columnspan=3, padx=4, pady=2, sticky="n")
         self.label050301d02.grid(row=0, column=3, columnspan=3, padx=4, pady=2, sticky="n")
-
-                            
-
-    
 
     def update_alarm_window(self):
         # Determine size of logfile (number of lines)
@@ -541,7 +521,6 @@ class MainWindow(object):
             self.text = linecache.getline(self.logfile, self.line)
             self.iter += 1
         linecache.clearcache()
-
 
     def action010101(self):
         logging.log(logging.DEBUG, "Button 010101 was pressed")
@@ -727,8 +706,6 @@ class MainWindow(object):
         logging.log(logging.DEBUG, "Button 050301a08c was pressed")
         self.msg_out_queue.put_nowait("02,17,999")        
 
-
-
     def action050301b01a(self):
         logging.log(logging.DEBUG, "Button 050301b01a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,fylt1")
@@ -841,7 +818,6 @@ class MainWindow(object):
         self.button050301b04b.config(image=self.button_square_red_img)
         self.button050301b05b.config(image=self.button_square_red_img)
         self.button050301b06b.config(image=self.button_square_red_img)
-
 
     def action050301b08a(self):
         logging.log(logging.DEBUG, "Button 050301b08a was pressed")
@@ -966,7 +942,6 @@ class MainWindow(object):
         self.button050301b12b.config(image=self.button_square_red_img)
         self.button050301b13b.config(image=self.button_square_red_img)                       
 
-
     def action050301c01a(self):
         logging.log(logging.DEBUG, "Button 050301c01a was pressed")
         #self.msg_out_queue.put_nowait("02,16,161,fylt1")
@@ -981,7 +956,6 @@ class MainWindow(object):
         #self.msg_out_queue.put_nowait("02,16,160,fylt1") 
         self.button050301c01b.config(image=self.button_square_red_img)    
 
-
     def after_tasks(self):
         #logging.log(logging.DEBUG, "Running \"after\" task")
         # Process incoming message queue
@@ -990,8 +964,6 @@ class MainWindow(object):
             #logging.log(logging.DEBUG, "Checked in msg queue and found msg: %s" % self.msg_in)   
         except:
             pass
-        
-
         # Process incoming message
         if len(self.msg_in) != 0:
             if self.msg_in[3:5] == "02":
