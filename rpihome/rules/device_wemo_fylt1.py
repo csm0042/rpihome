@@ -50,9 +50,9 @@ class Wemo_fylt1(device_wemo.DeviceWemo):
                 if key == "utcOffset":
                     self.UTCoffset = value
                 if key == "sunriseOffset":
-                    self.UTCoffset = value
+                    self.sunriseOffset = value
                 if key == "sunsetOffset":
-                    self.UTCoffset = value   
+                    self.sunsetOffset = value   
                 if key == "timeout":
                     self.timeout = value                                                          
         # Calculate sunrise / sunset times

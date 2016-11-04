@@ -33,6 +33,8 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     devices = pywemo.discover_devices()
     numOfDevices = len(devices)
     logging.log(logging.DEBUG, "Found %s wemo devices on network" % str(numOfDevices))
+    for i, j in enumerate(devices):
+        logging.log(logging.DEBUG, "Found Device: %s" % str(j))
 
     # Main process loop
     while True:
