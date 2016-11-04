@@ -8,6 +8,7 @@ import logging
 import multiprocessing
 import pywemo
 import time
+from modules import wemo
 
 # Authorship Info *****************************************************************************************************
 __author__ = "Christopher Maue"
@@ -20,6 +21,15 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
+def discover():
+    devices = pywemo.discover_devices()
+    numOfDevices = len(devices)
+    logging.log(logging.DEBUG, "Found %s wemo devices on network" % str(numOfDevices))
+    for i, j in enumerate(devices):
+        logging.log(logging.DEBUG, "Found Device: %s" % str(j))
+    return devices
+    
+
 # Wemo Gateway Process loop *******************************************************************************************
 def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     log_configurer(log_queue)
@@ -30,11 +40,8 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     msg_in = str()
     close_pending = False
     last_hb = time.time()
-    devices = pywemo.discover_devices()
+    devices = wemo.discover()
     numOfDevices = len(devices)
-    logging.log(logging.DEBUG, "Found %s wemo devices on network" % str(numOfDevices))
-    for i, j in enumerate(devices):
-        logging.log(logging.DEBUG, "Found Device: %s" % str(j))
 
     # Main process loop
     while True:
@@ -108,3 +115,6 @@ def find_device_match(name, device_list):
         if lower_dev_name.find(lower_name) != -1:
             return device, True
     return None, False
+
+if __name__ == "__main__":
+    print("Called as main")
