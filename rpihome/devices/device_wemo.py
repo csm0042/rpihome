@@ -8,8 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-import modules.sunrise as sunrise
-from devices import device
+from rpihome.devices.device import Device
 
 
 
@@ -25,15 +24,10 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class DeviceWemo(device.Device):
+class DeviceWemo(Device):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
         self.new_status = int()             
-        self.s = sunrise.sun(lat=38.566, long=-90.410)
-        self.utcOffset = datetime.timedelta(hours=-6)
-        self.sunriseOffset = datetime.timedelta(minutes=30)
-        self.sunsetOffset = datetime.timedelta(minutes=-30)
-        self.timeout = datetime.timedelta(minutes=-15)
           
 
     def command(self):  

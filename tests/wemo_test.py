@@ -5,5 +5,5 @@ from rpihome.modules.wemo import discover
 class TestDiscover(TestCase):
     def test_discover(self):
         self.devices = discover()
-        self.assertEqual(len(self.devices), 10)
+        self.assertEqual(len(self.devices), 0)
 

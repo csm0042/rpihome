@@ -4,6 +4,7 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import datetime
+from rpihome.modules.sun import Sun
 
 
 # Authorship Info *****************************************************************************************************
@@ -33,7 +34,13 @@ class Device(object):
         self.home = False
         self.homeArray = [] 
         self.homeTime = [] 
-        self.homeNew = False        
+        self.homeNew = False     
+        self.s = Sun(lat=38.566, long=-90.410)
+        self.utcOffset = datetime.timedelta(hours=0)
+        self.sunriseOffset = datetime.timedelta(minutes=0)
+        self.sunsetOffset = datetime.timedelta(minutes=0)  
+        self.timeout = datetime.timedelta(minutes=-15) 
+                
 
     @property
     def name(self):

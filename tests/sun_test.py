@@ -1,12 +1,12 @@
 from unittest import TestCase
 import datetime
-from rpihome.modules.sunrise import sun
+from rpihome.modules.sun import Sun
 
 
 class TestSun(TestCase):
     def setUp(self):
-        self.s = sun(lat=38.566, long=-90.409)
-        self.utcOffset = -5
+        self.s = Sun(lat=38.566, long=-90.409)
+        self.utcOffset = datetime.timedelta(hours=-5)
 
     def test_sunrise(self):
         self.sunrise_time = self.s.sunrise(datetime.datetime.now(), self.utcOffset)

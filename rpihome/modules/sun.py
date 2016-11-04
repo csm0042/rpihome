@@ -8,7 +8,7 @@ from math import degrees as deg, radians as rad
 from datetime import date,datetime,time, timezone, timedelta   
 
 
-class sun:  
+class Sun:  
     """  
     Calculate sunrise and sunset based on equations from NOAA 
     http://www.srrb.noaa.gov/highlights/sunrise/calcdetails.html 
@@ -24,7 +24,7 @@ class sun:
         self.lat=lat  
         self.long=long  
     
-    def sunrise(self,when=None, offset=0):  
+    def sunrise(self,when=None, offset=timedelta(hours=0)):  
         """ 
         return the time of sunrise as a datetime.time object when is a datetime.datetime object. If none is given 
         a local time zone is assumed (including daylight saving if present) 
@@ -33,8 +33,8 @@ class sun:
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.sunrise_UTC = sun.__timefromdecimalday(self.sunrise_t)
-        self.sunrise_adj = datetime.combine(date.today(), self.sunrise_UTC) + timedelta(hours=offset)
+        self.sunrise_UTC = Sun.__timefromdecimalday(self.sunrise_t)
+        self.sunrise_adj = datetime.combine(date.today(), self.sunrise_UTC) + offset
         return self.sunrise_adj.time()
     
     def sunset(self,when=None, offset=0):  
@@ -42,8 +42,8 @@ class sun:
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.sunset_UTC = sun.__timefromdecimalday(self.sunset_t)
-        self.sunset_adj = datetime.combine(date.today(), self.sunset_UTC) + timedelta(hours=offset)        
+        self.sunset_UTC = Sun.__timefromdecimalday(self.sunset_t)
+        self.sunset_adj = datetime.combine(date.today(), self.sunset_UTC) + offset        
         return self.sunset_adj.time()
     
     def solarnoon(self,when=None, offset=0):  
@@ -51,8 +51,8 @@ class sun:
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.solarnoon_UTC = sun.__timefromdecimalday(self.solarnoon_t)
-        self.solarnoon_adj = datetime.combine(date.today(), self.solarnoon_UTC) + timedelta(hours=offset)
+        self.solarnoon_UTC = Sun.__timefromdecimalday(self.solarnoon_t)
+        self.solarnoon_adj = datetime.combine(date.today(), self.solarnoon_UTC) + offset
         return self.solarnoon_adj.time()
 
     @staticmethod  

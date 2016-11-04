@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-import devices.device_wemo as device_wemo
+from rpihome.devices.device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,7 +23,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_ewlt1(device_wemo.DeviceWemo):
+class Wemo_ewlt1(DeviceWemo):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
         
@@ -38,26 +38,20 @@ class Wemo_ewlt1(device_wemo.DeviceWemo):
         self.homeTime = []          
         self.home = False 
         self.homeNew = False 
-        self.utcOffset = -6
-        self.sunriseOffset = datetime.timedelta(minutes=30)
-        self.sunsetOffset = datetime.timedelta(minutes=-30)
-        self.timeout = 15
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
                     self.dt = value
                 if key == "homeArray":
                     self.homeArray = value 
-                if key == "homeTime":
-                    self.homeTime = value                    
                 if key == "home":
                     self.home = value 
                 if key == "utcOffset":
-                    self.UTCoffset = value
+                    self.utcOffset = value
                 if key == "sunriseOffset":
-                    self.UTCoffset = value
+                    self.sunriseOffset = value
                 if key == "sunsetOffset":
-                    self.UTCoffset = value   
+                    self.sunsetOffset = value   
                 if key == "timeout":
                     self.timeout = value                                                          
         # Calculate sunrise / sunset times

@@ -6,7 +6,7 @@
 import datetime
 import logging
 import multiprocessing
-import devices.device_wemo as device_wemo
+from rpihome.devices.device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -21,7 +21,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_b1lt2(device_wemo.DeviceWemo):
+class Wemo_b1lt2(DeviceWemo):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
 
@@ -41,6 +41,14 @@ class Wemo_b1lt2(device_wemo.DeviceWemo):
                     self.homeArray = value 
                 if key == "home":
                     self.home = value 
+                if key == "utcOffset":
+                    self.utcOffset = value
+                if key == "sunriseOffset":
+                    self.sunriseOffset = value
+                if key == "sunsetOffset":
+                    self.sunsetOffset = value   
+                if key == "timeout":
+                    self.timeout = value
         # Determine if anyone is home
         for h in self.homeArray:
             if h is True:

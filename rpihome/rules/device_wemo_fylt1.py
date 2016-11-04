@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-import devices.device_wemo as device_wemo
+from rpihome.devices.device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,7 +23,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_fylt1(device_wemo.DeviceWemo):
+class Wemo_fylt1(DeviceWemo):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
 
@@ -35,10 +35,6 @@ class Wemo_fylt1(device_wemo.DeviceWemo):
         # Process input variables if present 
         self.homeArray = []   
         self.home = False  
-        self.utcOffset = -6
-        self.sunriseOffset = datetime.timedelta(minutes=30)
-        self.sunsetOffset = datetime.timedelta(minutes=-30)
-        self.timeout = 15
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -48,13 +44,13 @@ class Wemo_fylt1(device_wemo.DeviceWemo):
                 if key == "home":
                     self.home = value 
                 if key == "utcOffset":
-                    self.UTCoffset = value
+                    self.utcOffset = value
                 if key == "sunriseOffset":
                     self.sunriseOffset = value
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                          
+                    self.timeout = value                                                         
         # Calculate sunrise / sunset times
         self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
         self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 

@@ -9,7 +9,6 @@ import logging
 import multiprocessing
 import time
 
-from modules import sunrise
 from rules import device_rpi
 from rules import device_wemo_fylt1
 from rules import device_wemo_bylt1
@@ -48,6 +47,7 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     last_hb = time.time() 
     update_index = 0
 
+    print("Waiting 60 seconds for wemo discovery process to complete")
     time.sleep(60)
 
     # Create devices
