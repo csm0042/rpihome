@@ -1,0 +1,57 @@
+p02_gui          |  2016-11-04 11:09:33,980  |  Logging handler for gui process started
+p13_home_away    |  2016-11-04 11:09:33,981  |  Sending 'user1 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:09:33,982  |  Sending 'user2 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:09:33,982  |  Sending 'user3 NOT home' message to logic solver
+p11_logic_solver |  2016-11-04 11:09:33,982  |  Logging handler for p11_logic_solver process started
+p15_rpi_screen   |  2016-11-04 11:09:33,985  |  Logging handler for p15_RPI_screen process started
+p16_wemo_gw      |  2016-11-04 11:09:33,988  |  Logging handler for p16_wemo_gateway process started
+p02_gui          |  2016-11-04 11:09:34,243  |  Main application window created
+p02_gui          |  2016-11-04 11:09:34,259  |  Overlayed 1 primary frame over-top of application (root) window
+p02_gui          |  2016-11-04 11:09:34,260  |  Overlayed 6 sub-frames, packed top to bottom over-top of primary frame
+p02_gui          |  2016-11-04 11:09:34,277  |  creating main window
+p02_gui          |  2016-11-04 11:09:34,277  |  scheduling initial "after" task
+p02_gui          |  2016-11-04 11:09:34,277  |  starting gui mainloop
+p16_wemo_gw      |  2016-11-04 11:09:39,063  |  Found 0 wemo devices on network
+p02_gui          |  2016-11-04 11:10:01,787  |  Button 050301a01c was pressed
+p13_home_away    |  2016-11-04 11:10:30,194  |  Logging handler for p13_home_away process started
+p13_home_away    |  2016-11-04 11:10:30,195  |  Sending 'user1 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:10:30,195  |  Sending 'user2 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:10:30,195  |  Sending 'user3 NOT home' message to logic solver
+p16_wemo_gw      |  2016-11-04 11:10:30,191  |  Logging handler for p16_wemo_gateway process started
+p02_gui          |  2016-11-04 11:10:30,202  |  Logging handler for gui process started
+p11_logic_solver |  2016-11-04 11:10:30,202  |  Logging handler for p11_logic_solver process started
+p15_rpi_screen   |  2016-11-04 11:10:30,223  |  Logging handler for p15_RPI_screen process started
+p02_gui          |  2016-11-04 11:10:30,241  |  Main application window created
+p02_gui          |  2016-11-04 11:10:30,249  |  Overlayed 1 primary frame over-top of application (root) window
+p02_gui          |  2016-11-04 11:10:30,249  |  Overlayed 6 sub-frames, packed top to bottom over-top of primary frame
+p02_gui          |  2016-11-04 11:10:30,265  |  creating main window
+p02_gui          |  2016-11-04 11:10:30,265  |  scheduling initial "after" task
+p02_gui          |  2016-11-04 11:10:30,265  |  starting gui mainloop
+p16_wemo_gw      |  2016-11-04 11:10:35,248  |  Found 0 wemo devices on network
+p02_gui          |  2016-11-04 11:10:37,892  |  Button 050301a01c was pressed
+p02_gui          |  2016-11-04 11:10:43,110  |  Button 050301a01a was pressed
+p02_gui          |  2016-11-04 11:10:48,680  |  Button 050301a04c was pressed
+p13_home_away    |  2016-11-04 11:10:48,710  |  Kill code received - Shutting down: 02,13,999
+p02_gui          |  2016-11-04 11:10:51,054  |  Button 050301a04a was pressed
+p13_home_away    |  2016-11-04 11:10:51,689  |  Logging handler for p13_home_away process started
+p13_home_away    |  2016-11-04 11:10:51,690  |  Sending 'user1 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:10:51,690  |  Sending 'user2 NOT home' message to logic solver
+p13_home_away    |  2016-11-04 11:10:51,690  |  Sending 'user3 NOT home' message to logic solver
+p02_gui          |  2016-11-04 11:11:01,753  |  Button 050301a07c was pressed
+p16_wemo_gw      |  2016-11-04 11:11:01,829  |  Kill code received - Shutting down: 02,16,999
+p02_gui          |  2016-11-04 11:11:03,935  |  Button 050301a07a was pressed
+p16_wemo_gw      |  2016-11-04 11:11:04,487  |  Logging handler for p16_wemo_gateway process started
+p16_wemo_gw      |  2016-11-04 11:11:09,542  |  Found 0 wemo devices on network
+p02_gui          |  2016-11-04 11:11:13,228  |  Kill code sent to p17_nest_gateway process
+p02_gui          |  2016-11-04 11:11:13,228  |  Kill code sent to p16_wemo_gateway process
+p02_gui          |  2016-11-04 11:11:13,228  |  Kill code sent to p15_rpi_screen process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p14_motion process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p13_home_away process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p12_db_interface process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p11_logic_solver process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p02_gui process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p01_logger process
+p02_gui          |  2016-11-04 11:11:13,229  |  Kill code sent to p00_main process
+p16_wemo_gw      |  2016-11-04 11:11:13,519  |  Kill code received - Shutting down: 02,16,999
+p15_rpi_screen   |  2016-11-04 11:11:13,698  |  Kill code received - Shutting down: 02,15,999
+p13_home_away    |  2016-11-04 11:11:14,056  |  Kill code received - Shutting down: 02,13,999
