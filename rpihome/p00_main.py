@@ -13,18 +13,18 @@ import os
 import sys
 import time
 
-from rpihome.modules import log_path
-from rpihome.modules import multiprocess_logging
+from modules import log_path
+from modules import multiprocess_logging
 
-from rpihome.p01_log_handler import listener_process
-from rpihome.p02_gui import gui_func
-from rpihome.p11_logic_solver import logic_func
-from rpihome.p12_db_interface import db_func
-from rpihome.p13_home_away import home_func
-from rpihome.p14_motion import motion_func
-from rpihome.p15_rpi_screen import screen_func
-from rpihome.p16_wemo_gateway import wemo_func
-from rpihome.p17_nest_gateway import nest_func
+from p01_log_handler import listener_process
+from p02_gui import gui_func
+from p11_logic_solver import logic_func
+from p12_db_interface import db_func
+from p13_home_away import home_func
+from p14_motion import motion_func
+from p15_rpi_screen import screen_func
+from p16_wemo_gateway import wemo_func
+from p17_nest_gateway import nest_func
 
 
 # Authorship Info *****************************************************************************************************
