@@ -170,7 +170,7 @@ def main():
             p01_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p01_process.is_alive() is False:
-                    p01_process = create_process("p01_log_handler", listener_process, True, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
+                    p01_process = create_process("p01_log_handler", listener_process, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
             if msg_in[6:9] == "999":
                 if p01_process.is_alive() is True:
                     p01_process.join()
