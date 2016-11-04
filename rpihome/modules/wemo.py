@@ -1,6 +1,7 @@
 import logging
 import pywemo
 
+
 # Wemo Discovery function *********************************************************************************************
 def discover():
     devices = pywemo.discover_devices()

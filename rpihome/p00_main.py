@@ -10,22 +10,21 @@
 import logging
 import multiprocessing
 import os
-import psutil
 import sys
 import time
 
-from modules import log_path
-from modules import multiprocess_logging
+from rpihome.modules import log_path
+from rpihome.modules import multiprocess_logging
 
-from p01_log_handler import listener_process
-from p02_gui import gui_func
-from p11_logic_solver import logic_func
-from p12_db_interface import db_func
-from p13_home_away import home_func
-from p14_motion import motion_func
-from p15_rpi_screen import screen_func
-from p16_wemo_gateway import wemo_func
-from p17_nest_gateway import nest_func
+from rpihome.p01_log_handler import listener_process
+from rpihome.p02_gui import gui_func
+from rpihome.p11_logic_solver import logic_func
+from rpihome.p12_db_interface import db_func
+from rpihome.p13_home_away import home_func
+from rpihome.p14_motion import motion_func
+from rpihome.p15_rpi_screen import screen_func
+from rpihome.p16_wemo_gateway import wemo_func
+from rpihome.p17_nest_gateway import nest_func
 
 
 # Authorship Info *****************************************************************************************************
@@ -50,7 +49,8 @@ def create_process(name, func_name, args):
 def main():
 
     # Decide what processes to enable
-    enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True, True, False]
+    enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True,
+              True, False]
 
     # Get Nest login info if necessary
     if enable[17] is True:
@@ -84,10 +84,13 @@ def main():
     logfile = logfilepathgen.return_path_and_name_combined(name=name, path=os.path.dirname(sys.argv[0]))
     process_path = os.path.dirname(sys.argv[0])
 
-    # Start global log handler process - This process retrieves log messages from the shared log queue and writes them to a file    
+    # Start global log handler process - This process retrieves log messages from the shared log queue and writes them
+    # to a file
     if enable[1] is True: 
         p01_process_alive_mem = None
-        p01_process = create_process("p01_log_handler", listener_process, (p01_queue, p00_queue, multiprocess_logging.listener_configurer, name, logfile))
+        p01_process = create_process("p01_log_handler", listener_process, (p01_queue, p00_queue,
+                                                                           multiprocess_logging.listener_configurer,
+                                                                           name, logfile))
         p01_process_modtime = os.path.getmtime(os.path.join(process_path, "p01_log_handler.py"))
 
 

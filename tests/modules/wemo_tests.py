@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" p16_wemo_gateway.py:
+""" wemo_tests.py:
 """
 
 # Import Required Libraries (Standard, Third Party, Local) *************************************************************
@@ -15,7 +15,7 @@ __license__ = "GPL"
 __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
-__status__ = "Development"     
+__status__ = "Development"
 
 
 # Test Class for Wemo Discovery Module *********************************************************************************

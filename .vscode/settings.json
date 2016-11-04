@@ -21,8 +21,9 @@
     "python.unitTest.nosetestsEnabled": false,
 
     "python.unitTest.unittestArgs": [
-        "-p *_test.py",
-        "-v",
-        "-s ./tests"
+        "-s",
+        "./tests",
+        "-p",
+        "*_test.py"
     ]
 }
