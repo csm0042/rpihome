@@ -47,8 +47,9 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     last_hb = time.time() 
     update_index = 0
 
-    print("Waiting 60 seconds for wemo discovery process to complete")
-    time.sleep(60)
+    print("Waiting 5 seconds for wemo discovery process to complete")
+    time.sleep(5)
+    print("Running logic solver")
 
     # Create devices
     rpi_screen = device_rpi.RPImain("rpi", msg_out_queue)
@@ -173,12 +174,12 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
 
         # UPDATE ON AND OFF TIME RULES
         rpi_screen.check_rules(homeArray=homeArray)        
-        wemo_fylt1.check_rules(homeArray=homeArray, utcOffset=-5, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_bylt1.check_rules(homeArray=homeArray, utcOffset=-5, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_ewlt1.check_rules(homeArray=homeArray, homeTime=homeTime, utcOffset=-6, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_cclt1.check_rules(homeArray=homeArray, utcOffset=-5, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
-        wemo_lrlt1.check_rules(homeArray=homeArray, utcOffset=-5, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_drlt1.check_rules(homeArray=homeArray, utcOffset=-5, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
+        wemo_fylt1.check_rules(homeArray=homeArray, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_bylt1.check_rules(homeArray=homeArray, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_ewlt1.check_rules(homeArray=homeArray, homeTime=homeTime, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_cclt1.check_rules(homeArray=homeArray, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
+        wemo_lrlt1.check_rules(homeArray=homeArray, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_drlt1.check_rules(homeArray=homeArray, utcOffset=datetime.timedelta(hours=-5), sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
         wemo_b1lt1.check_rules(homeArray=homeArray)        
         wemo_b1lt2.check_rules(homeArray=homeArray)
         wemo_b2lt1.check_rules(homeArray=homeArray)        

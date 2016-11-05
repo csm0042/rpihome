@@ -27,7 +27,7 @@ __status__ = "Development"
 class DeviceWemo(Device):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
-        self.new_status = int()             
+             
           
 
     def command(self):  

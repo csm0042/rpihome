@@ -4,6 +4,7 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import copy
+import datetime
 import logging
 import multiprocessing
 import pywemo
@@ -42,6 +43,7 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     last_hb = time.time()
     devices = wemo.discover()
     numOfDevices = len(devices)
+    last_scan = datetime.datetime.now()    
 
     # Main process loop
     while True:
@@ -97,6 +99,15 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
             pass
             # Clear incoming message string to ready routine for next message
             msg_in = str()
+
+
+        # Re-scan network if not all devices are found
+        if numOfDevices != 10:
+            if datetime.datetime.now() > last_scan + datetime.timedelta(seconds=60):
+                logging.log(logging.DEBUG, "Rescanning for wemo devices")
+                devices = wemo.discover()
+                numOfDevices = len(devices)
+                last_scan = datetime.datetime.now()       
 
 
         # Only close down process once incoming message queue is empty

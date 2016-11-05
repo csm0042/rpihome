@@ -32,15 +32,15 @@ class Wemo_bylt1(DeviceWemo):
         """ This method contains the rule-set that controls external security lights """
         # Update value stored in dt_now to current datetime
         self.dt = datetime.datetime.now()
-        # Process input variables if present 
-        self.homeArray = []   
-        self.home = False  
+        # Process input variables if present  
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
                     self.dt = value
                 if key == "homeArray":
                     self.homeArray = value 
+                if key == "homeTime":
+                    self.homeTime = value                    
                 if key == "home":
                     self.home = value 
                 if key == "utcOffset":

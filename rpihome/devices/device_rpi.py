@@ -11,7 +11,6 @@ import time
 from rpihome.devices.device import Device
 
 
-
 # Authorship Info *****************************************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
@@ -27,7 +26,7 @@ __status__ = "Development"
 class DeviceRPI(Device):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue) 
-        self.new_status = int()
+        #self.new_status = int()
 
             
 

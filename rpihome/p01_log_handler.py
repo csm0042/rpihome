@@ -66,7 +66,7 @@ def listener_process(msg_in_queue, msg_out_queue, log_configurer, name, logfile)
             break
         
         # Delay before re-running loop
-        time.sleep(0.13)
+        time.sleep(0.013)
 
 
 

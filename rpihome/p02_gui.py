@@ -514,7 +514,7 @@ class MainWindow(object):
         # Processing logfile
         self.iter = 1
         while len(self.text) != 0 and self.iter < 1000:
-            if (self.text.find("p16_wemo_gw") < 0) or (self.text.find("p16_wemo_gw") >= 0):
+            if (self.text.find("|  \"GET /") < 0) and (self.text.find("|  \"POST /") < 0) and (self.text.find("|  Starting new HTTP connection") < 0) and (self.text.find("|  Starting new HTTPS connection") < 0) and (self.text.find("|  Error fetching") < 0):
                 self.text020301.insert(tk.END, self.text)
                 self.text020301.yview_pickplace("end")
             self.line += 1

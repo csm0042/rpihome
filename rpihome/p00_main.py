@@ -13,6 +13,7 @@ import multiprocessing
 import os
 import sys
 import time
+sys.path.append("..")
 
 from modules import log_path
 from modules import multiprocess_logging
@@ -505,7 +506,7 @@ def main():
             break            
 
         # Wait before next loop iteration
-        time.sleep(0.11)
+        time.sleep(0.011)
 
 
 

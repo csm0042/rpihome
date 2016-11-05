@@ -32,15 +32,15 @@ class Wemo_lrlt1(DeviceWemo):
         """ This method contains the rule-set that controls external security lights """
         # Update value stored in dt_now to current datetime
         self.dt = datetime.datetime.now()
-        # Process input variables if present 
-        self.homeArray = []   
-        self.home = False  
+        # Process input variables if present   
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
                     self.dt = value
                 if key == "homeArray":
                     self.homeArray = value 
+                if key == "homeTime":
+                    self.homeTime = value                    
                 if key == "home":
                     self.home = value 
                 if key == "utcOffset":
@@ -50,7 +50,7 @@ class Wemo_lrlt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                          
+                    self.timeout = value                                                         
         # Calculate sunrise / sunset times
         self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
         self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 

@@ -51,7 +51,7 @@ class Device(object):
         if isinstance(value, str) is True:
             self.__name = value
         else:
-            raise Exception("Improper type attmpted to load into self.name (should be type: str)")
+            print("Improper type attmpted to load into self.name (should be type: str)")
 
     @property
     def state(self):
@@ -62,7 +62,7 @@ class Device(object):
         if isinstance(value, bool) is True:
             self.__state = value
         else:
-            raise Exception("Improper type attmpted to load into self.state (should be type: bool)")   
+            print("Improper type attmpted to load into self.state (should be type: bool)")   
 
     @property
     def status(self):
@@ -73,7 +73,7 @@ class Device(object):
         if isinstance(value, int) is True:
             self.__status = value
         else:
-            raise Exception("Improper type attmpted to load into self.status (should be type: int)")  
+            print("Improper type attmpted to load into self.status (should be type: int)")  
 
     @property
     def statusChangeTS(self):
@@ -84,7 +84,7 @@ class Device(object):
         if isinstance(value, datetime.datetime) is True:
             self.__statusChangeTS = value
         else:
-            raise Exception("Improper type attmpted to load into self.statusChangeTS (should be type: datetime)")  
+            print("Improper type attmpted to load into self.statusChangeTS (should be type: datetime)")  
 
     @property
     def online(self):
@@ -95,7 +95,7 @@ class Device(object):
         if isinstance(value, bool) is True:
             self.__online = value
         else:
-            raise Exception("Improper type attmpted to load into self.online (should be type: bool)") 
+            print("Improper type attmpted to load into self.online (should be type: bool)") 
 
     @property
     def dt(self):
@@ -106,7 +106,7 @@ class Device(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dt = value
         else:
-            raise Exception("Improper type attmpted to load into self.dt")             
+            print("Improper type attmpted to load into self.dt")             
 
     @property
     def home(self):
@@ -117,4 +117,48 @@ class Device(object):
         if isinstance(value, bool) is True:
             self.__home = value
         else:
-            raise Exception("Improper type attmpted to load into self.home")                                                               
+            print("Improper type attmpted to load into self.home")  
+
+    @property
+    def utcOffset(self):
+        return self.__utcOffset
+
+    @utcOffset.setter
+    def utcOffset(self, value):
+        if isinstance(value, datetime.timedelta) is True:
+            self.__utcOffset = value
+        else:
+            print("Improper type attmpted to load into self.utcOffset")   
+
+    @property
+    def sunriseOffset(self):
+        return self.__sunriseOffset
+
+    @sunriseOffset.setter
+    def sunriseOffset(self, value):
+        if isinstance(value, datetime.timedelta) is True:
+            self.__sunriseOffset = value
+        else:
+            print("Improper type attmpted to load into self.sunriseOffset")   
+
+    @property
+    def sunsetOffset(self):
+        return self.__sunsetOffset
+
+    @sunsetOffset.setter
+    def sunsetOffset(self, value):
+        if isinstance(value, datetime.timedelta) is True:
+            self.__sunsetOffset = value
+        else:
+            print("Improper type attmpted to load into self.sunsetOffset") 
+
+    @property
+    def timeout(self):
+        return self.__timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        if isinstance(value, datetime.timedelta) is True:
+            self.__timeout = value
+        else:
+            print("Improper type attmpted to load into self.timeout")                                                                                                       

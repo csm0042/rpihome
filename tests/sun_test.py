@@ -12,12 +12,11 @@ class TestSun(TestCase):
         self.sunrise_time = self.s.sunrise(datetime.datetime.now(), self.utcOffset)
         self.sunrise = datetime.datetime.combine(datetime.datetime.today().date(), self.sunrise_time)
         self.sunrise_compare = datetime.datetime.now()
-        print("Sunrise: " + str(self.sunrise))
-        self.assertLessEqual(self.sunrise, self.sunrise_compare)
+        self.assertEqual(self.sunrise.date(), datetime.datetime.now().date())
+        
 
     def test_sunset(self):
         self.sunset_time = self.s.sunset(datetime.datetime.now(), self.utcOffset)
         self.sunset = datetime.datetime.combine(datetime.datetime.today().date(), self.sunset_time)
         self.sunset_compare = datetime.datetime.now()
-        print("Sunset: " + str(self.sunset))
-        self.assertGreaterEqual(self.sunset, self.sunset_compare)
+        self.assertEqual(self.sunset.date(), datetime.datetime.now().date())
