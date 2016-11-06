@@ -5,7 +5,9 @@
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 from math import cos,sin,acos,asin,tan  
 from math import degrees as deg, radians as rad  
-from datetime import date,datetime,time, timezone, timedelta   
+from datetime import date, datetime, time, timezone, timedelta 
+if __name__ == "__main__":
+    from dst import USdst  
 
 
 class Sun:  
@@ -33,26 +35,41 @@ class Sun:
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.sunrise_UTC = Sun.__timefromdecimalday(self.sunrise_t)
-        self.sunrise_adj = datetime.combine(date.today(), self.sunrise_UTC) + offset
+        self.sunrise_UTC_h, self.sunrise_UTC_m, self.sunrise_UTC_s = Sun.__timefromdecimalday(self.sunrise_t)
+        if self.sunrise_UTC_h < 24:
+            self.sunrise_UTC = time(self.sunrise_UTC_h, self.sunrise_UTC_m, self.sunrise_UTC_s)
+            self.sunrise_adj = datetime.combine(date.today(), self.sunrise_UTC) + offset
+        elif self.sunrise_UTC_h >= 24:
+            self.sunrise_UTC = time((self.sunrise_UTC_h-24), self.sunrise_UTC_m, self.sunrise_UTC_s)
+            self.sunrise_adj = datetime.combine((date.today()+ timedelta(days=1)), self.sunrise_UTC) + offset  
         return self.sunrise_adj.time()
     
-    def sunset(self,when=None, offset=0):  
+    def sunset(self,when=None, offset=timedelta(hours=0)):  
         if when is None : 
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.sunset_UTC = Sun.__timefromdecimalday(self.sunset_t)
-        self.sunset_adj = datetime.combine(date.today(), self.sunset_UTC) + offset        
+        self.sunset_UTC_h, self.sunset_UTC_m, self.sunset_UTC_s = Sun.__timefromdecimalday(self.sunset_t)
+        if self.sunset_UTC_h < 24:
+            self.sunset_UTC = time(self.sunset_UTC_h, self.sunset_UTC_m, self.sunset_UTC_s)
+            self.sunset_adj = datetime.combine(date.today(), self.sunset_UTC) + offset
+        elif self.sunset_UTC_h >= 24:
+            self.sunset_UTC = time((self.sunset_UTC_h-24), self.sunset_UTC_m, self.sunset_UTC_s)
+            self.sunset_adj = datetime.combine((date.today()+ timedelta(days=1)), self.sunset_UTC) + offset        
         return self.sunset_adj.time()
     
-    def solarnoon(self,when=None, offset=0):  
+    def solarnoon(self,when=None, offset=timedelta(hours=0)):  
         if when is None : 
             when = datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        self.solarnoon_UTC = Sun.__timefromdecimalday(self.solarnoon_t)
-        self.solarnoon_adj = datetime.combine(date.today(), self.solarnoon_UTC) + offset
+        self.solarnoon_UTC_h, self.solarnoon_UTC_m, self.solarnoon_UTC_s = Sun.__timefromdecimalday(self.solarnoon_t)
+        if self.solarnoon_UTC_h < 24:
+            self.solarnoon_UTC = time(self.solarnoon_UTC_h, self.solarnoon_UTC_m, self.solarnoon_UTC_s)
+            self.solarnoon_adj = datetime.combine(date.today(), self.solarnoon_UTC) + offset
+        elif self.solarnoon_UTC_h >= 24:
+            self.solarnoon_UTC = time((self.solarnoon_UTC_h-24), self.solarnoon_UTC_m, self.solarnoon_UTC_s)
+            self.solarnoon_adj = datetime.combine((date.today()+ timedelta(days=1)), self.solarnoon_UTC) + offset
         return self.solarnoon_adj.time()
 
     @staticmethod  
@@ -68,7 +85,7 @@ class Sun:
         m      = int(minutes)  
         seconds= (minutes-m)*60  
         s      = int(seconds)  
-        return time(hour=h,minute=m,second=s)  
+        return h, m, s  
   
     def __preptime(self,when):  
         """ 
@@ -127,8 +144,18 @@ class Sun:
         self.sunset_t   =self.solarnoon_t+hourangle*4/1440  
   
 if __name__ == "__main__":  
-    s = sun(lat=38.566, long=-90.410)  
-    print("Current datetime: %s" % datetime.today())
-    print("Sunrise: %s" % s.sunrise(datetime.now(), -5))
-    print("Solarnoon: %s" % s.solarnoon(datetime.now(), -5))
-    print("Sunset: %s" % s.sunset(datetime.now(), -5))
+    s = Sun(lat=38.566, long=-90.410) 
+    dst = USdst() 
+    testDatetime = datetime.combine(date(2016,3,13), time(7,40)) 
+    # Calculate if DST is active or not
+    if dst.is_active(datetime=testDatetime) is True:
+        utcOffset = timedelta(hours=-5)
+        print("DST is active")
+    else:
+        print("DST is NOT active")
+        utcOffset = timedelta(hours=-6)           
+    # Print Results
+    print("Current datetime: %s" % testDatetime)
+    print("Sunrise: %s" % s.sunrise(testDatetime, utcOffset))
+    print("Solarnoon: %s" % s.solarnoon(testDatetime, utcOffset))
+    print("Sunset: %s" % s.sunset(testDatetime, utcOffset))

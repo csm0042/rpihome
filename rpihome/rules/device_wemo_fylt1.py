@@ -52,8 +52,8 @@ class Wemo_fylt1(DeviceWemo):
                 if key == "timeout":
                     self.timeout = value                                                         
         # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
+        self.sunrise = datetime.datetime.combine(self.dt.date(), self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt.date(), self.s.sunset(self.dt, self.utcOffset)) 
         # Decision tree to determine if screen should be awake or not
         if self.dt <= self.sunrise + self.sunriseOffset:
             self.state = True

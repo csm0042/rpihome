@@ -6,8 +6,6 @@
 import copy
 import datetime
 import logging
-import multiprocessing
-import time
 from rpihome.devices.device import Device
 
 
@@ -28,10 +26,9 @@ class DeviceWemo(Device):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue)
              
-          
-
     def command(self):  
-        """ This method is used to send a single command to various devices when necessary instead of sending the same command over and over again """ 
+        """ This method is used to send a single command to various devices when necessary instead of sending the same 
+        command over and over again """ 
         if self.state != self.state_mem:
             if self.state is True:
                 self.msg_out_queue.put_nowait("11,16,161,%s" % self.name)
@@ -41,4 +38,4 @@ class DeviceWemo(Device):
                 logging.log(logging.DEBUG, "Sending command to wemo gateway to turn OFF device: %s" % self.name)
             pass
             # Snapshot new device state in memory so the command is only sent once
-            self.state_mem = copy.copy(self.state)                         
+            self.state_mem = copy.copy(self.state)

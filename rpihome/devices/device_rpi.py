@@ -6,7 +6,6 @@
 import copy
 import datetime
 import logging
-import multiprocessing
 import time
 from rpihome.devices.device import Device
 
@@ -26,12 +25,11 @@ __status__ = "Development"
 class DeviceRPI(Device):
     def __init__(self, name, msg_out_queue):
         super().__init__(name, msg_out_queue) 
-        #self.new_status = int()
-
             
 
     def command(self):
-        """ This method is used to send a single command to various devices when necessary instead of sending the same command over and over again """        
+        """ This method is used to send a single command to various devices when necessary instead of sending the same 
+        command over and over again """        
         if self.state != self.state_mem:
             if self.state is True:
                 self.msg_out_queue.put_nowait("11,15,150,export DISPLAY=:0; xset s reset")

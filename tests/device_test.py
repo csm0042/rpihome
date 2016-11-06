@@ -54,7 +54,7 @@ class TestDevice(TestCase):
         self.device.online = True
         self.assertEqual(self.device.online, True) 
         self.device.online = None
-        self.assertEqual(self.device.online, True)          
+        self.assertEqual(self.device.online, None)          
         self.device.online = False
         self.assertEqual(self.device.online, False)         
         self.assertIsInstance(self.device.online, bool)
