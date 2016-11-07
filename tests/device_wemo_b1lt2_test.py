@@ -7,7 +7,7 @@ from rpihome.rules.device_wemo_b1lt2 import Wemo_b1lt2
 class Test_wemo_b1lt2(TestCase):
     def setUp(self):
         self.testQueue = multiprocessing.Queue(-1)    
-        self.device = Wemo_b1lt2("b1lt2", self.testQueue) 
+        self.device = Wemo_b1lt2("b1lt2", "192.168.86.28", self.testQueue) 
 
     def test_wemo_b1lt2(self):
         self.testData = []

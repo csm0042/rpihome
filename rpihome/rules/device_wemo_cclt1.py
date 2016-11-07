@@ -30,6 +30,7 @@ class Wemo_cclt1(DeviceWemo):
         """This method contains the rule-set that controls internal security lights """
         # Update value stored in dt_now to current datetime
         self.dt = datetime.datetime.now()
+        self.home = False
         # Process input variables if present           
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -54,8 +55,8 @@ class Wemo_cclt1(DeviceWemo):
             if h is True:
                 self.home = True        
         # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset))                        
+        self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset))                        
         # Decision tree to determine if screen should be awake or not
         if self.home is True:
             # If after 5am but before sunrise + the offset minutes

@@ -30,6 +30,7 @@ class Wemo_b2lt2(DeviceWemo):
         """ Nightstand light in kids bedroom """
         # Update value stored in dt_now to current datetime
         self.dt = datetime.datetime.now()
+        self.home = False
         # Process input variables if present    
         if kwargs is not None:
             for key, value in kwargs.items():

@@ -33,6 +33,7 @@ class Wemo_ewlt1(DeviceWemo):
         """ This method contains the rule-set that controls external security lights """
         # Update value stored in dt_now to current datetime
         self.dt = datetime.datetime.now()
+        self.home = False
         # Process input variables if present  
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -53,37 +54,33 @@ class Wemo_ewlt1(DeviceWemo):
                 if key == "timeout":
                     self.timeout = value                                                          
         # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
+        self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset)) 
         # Determine if anyone is home
         for h in self.homeArray:
             if h is True:
                 self.home = True
         # Determine if someone has recently come home
+        self.homeNew = False
         for i, j in enumerate(self.homeArray):
             if j is True:
                 if self.dt < self.homeTime[i] + datetime.timedelta(minutes=10):
-                    self.homeNew = True
+                    self.homeNew = True                
         # Decision tree to determine if screen should be awake or not
-        if self.homeNew is True and (self.dt.time() >= self.sunset.time() or self.dt.time() <= self.sunrise.time()):
-            self.state = True
-        else:
-            # If before sunrise + 30 minutes
-            if 0 <= self.dt.weekday() <= 4:
-                if self.homeArray[0] is True:
-                    if self.homeArray[1] is True or self.homeArray[2] is True:
-                        if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,40):
-                            self.state = True
-                        else:
-                            self.state = False
-                    else:
-                        if datetime.time(6,30) <= self.dt.time() <= datetime.time(7,10):
-                            self.state = True
-                        else:
-                            self.state = False
+        if self.home is True:
+            # If someone recently entered the house
+            if self.homeNew is True:
+                # If after 5am but before sunrise + the offset minutes
+                if self.dt <= self.sunrise + self.sunriseOffset:
+                    self.state = True
+                # If after sunset + the offset minutes but before 10pm  
+                elif self.dt >= self.sunset + self.sunsetOffset:              
+                    self.state = True
                 else:
                     self.state = False
-            elif 5 <= self.dt.weekday() <= 6:
+            else:
                 self.state = False
+        else:
+            self.state = False
         # Return result
-        return self.state
+        return self.state                 

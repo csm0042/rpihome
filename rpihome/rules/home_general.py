@@ -71,11 +71,11 @@ class HomeGeneral(object):
 
     @mode.setter
     def mode(self, value):
-        if 0 <= value <= 4:
+        if 0 <= value <= 5:
             self.__mode = value
         else:
-            self.__mode = 4
-            logging.log(logging.DEBUG, "Invalid mode entered.  Defaulting to mode=4 (ping with delay)")        
+            self.__mode = 2
+            logging.log(logging.DEBUG, "Invalid mode entered.  Defaulting to mode=2 (by schedule)")        
 
     @property
     def mac(self):
@@ -272,7 +272,7 @@ class HomeGeneral(object):
                 if key == "ip":
                     self.ip = value
         # Ping device every 30 seconds - If device found, set home status true
-        if self.dt.time() >= self.last_ping + datetime.timedelta(seconds=30):
+        if self.dt >= self.last_ping + datetime.timedelta(seconds=30):
             self.pingResponse = self.by_ping()
             if self.pingResponse is True:
                 self.yes = True
@@ -315,7 +315,10 @@ class HomeGeneral(object):
         elif self.mode == 3:
             self.by_arp_and_ping(mac=self.mac, ip=self.ip)
         elif self.mode == 4:
-            self.by_ping_with_delay(ip=self.ip)            
+            self.by_ping_with_delay(ip=self.ip)
+        elif self.mode == 5:
+            self.by_ping_with_delay(ip=self.ip)
+            self.by_schedule()          
         else:
             logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
         # Return result

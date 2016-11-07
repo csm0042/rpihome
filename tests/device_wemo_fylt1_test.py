@@ -9,7 +9,7 @@ from rpihome.rules.device_wemo_fylt1 import Wemo_fylt1
 class Test_wemo_fylt1(TestCase):
     def setUp(self):
         self.testQueue = multiprocessing.Queue(-1)          
-        self.device = Wemo_fylt1("fylt1", self.testQueue)
+        self.device = Wemo_fylt1("fylt1", "192.168.86.21", self.testQueue)
         self.utcOffset = datetime.timedelta(hours=0)         
         self.dst = USdst()
 
