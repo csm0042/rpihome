@@ -63,6 +63,7 @@ class MainWindow(object):
         self.close_pending = False
         self.last_hb = time.time()
         self.index = 0
+        self.scanWemo = False
 
         self.line = sum(1 for line in open(self.logfile)) - 50
         if self.line < 1:
@@ -539,6 +540,7 @@ class MainWindow(object):
         pass 
 
     def action050101(self):
+        self.scanWemo = False
         logging.log(logging.DEBUG, "Button 050101 was pressed")
         if self.frame050301a_packed is False:
             self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -558,6 +560,7 @@ class MainWindow(object):
 
     def action050102(self):
         logging.log(logging.DEBUG, "Button 050102 was pressed")
+        self.scanWemo = True
         if self.frame050301b_packed is False:
             self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301b.pack_propagate(False)
@@ -575,6 +578,7 @@ class MainWindow(object):
         pass
 
     def action050103(self):
+        self.scanWemo = False
         logging.log(logging.DEBUG, "Button 050103 was pressed")
         if self.frame050301c_packed is False:
             self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -593,6 +597,7 @@ class MainWindow(object):
         pass   
 
     def action050104(self):
+        self.scanWemo = False
         logging.log(logging.DEBUG, "Button 050103 was pressed")
         if self.frame050301d_packed is False:
             self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -1070,32 +1075,32 @@ class MainWindow(object):
             self.msg_in = str()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False:
-            if self.index > 24:
+        if self.close_pending is False and self.scanWemo is True:
+            if self.index > 15:
                 self.index = 0
             if self.index == 0:
                 self.msg_out_queue.put_nowait("02,16,162,fylt1")
-            elif self.index == 2:
+            elif self.index == 1:
                 self.msg_out_queue.put_nowait("02,16,162,bylt1")
-            elif self.index == 4:
+            elif self.index == 2:
                 self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-            elif self.index == 6:
+            elif self.index == 3:
                 self.msg_out_queue.put_nowait("02,16,162,cclt1")
-            elif self.index == 8:
+            elif self.index == 4:
                 self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-            elif self.index == 10:
+            elif self.index == 5:
                 self.msg_out_queue.put_nowait("02,16,162,drlt1")
-            elif self.index == 12:
+            elif self.index == 6:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt1")
-            elif self.index == 14:
+            elif self.index == 7:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt2")
-            elif self.index == 16:
+            elif self.index == 8:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt1")
-            elif self.index == 18:
+            elif self.index == 9:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt2")
-            elif self.index == 20:
+            elif self.index == 10:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt1")
-            elif self.index == 22:
+            elif self.index == 11:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt2")
             self.index += 1
         
