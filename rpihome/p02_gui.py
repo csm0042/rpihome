@@ -685,6 +685,7 @@ class MainWindow(object):
     def action050301a07a(self):
         logging.log(logging.DEBUG, "Button 050301a07a was pressed")
         self.msg_out_queue.put_nowait("02,16,900")
+        self.msg_out_queue.put_nowait("02,11,168")
 
     def action050301a07b(self):
         logging.log(logging.DEBUG, "Button 050301a07b was pressed")

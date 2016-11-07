@@ -23,12 +23,14 @@ __status__ = "Development"
 
 # Device class ********************************************************************************************************
 class DeviceWemo(Device):
-    def __init__(self, name, msg_out_queue):
+    def __init__(self, name, ip, msg_out_queue):
         super().__init__(name, msg_out_queue)
+        self.discover_device(ip)
 
     def discover_device(self, ip):
         logging.log(logging.DEBUG, "Sending command to wemo gateway to find device at address: %s" % ip)
         self.msg_out_queue.put_nowait("11,16,169,%s" % ip)
+        self.msg_out_queue.put_nowait("11,16,001")
              
     def command(self):  
         """ This method is used to send a single command to various devices when necessary instead of sending the same 
