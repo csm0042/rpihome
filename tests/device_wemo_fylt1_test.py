@@ -13,7 +13,7 @@ class Test_wemo_fylt1(TestCase):
         self.utcOffset = datetime.timedelta(hours=0)         
         self.dst = USdst()
 
-    def test_fylt1(self):
+    def test_wemo_fylt1(self):
         self.testData = []
         # Before DST begins (sunrise around 6:34 am on 3/1)
         self.testData.append((datetime.datetime.combine(datetime.date(2016,3,1), datetime.time(6,30)), True))

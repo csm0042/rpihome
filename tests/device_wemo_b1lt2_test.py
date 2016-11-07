@@ -9,7 +9,7 @@ class Test_wemo_b1lt2(TestCase):
         self.testQueue = multiprocessing.Queue(-1)    
         self.device = Wemo_b1lt2("b1lt2", self.testQueue) 
 
-    def test_weekday(self):
+    def test_wemo_b1lt2(self):
         self.testData = []
         # Before early wake time - with and without kids
         self.testData.append((datetime.datetime.combine(datetime.date(2016,10,31), datetime.time(5,39)), [True, True, True], False))
