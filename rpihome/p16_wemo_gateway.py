@@ -41,7 +41,8 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     msg_in = str()
     close_pending = False
     last_hb = time.time()
-    devices = wemo.discover()
+    #devices = wemo.discover()
+    devices = []
     numOfDevices = len(devices)
     last_scan = datetime.datetime.now()    
 
@@ -88,6 +89,35 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                         state_response = "16," + msg_in[0:2] + ",163," + str(state) + "," + msg_in[10:]
                         msg_out_queue.put_nowait(state_response)
                         logging.log(logging.DEBUG, "Response message [%s] sent for device: %s" % (state_response, msg_in[10:]))   
+
+                # Process "find device" message
+                if msg_in[6:9] == "169":
+                    address = msg_in[10:]
+                    logging.log(logging.DEBUG, "Searching for wemo device at: %s" % address)
+                    try:
+                        port = None
+                        port = pywemo.ouimeaux_device.probe_wemo(address)
+                        if port is not None:
+                            url = 'http://%s:%i/setup.xml' % (address, port)
+                            try:
+                                device = pywemo.discovery.device_from_description(url, None)
+                                if device is not None:
+                                    alreadyInList = False
+                                    for i, j in enumerate(devices):
+                                        if device.name == j.name:
+                                            logging.log(logging.DEBUG, "Device: %s already exists in device list at address: %s and port: %s" % (device.name, address, port))
+                                            alreadyInList = True
+                                    if alreadyInList is False:
+                                        logging.log(logging.DEBUG, "found wemo device name: %s at: %s, port: %s" % (device.name, address, port))
+                                        devices.append(copy.copy(device))
+                                    numOfDevices = len(devices)
+                            except:
+                                logging.log(logging.DEBUG, "Error during device discovery")
+                        else:
+                            logging.log(logging.DEBUG, "Could not find device on network at address: %s" % address)                        
+                    except:
+                        logging.log(logging.DEBUG, "Could not find device on network at address: %s" % address)
+                    
   
                 # Process "kill process" message
                 if msg_in[6:9] == "999":
@@ -102,12 +132,12 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
 
 
         # Re-scan network if not all devices are found
-        if numOfDevices != 10:
-            if datetime.datetime.now() > last_scan + datetime.timedelta(seconds=60):
-                logging.log(logging.DEBUG, "Rescanning for wemo devices")
-                devices = wemo.discover()
-                numOfDevices = len(devices)
-                last_scan = datetime.datetime.now()       
+        #if numOfDevices != 10:
+        #    if datetime.datetime.now() > last_scan + datetime.timedelta(seconds=60):
+        #        logging.log(logging.DEBUG, "Rescanning for wemo devices")
+        #        devices = wemo.discover()
+        #        numOfDevices = len(devices)
+        #        last_scan = datetime.datetime.now()       
 
 
         # Only close down process once incoming message queue is empty

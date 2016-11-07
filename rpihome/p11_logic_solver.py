@@ -50,24 +50,34 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     update_index = 0
     dst = USdst()
 
-    print("Waiting 5 seconds for wemo discovery process to complete")
-    time.sleep(5)
     print("Running logic solver")
 
     # Create devices
     rpi_screen = device_rpi.RPImain("rpi", msg_out_queue)
     wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", msg_out_queue)
+    wemo_fylt1.discover_device("192.168.86.21")
     wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", msg_out_queue)
+    wemo_bylt1.discover_device("192.168.86.22")    
     wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", msg_out_queue)
+    wemo_ewlt1.discover_device("192.168.86.23")    
     wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", msg_out_queue)
+    wemo_cclt1.discover_device("192.168.86.24")    
     wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", msg_out_queue)
+    wemo_lrlt1.discover_device("192.168.86.25")    
     wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", msg_out_queue)
+    wemo_drlt1.discover_device("192.168.86.26")
     wemo_b1lt1 = device_wemo_b1lt1.Wemo_b1lt1("b1lt1", msg_out_queue)
+    #wemo_b1lt1.discover_device("192.168.86.27")
     wemo_b1lt2 = device_wemo_b1lt2.Wemo_b1lt2("b1lt2", msg_out_queue)
+    wemo_b1lt2.discover_device("192.168.86.28")
     wemo_b2lt1 = device_wemo_b2lt1.Wemo_b2lt1("b2lt1", msg_out_queue)
+    #wemo_b2lt1.discover_device("192.168.86.29")
     wemo_b2lt2 = device_wemo_b2lt2.Wemo_b2lt2("b2lt2", msg_out_queue)
+    wemo_b2lt2.discover_device("192.168.86.30")
     wemo_b3lt1 = device_wemo_b3lt1.Wemo_b3lt1("b3lt1", msg_out_queue)
+    wemo_b3lt1.discover_device("192.168.86.31")    
     wemo_b3lt2 = device_wemo_b3lt2.Wemo_b3lt2("b3lt2", msg_out_queue)
+    wemo_b3lt2.discover_device("192.168.86.32")
 
 
     # create home array

@@ -1069,32 +1069,32 @@ class MainWindow(object):
             self.msg_in = str()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False and 1 == 2:
-            if self.index > 180:
-                self.index = 120
-            if self.index == 120:
+        if self.close_pending is False:
+            if self.index > 24:
+                self.index = 0
+            if self.index == 0:
                 self.msg_out_queue.put_nowait("02,16,162,fylt1")
-            elif self.index == 125:
+            elif self.index == 2:
                 self.msg_out_queue.put_nowait("02,16,162,bylt1")
-            elif self.index == 130:
+            elif self.index == 4:
                 self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-            elif self.index == 135:
+            elif self.index == 6:
                 self.msg_out_queue.put_nowait("02,16,162,cclt1")
-            elif self.index == 140:
+            elif self.index == 8:
                 self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-            elif self.index == 145:
+            elif self.index == 10:
                 self.msg_out_queue.put_nowait("02,16,162,drlt1")
-            elif self.index == 150:
+            elif self.index == 12:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt1")
-            elif self.index == 155:
+            elif self.index == 14:
                 self.msg_out_queue.put_nowait("02,16,162,b1lt2")
-            elif self.index == 160:
+            elif self.index == 16:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt1")
-            elif self.index == 165:
+            elif self.index == 18:
                 self.msg_out_queue.put_nowait("02,16,162,b2lt2")
-            elif self.index == 170:
+            elif self.index == 20:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt1")
-            elif self.index == 175:
+            elif self.index == 22:
                 self.msg_out_queue.put_nowait("02,16,162,b3lt2")
             self.index += 1
         
