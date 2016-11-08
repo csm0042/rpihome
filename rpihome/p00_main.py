@@ -13,7 +13,8 @@ import multiprocessing
 import os
 import sys
 import time
-sys.path.append("..")
+if __name__ == "__main__":
+    sys.path.append("..")
 
 from modules import log_path
 from modules import multiprocess_logging

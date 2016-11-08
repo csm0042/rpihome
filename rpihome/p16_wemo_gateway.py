@@ -35,7 +35,6 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     last_hb = time.time()
     wemo = WemoHelper()    
 
-
     # Main process loop
     while True:
         # Monitor message queue for new messages

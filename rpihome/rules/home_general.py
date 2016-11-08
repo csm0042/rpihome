@@ -49,13 +49,10 @@ class HomeGeneral(object):
 
     @yes.setter
     def yes(self, value):
-        # capture last seen from PC clock every time a true result is returned
-        if value is True:
-            self.last_seen = datetime.datetime.now()
-            # Watch for false-to-true changes of state and snapshot "home time" on transition
-            if value != self.__yes:
-                self.home_time = datetime.datetime.now()
-        self.__yes = value
+        if (isinstance(value, bool) is True) or (isinstance(value, None) is True):
+            self.__yes = value
+        else:
+            logging.log(logging.DEBUG, "Invalid type attmpted to load into self.yes (should be type bool or None)")
 
     @property
     def mem(self):
@@ -251,10 +248,10 @@ class HomeGeneral(object):
             self.yes is True
         else:
             if self.dt > self.last_arp + datetime.timedelta(seconds=15):
-                self.yes = self.by_arp()
+                self.yes = self.by_arp(datetime=self.dt, mac=self.mac)
                 if self.yes is False:
                     if self.dt > self.last_ping + datetime.timedelta(seconds=30):
-                        self.yes = self.by_ping()
+                        self.yes = self.by_ping(datetime=self.dt, ip=self.ip)
         # Return result
         return self.yes
 
@@ -277,18 +274,35 @@ class HomeGeneral(object):
             if self.pingResponse is True:
                 self.yes = True
                 self.last_seen = self.dt
-        # Determine if home during the day
+        # Rule-set to follow during the daytime hours
         if self.morningCutoff <= self.dt.time() <= self.eveningCutoff:
-            if self.yes is False and self.pingResponse is True:
+            if self.pingResponse is True:
+                # If a ping hasn't been received in an hour, assume the user just got home after being gone
+                if self.dt > self.last_seen + datetime.timedelta(minutes=60):
+                    self.home_time = self.dt
+                # Regardless, a positive ping indicates the user is home
                 self.yes = True
-            if self.yes is True and self.dt > self.last_seen + datetime.timedelta(minutes=30):
-                self.yes = False
-        # Determine if home during evening/early morning hours
+                self.last_seen = self.dt
+            else:
+                # Wait 30 minutes with no positive pings before declaring the user "away"
+                if self.dt < self.last_seen + datetime.timedelta(minutes=30):
+                    self.yes = True
+                else:
+                    self.yes = False
+        # Rule-set to follow after dark and overnight
         if self.dt.time() > self.eveningCutoff or self.dt.time() < self.morningCutoff:
-            if self.yes is False and self.pingResponse is True:
+            if self.pingResponse is True:
+                # If a ping hasn't been received in an hour, assume the user just got home after being gone
+                if self.dt > self.last_seen + datetime.timedelta(minutes=60):
+                    self.home_time = self.dt   
+                # Regardless, a positive ping indicates the user is home                                 
                 self.yes = True
-        # Return result
-        return self.yes  
+                self.last_seen = self.dt
+            else:
+                # Will not declare a user as "away" if transition occurs after 6pm
+                pass
+        # Return result                
+        return self.yes                
 
 
     def by_mode(self, **kwargs):
@@ -306,19 +320,25 @@ class HomeGeneral(object):
                 if key == "ip":
                     self.ip = value   
         # Use correct rule-set based on home/away decision mode
+        # mode == 0 represents a mode of "force away"
         if self.mode == 0:
             self.yes = False
+        # mode == 1 represents a mode of "force home"
         elif self.mode == 1:
             self.yes = True
+        # mode == 2 determines home/away based on each user's typical schedule
         elif self.mode == 2:
-            self.by_schedule()
+            self.by_schedule(datetime=self.dt)
+        # mode == 3 determines home/away based on a combination of arp tables and pings
         elif self.mode == 3:
-            self.by_arp_and_ping(mac=self.mac, ip=self.ip)
+            self.by_arp_and_ping(datetime=self.dt, mac=self.mac, ip=self.ip)
+        # mode == 4 determines home/away based solely of pings but with the 30 minute timeout on "away"
         elif self.mode == 4:
             self.by_ping_with_delay(ip=self.ip)
+        # mode == 5 determines home/away based on schedule, but performs periodic pings regardless to capture updates in the "homeTime" register
         elif self.mode == 5:
             self.by_ping_with_delay(ip=self.ip)
-            self.by_schedule()          
+            self.by_schedule(datetime=self.dt)          
         else:
             logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
         # Return result

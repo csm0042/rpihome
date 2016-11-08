@@ -106,9 +106,9 @@ def home_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
                                 
 
         # Determine if user is home
-        user1.by_mode(mode=5, ip="192.168.86.40")     
-        user2.by_mode(mode=5, ip="192.168.86.42")        
-        user3.by_mode(mode=5, ip="192.168.86.43") 
+        user1.by_mode(mode=5, datetime=datetime.datetime.now(), ip="192.168.86.40")     
+        user2.by_mode(mode=2, datetime=datetime.datetime.now(), ip="192.168.86.42")        
+        user3.by_mode(mode=2, datetime=datetime.datetime.now(), ip="192.168.86.43") 
 
         user1.command()
         user2.command()

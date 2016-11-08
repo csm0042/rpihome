@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-from rules import home_general
+from rpihome.rules import home_general
 
 
 # Authorship Info *****************************************************************************************************
@@ -41,31 +41,31 @@ class HomeUser1(home_general.HomeGeneral):
                     self.last_seen = value                    
         # Monday
         if self.dt.weekday() == 0:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False
         # Tuesday
         elif self.dt.weekday() == 1:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            
         # Wednesday
         elif self.dt.weekday() == 2:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            
         # Thursday
         elif self.dt.weekday() == 3:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            
         # Friday
         elif self.dt.weekday() == 4:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            

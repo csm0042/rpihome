@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-from rules import home_general
+from rpihome.rules import home_general
 
 
 # Authorship Info *****************************************************************************************************
@@ -44,7 +44,7 @@ class HomeUser3(home_general.HomeGeneral):
             if 2016 <= self.dt.date().isocalendar()[0] <= 2017:
                 # If even number week (non-custody week)
                 if self.dt.date().isocalendar()[1] % 2 == 0:
-                    if self.dt.time() < datetime.time(7,0,0):
+                    if self.dt.time() < datetime.time(7,0):
                         self.yes = True
                     else:
                         self.yes = False
@@ -57,13 +57,13 @@ class HomeUser3(home_general.HomeGeneral):
             self.yes = False            
         # Wednesday
         elif self.dt.weekday() == 2:
-            if self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            
         # Thursday
         elif self.dt.weekday() == 3:
-            if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+            if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                 self.yes = True
             else:
                 self.yes = False            
@@ -73,13 +73,13 @@ class HomeUser3(home_general.HomeGeneral):
                 # If odd number week (custody week)
                 if self.dt.date().isocalendar()[1] % 2 == 1:
                     # Home before 7am or after 5pm
-                    if self.dt.time() < datetime.time(7,0,0) or self.dt.time() >= datetime.time(17,0,0):
+                    if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
                         self.yes = True
                     else:
                         self.yes = False                    
                 else:
                     # Home only before 7am
-                    if self.dt.time() < datetime.time(7,0,0):
+                    if self.dt.time() < datetime.time(7,0):
                         self.yes = True
                     else:
                         self.yes = False
