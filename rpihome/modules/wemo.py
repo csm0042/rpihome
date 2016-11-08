@@ -40,7 +40,7 @@ class WemoHelper(object):
             # If match is found, send OFF command to device
             if (device.name.lower()).find(self.deviceName) != -1:
                 self.found = True
-                self.device.off()
+                device.off()
                 logging.log(logging.DEBUG, "OFF command sent to device: %s" % self.deviceName)
         # If match is not found, log error and continue
         if self.found is False:
