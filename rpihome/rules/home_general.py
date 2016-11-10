@@ -152,7 +152,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dt = value
         else:
-            raise Exception("Improper type attmpted to load into self.dt")
+            logging.log(logging.DEBUG, "Improper type attmpted to load into self.dt")
 
     @property
     def output(self):
@@ -171,7 +171,7 @@ class HomeGeneral(object):
         if isinstance(value, int) is True:
             self.__index = value
         else:
-            raise Exception("Tried to load a non-integer value into self.index")                
+            logging.log(logging.DEBUG, "Tried to load a non-integer value into self.index")                
 
 
     def by_arp(self, **kwargs):      
@@ -238,7 +238,7 @@ class HomeGeneral(object):
                 if key == "ip":
                     self.ip = value
         # Evaluate home/away based on arp tables and ping's if necessary
-        if self.yes is True and datetime.datetime.now().time().hour >= 20:
+        if self.yes is True and self.dt.time().hour >= 20:
             self.yes is True
         else:
             if self.dt > self.last_arp + datetime.timedelta(seconds=15):

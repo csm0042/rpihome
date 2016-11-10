@@ -117,8 +117,61 @@ class TestHomeGeneral(TestCase):
         self.user.index = "2"
         self.assertEqual(self.user.index, 1)
         self.user.index = 3
-        self.assertEqual(self.user.index, 3)                                                   
+        self.assertEqual(self.user.index, 3)    
 
+    def test_home_general_by_arp(self):
+        self.mac = "70:ec:e4:81:44:0f"
+        self.user.by_arp(mac=self.mac) 
+        self.assertEqual(self.user.yes, True) 
         
+        self.mac = "70:ec:e4:81:44:0a"
+        self.user.last_seen = self.user.last_seen + datetime.timedelta(hours=-2)
+        self.user.by_arp(mac=self.mac) 
+        self.assertEqual(self.user.yes, False)                
 
-    
+    def test_home_general_by_ping(self):
+        self.dt = datetime.datetime.now()
+        
+        self.ip = "10.5.30.112"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_ping(ip=self.ip)   
+        self.assertEqual(self.user.yes, True) 
+        
+        self.ip = "192.168.86.12"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_ping(ip=self.ip)   
+        self.assertEqual(self.user.yes, False)                  
+
+    def test_home_general_by_arp_and_ping(self):
+        self.dt = datetime.datetime.now()
+        
+        self.mac = "70:ec:e4:81:44:0f"
+        self.ip = "10.5.30.112"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_arp_and_ping(mac=self.mac, ip=self.ip)  
+        self.assertEqual(self.user.yes, True)   
+        
+        self.mac = "70:ec:e4:81:44:0a"
+        self.ip = "10.5.30.112"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_arp_and_ping(mac=self.mac, ip=self.ip)  
+        self.assertEqual(self.user.yes, True)    
+        
+        self.mac = "70:ec:e4:81:44:0a"
+        self.ip = "192.168.86.12"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_arp_and_ping(mac=self.mac, ip=self.ip)  
+        self.assertEqual(self.user.yes, False)                   
+
+    def test_home_general_by_ping_w_delay(self):
+        self.dt = datetime.datetime.now() + datetime.timedelta(hours=-5, days=-1)
+        
+        self.ip = "10.5.30.112"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_ping_with_delay(datetime=self.dt, ip=self.ip)         
+        self.assertEqual(self.user.yes, True)  
+        
+        self.ip = "192.168.86.12"
+        self.user.last_arp = self.user.last_ping = self.user.last_seen = self.dt + datetime.timedelta(hours=-2)
+        self.user.by_ping_with_delay(datetime=self.dt, ip=self.ip) 
+        self.assertEqual(self.user.yes, False)                                                                        
