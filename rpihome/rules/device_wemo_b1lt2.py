@@ -28,8 +28,6 @@ class Wemo_b1lt2(DeviceWemo):
 
     def check_rules(self, **kwargs):
         """ Nightstand light in parent bedroom """
-        # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()
         self.home = False
         # Process input variables if present  
         if kwargs is not None:

@@ -194,19 +194,19 @@ def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
 
 
         # UPDATE ON AND OFF TIME RULES
-        rpi_screen.check_rules(homeArray=homeArray)        
-        wemo_fylt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_bylt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_ewlt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0), homeTime=homeTime)
-        wemo_cclt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
-        wemo_lrlt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_drlt1.check_rules(homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
-        wemo_b1lt1.check_rules(homeArray=homeArray)        
-        wemo_b1lt2.check_rules(homeArray=homeArray)
-        wemo_b2lt1.check_rules(homeArray=homeArray)        
-        wemo_b2lt2.check_rules(homeArray=homeArray) 
-        wemo_b3lt1.check_rules(homeArray=homeArray)        
-        wemo_b3lt2.check_rules(homeArray=homeArray) 
+        rpi_screen.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
+        wemo_fylt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_bylt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_ewlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0), homeTime=homeTime)
+        wemo_cclt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
+        wemo_lrlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
+        wemo_drlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
+        wemo_b1lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
+        wemo_b1lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)
+        wemo_b2lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
+        wemo_b2lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray) 
+        wemo_b3lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
+        wemo_b3lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray) 
 
         # Send commands when change-of-state detected in desired output state
         wemo_fylt1.command()

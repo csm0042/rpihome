@@ -30,8 +30,6 @@ class HomeUser3(home_general.HomeGeneral):
 
 
     def by_schedule(self, **kwargs):
-        # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -106,6 +104,44 @@ class HomeUser3(home_general.HomeGeneral):
             self.yes = False
         # Return result
         return self.yes             
+
+
+    def by_mode(self, **kwargs):       
+        # Process input variables if present
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "datetime":
+                    self.dt = value 
+                if key == "mode":
+                    self.mode = value 
+                if key == "mac":
+                    self.mac = value                                  
+                if key == "ip":
+                    self.ip = value   
+        # Use correct rule-set based on home/away decision mode
+        # mode == 0 represents a mode of "force away"
+        if self.mode == 0:
+            self.yes = False
+        # mode == 1 represents a mode of "force home"
+        elif self.mode == 1:
+            self.yes = True
+        # mode == 2 determines home/away based on each user's typical schedule
+        elif self.mode == 2:
+            self.by_schedule(datetime=self.dt)
+        # mode == 3 determines home/away based on a combination of arp tables and pings
+        elif self.mode == 3:
+            self.by_arp_and_ping(datetime=self.dt, mac=self.mac, ip=self.ip)
+        # mode == 4 determines home/away based solely of pings but with the 30 minute timeout on "away"
+        elif self.mode == 4:
+            self.by_ping_with_delay(ip=self.ip)
+        # mode == 5 determines home/away based on schedule, but performs periodic pings regardless to capture updates in the "homeTime" register
+        elif self.mode == 5:
+            self.by_ping_with_delay(datetime=self.dt, ip=self.ip)
+            self.by_schedule(datetime=self.dt)           
+        else:
+            logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
+        # Return result
+        return self.yes
 
 
     def command(self):

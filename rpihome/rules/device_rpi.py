@@ -30,8 +30,6 @@ class RPImain(device_rpi.DeviceRPI):
 
     def check_rules(self, **kwargs):
         """ This method contains the rule-set that controls the wake/sleep state of the RPi Homescreen """
-        # Update value stored in dt_now to current datetime
-        self.dt = datetime.datetime.now()
         # Process input variables if present
         self.homeArray = []   
         self.home = False  
