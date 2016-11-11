@@ -1,16 +1,14 @@
 #!/usr/bin/python3
-""" device_rpi.py:   
-""" 
+""" device_rpi.py:
+"""
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
+# Import Required Libraries (Standard, Third Party, Local) *****************************************
 import copy
-import datetime
 import logging
-import time
 from rpihome.devices.device import Device
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info **********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -21,15 +19,15 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Device class ********************************************************************************************************
+# Device class *************************************************************************************
 class DeviceRPI(Device):
+    """ Test class and methods for the DeviceRPI class """
     def __init__(self, name, msg_out_queue):
-        super().__init__(name, msg_out_queue) 
-            
+        super().__init__(name, msg_out_queue)
 
     def command(self):
-        """ This method is used to send a single command to various devices when necessary instead of sending the same 
-        command over and over again """        
+        """ This method is used to send a single command to various devices when necessary instead
+        of sending the same command over and over again """
         if self.state != self.state_mem:
             if self.state is True:
                 self.msg_out_queue.put_nowait("11,15,150,export DISPLAY=:0; xset s reset")
@@ -37,5 +35,5 @@ class DeviceRPI(Device):
             else:
                 self.msg_out_queue.put_nowait("11,15,150,export DISPLAY=:0; xset s activate")
                 logging.log(logging.DEBUG, "Sending sleep command to RPi Monitor")
-            self.state_mem = copy.copy(self.state) 
+            self.state_mem = copy.copy(self.state)
                               
