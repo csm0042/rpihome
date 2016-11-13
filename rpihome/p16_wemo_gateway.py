@@ -23,67 +23,98 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
+
+class WemoProcessHelper(object):
+    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        self.configure_logger(log_queue, log_configurer)
+        self.msg_in_queue = msg_in_queue
+        self.msg_out_queue = msg_out_queue
+        self.msg_in = str()
+        self.msg_to_process = str()
+        self.work_queue = multiprocessing.Queue(-1)
+        self.wemo = WemoHelper()
+        self.last_hb = datetime.datetime.now()
+        self.run1 = bool()
+        self.run2 = bool()
+        self.close_pending = False
+
+    def configure_logger(self, log_queue, log_configurer):
+        log_configurer(log_queue)
+        self.logger = logging.getLogger("main")
+        self.logger.log(logging.DEBUG, "Logging handler for p16_wemo_gateway process started")        
+        
+    def process_in_msg_queue(self):
+        self.run1 = True
+        while self.run1 is True:
+            try:
+                self.msg_in = self.msg_in_queue.get_nowait()
+            except:
+                self.run1 = False
+            if len(self.msg_in) != 0:
+                if self.msg_in[3:5] == "16":
+                    if self.msg_in[6:9] == "001":
+                        self.last_hb = datetime.datetime.now()
+                    else:
+                        self.work_queue.put_nowait(self.msg_in)
+                    self.msg_in = str()
+                else:
+                    self.msg_out_queue.put_nowait(self.msg_in)
+                self.msg_in = str()
+            else:
+                self.run1 = False
+
+    def process_internal_queue(self):
+        self.run2 = True
+        while self.run2 is True:
+            # Get next message from internal queue or timeout trying to do so
+            try:
+                self.msg_to_process = self.work_queue.get_nowait()
+            except:
+                self.run2 = False
+            # If there is a message to process, do so
+            if len(self.msg_to_process) != 0:
+                # Process wemo off commands
+                if self.msg_to_process[6:9] == "160":
+                    self.wemo.switch_off(self.msg_to_process)
+                # Process wemo on command                       
+                if self.msg_to_process[6:9] == "161":
+                    self.wemo.switch_on(self.msg_to_process)
+                # Process wemo state-request message
+                if self.msg_to_process[6:9] == "162":
+                    self.wemo.query_status(self.msg_to_process, msg_out_queue)
+                # Process "find device" message
+                if self.msg_to_process[6:9] == "169":
+                    self.wemo.discover_device(self.msg_to_process)
+                    #time.sleep(5)
+                # Process "kill process" message
+                if self.msg_to_process[6:9] == "999":
+                    self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s" % self.msg_to_process)
+                    self.close_pending = True
+                # Clear msg-to-process string
+                self.msg_to_process = str()
+            else:
+                self.run2 = False
+
+
+
 # Wemo Gateway Process loop *******************************************************************************************
 def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
-    log_configurer(log_queue)
-    name = multiprocessing.current_process().name
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p16_wemo_gateway process started")
+    process_helper = WemoProcessHelper(msg_in_queue, msg_out_queue, log_queue, log_configurer)
 
-    msg_in = str()
-    close_pending = False
-    last_hb = time.time()
-    wemo = WemoHelper()    
-
-    # Main process loop
     while True:
-        # Monitor message queue for new messages
-        try:
-            msg_in = msg_in_queue.get_nowait()  
-        except:
-            pass
-
         # Process incoming messages
-        if len(msg_in) != 0:
-            if msg_in[3:5] == "16":
-                # Process heartbeat message
-                if msg_in[6:9] == "001":
-                    #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
-                    last_hb = time.time()
-                
-                # Process wemo off commands
-                if msg_in[6:9] == "160":
-                    wemo.switch_off(msg_in)
- 
-                # Process wemo on command                       
-                if msg_in[6:9] == "161":
-                    wemo.switch_on(msg_in)                    
+        process_helper.process_in_msg_queue()
 
-                # Process wemo state-request message
-                if msg_in[6:9] == "162":
-                    wemo.query_status(msg_in, msg_out_queue)   
+        # Process tasks in internal work queue
+        process_helper.process_internal_queue()
 
-                # Process "find device" message
-                if msg_in[6:9] == "169":
-                    wemo.discover_device(msg_in)
-  
-                # Process "kill process" message
-                if msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
-                    close_pending = True
-            # Send mis-routed messages back to main
-            else:
-                msg_out_queue.put_nowait(msg_in)
-            pass
-            # Clear incoming message string to ready routine for next message
-            msg_in = str()
-
-        # Only close down process once incoming message queue is empty
-        if (close_pending is True and len(msg_in) == 0 and msg_in_queue.empty() is True) or (time.time() > (last_hb + 30)):
+        # Close process 
+        if (process_helper.close_pending is True and msg_in_queue.empty() is True) or datetime.datetime.now() > process_helper.last_hb + datetime.timedelta(seconds=30):
             break
 
-        # Pause before re-checking queue
+        # Pause before next process run
         time.sleep(0.097)
+
 
 
 if __name__ == "__main__":
