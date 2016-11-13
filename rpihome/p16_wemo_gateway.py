@@ -54,6 +54,7 @@ class WemoProcessHelper(object):
                 if self.msg_in[3:5] == "16":
                     if self.msg_in[6:9] == "001":
                         self.last_hb = datetime.datetime.now()
+                        self.logger.log(logging.DEBUG, "heartbeat received")
                     else:
                         self.work_queue.put_nowait(self.msg_in)
                     self.msg_in = str()
