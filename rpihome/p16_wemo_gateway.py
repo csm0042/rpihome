@@ -81,7 +81,7 @@ class WemoProcessHelper(object):
                     self.wemo.switch_on(self.msg_to_process)
                 # Process wemo state-request message
                 if self.msg_to_process[6:9] == "162":
-                    self.wemo.query_status(self.msg_to_process, msg_out_queue)
+                    self.wemo.query_status(self.msg_to_process, self.msg_out_queue)
                 # Process "find device" message
                 if self.msg_to_process[6:9] == "169":
                     self.wemo.discover_device(self.msg_to_process)
