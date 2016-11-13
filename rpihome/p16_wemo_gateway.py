@@ -63,37 +63,35 @@ class WemoProcessHelper(object):
             else:
                 self.run1 = False
 
-    def process_internal_queue(self):
-        self.run2 = True
-        while self.run2 is True:
-            # Get next message from internal queue or timeout trying to do so
-            try:
-                self.msg_to_process = self.work_queue.get_nowait()
-            except:
-                self.run2 = False
-            # If there is a message to process, do so
-            if len(self.msg_to_process) != 0:
-                # Process wemo off commands
-                if self.msg_to_process[6:9] == "160":
-                    self.wemo.switch_off(self.msg_to_process)
-                # Process wemo on command                       
-                if self.msg_to_process[6:9] == "161":
-                    self.wemo.switch_on(self.msg_to_process)
-                # Process wemo state-request message
-                if self.msg_to_process[6:9] == "162":
-                    self.wemo.query_status(self.msg_to_process, self.msg_out_queue)
-                # Process "find device" message
-                if self.msg_to_process[6:9] == "169":
-                    self.wemo.discover_device(self.msg_to_process)
-                    #time.sleep(5)
-                # Process "kill process" message
-                if self.msg_to_process[6:9] == "999":
-                    self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s" % self.msg_to_process)
-                    self.close_pending = True
-                # Clear msg-to-process string
-                self.msg_to_process = str()
-            else:
-                self.run2 = False
+    def process_work_queue(self):
+        # Get next message from internal queue or timeout trying to do so
+        try:
+            self.msg_to_process = self.work_queue.get_nowait()
+        except:
+            self.run2 = False
+        # If there is a message to process, do so
+        if len(self.msg_to_process) != 0:
+            # Process wemo off commands
+            if self.msg_to_process[6:9] == "160":
+                self.wemo.switch_off(self.msg_to_process)
+            # Process wemo on command                       
+            if self.msg_to_process[6:9] == "161":
+                self.wemo.switch_on(self.msg_to_process)
+            # Process wemo state-request message
+            if self.msg_to_process[6:9] == "162":
+                self.wemo.query_status(self.msg_to_process, self.msg_out_queue)
+            # Process "find device" message
+            if self.msg_to_process[6:9] == "169":
+                self.wemo.discover_device(self.msg_to_process)
+                #time.sleep(5)
+            # Process "kill process" message
+            if self.msg_to_process[6:9] == "999":
+                self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s" % self.msg_to_process)
+                self.close_pending = True
+            # Clear msg-to-process string
+            self.msg_to_process = str()
+        else:
+            self.run2 = False
 
 
 
@@ -106,7 +104,7 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
         process_helper.process_in_msg_queue()
 
         # Process tasks in internal work queue
-        process_helper.process_internal_queue()
+        process_helper.process_work_queue()
 
         # Close process 
         if (process_helper.close_pending is True and msg_in_queue.empty() is True) or datetime.datetime.now() > process_helper.last_hb + datetime.timedelta(seconds=30):
