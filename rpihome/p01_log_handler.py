@@ -21,8 +21,8 @@ __status__ = "Development"
 
 
 # Log Handler Process *************************************************************************************************
-def listener_process(msg_in_queue, msg_out_queue, log_configurer, name, logfile):
-    log_configurer(name, logfile)
+def listener_process(msg_in_queue, msg_out_queue, log_configurer, logfile):
+    log_configurer(logfile)
     close_pending = False
     msg_in = None
     last_hb = time.time()

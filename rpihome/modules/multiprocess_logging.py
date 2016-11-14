@@ -19,42 +19,22 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Log Handler Process *************************************************************************************************
-
-
-def listener_configurer(name, logfile):
+# Log Handler Process *****************************************************************************
+def listener_configurer(logfile):
+    """ Configures logger for the listener process in a multiprocess application """
     root = logging.getLogger()
-    hand = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=10, encoding=None,
-                                                     delay=False, utc=False, atTime=None)
-    #form = logging.Formatter('%(asctime)s %(processName)-10s %(levelname)-8s %(message)s')
+    hand = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1,
+                                                     backupCount=10, encoding=None,
+                                                     delay=False, utc=False,
+                                                     atTime=None)
     form = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
     hand.setFormatter(form)
     root.addHandler(hand)
 
-
-def listener_process(queue, configurer, name, logfile):
-    configurer(name, logfile)
-    while True:
-        try:
-            record = queue.get()
-            if record == None:
-                break
-            logger = logging.getLogger(record.name)
-            logger.handle(record)
-        except Exception:
-            import sys, traceback
-            print("Whoops! Problem: ", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-
-
 def worker_configurer(queue):
+    """ Configures individual processes to log to a shared queue in a multiprocess application """
     hand = logging.handlers.QueueHandler(queue)
     root = logging.getLogger()
     root.addHandler(hand)
     root.setLevel(logging.DEBUG)
-    return root
 
-
-def worker_process(queue, configurer):
-    configurer(queue)
-    name = multiprocessing.current_process().name

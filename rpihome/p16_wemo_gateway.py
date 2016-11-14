@@ -4,7 +4,9 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ****************************************
 import datetime
+import logging
 import multiprocessing
+import os
 import time
 from rpihome.modules.wemo import WemoHelper
 
@@ -25,7 +27,7 @@ class WemoProcess(multiprocessing.Process):
     """ WEMO gateway process class and methods """
     def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
         multiprocessing.Process.__init__(self, name="p16_wemo_gateway")
-        self.configure_logger(log_queue, log_configurer)
+        self.logger = self.configure_logger(log_queue, log_configurer)
         self.handlers = []
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
@@ -38,10 +40,14 @@ class WemoProcess(multiprocessing.Process):
         self.main_loop = bool()
         self.close_pending = False
 
+
     def configure_logger(self, log_queue, log_configurer):
         """ Method to configure multiprocess logging """
-        self.logger = log_configurer(log_queue)
+        log_configurer(log_queue)
+        self.logger = logging.getLogger("p16_wemo_gateway")
         self.logger.debug("Logging handler for p16_wemo_gateway process started")
+        return self.logger
+
 
     def kill_logger(self):
         """ Shut down logger when process exists """
@@ -50,6 +56,7 @@ class WemoProcess(multiprocessing.Process):
             self.logger.removeHandler(i)
             i.flush()
             i.close()
+
 
     def process_in_msg_queue(self):
         """ Method to cycle through incoming message queue, filtering out heartbeats and

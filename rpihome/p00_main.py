@@ -21,7 +21,7 @@ from modules import multiprocess_logging
 
 from p01_log_handler import listener_process
 from p02_gui import gui_func
-from p11_logic_solver import logic_func
+from p11_logic_solver import LogicProcess
 from p12_db_interface import db_func
 from p13_home_away import home_func
 from p14_motion import motion_func
@@ -95,7 +95,7 @@ def main():
         p01_process = create_process("p01_log_handler", listener_process,
                                      (p01_queue, p00_queue,
                                       multiprocess_logging.listener_configurer,
-                                      name, logfile))
+                                      logfile))
         p01_process_modtime = os.path.getmtime(os.path.join(process_path, "p01_log_handler.py"))
 
 
@@ -109,7 +109,9 @@ def main():
     # Start logic solver process - this process runs the automation engine that decides when to turn various devices on/off
     if enable[11] is True:      
         p11_process_alive_mem = None    
-        p11_process = create_process("p11_logic_solver", logic_func, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+        p11_process = LogicProcess(p11_queue, p00_queue, p01_queue,
+                                  multiprocess_logging.worker_configurer)
+        p11_process.start()
         p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
    
 
@@ -204,7 +206,8 @@ def main():
                 p11_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p11_process.is_alive() is False:
-                    p11_process = create_process("p11_logic_solver", logic_func, (p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))           
+                    p11_process = LogicProcess(p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer)
+                    p11_process.start()       
             if msg_in[6:9] == "999":
                 if p11_process.is_alive() is True:                
                     p11_process.join()

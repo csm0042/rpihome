@@ -9,21 +9,21 @@ import logging
 import multiprocessing
 import time
 
-from modules.dst import USdst
+from rpihome.modules.dst import USdst
 
-from rules import device_rpi
-from rules import device_wemo_fylt1
-from rules import device_wemo_bylt1
-from rules import device_wemo_ewlt1
-from rules import device_wemo_cclt1
-from rules import device_wemo_lrlt1
-from rules import device_wemo_drlt1
-from rules import device_wemo_b1lt1
-from rules import device_wemo_b1lt2
-from rules import device_wemo_b2lt1
-from rules import device_wemo_b2lt2
-from rules import device_wemo_b3lt1
-from rules import device_wemo_b3lt2
+from rpihome.rules import device_rpi
+from rpihome.rules import device_wemo_fylt1
+from rpihome.rules import device_wemo_bylt1
+from rpihome.rules import device_wemo_ewlt1
+from rpihome.rules import device_wemo_cclt1
+from rpihome.rules import device_wemo_lrlt1
+from rpihome.rules import device_wemo_drlt1
+from rpihome.rules import device_wemo_b1lt1
+from rpihome.rules import device_wemo_b1lt2
+from rpihome.rules import device_wemo_b2lt1
+from rpihome.rules import device_wemo_b2lt2
+from rpihome.rules import device_wemo_b3lt1
+from rpihome.rules import device_wemo_b3lt2
 
 
 # Authorship Info *****************************************************************************************************
@@ -37,196 +37,252 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Logic Solver Process loop **********************************************************************************************
-def logic_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
-    log_configurer(log_queue)
-    name = multiprocessing.current_process().name
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p11_logic_solver process started")
-
-    msg_in = str()
-    close_pending = False
-    last_hb = time.time() 
-    update_index = 0
-    dst = USdst()
-
-    print("Running logic solver")
-
-    # Create devices
-    rpi_screen = device_rpi.RPImain("rpi", msg_out_queue)
-    wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", msg_out_queue)
-    wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", msg_out_queue)
-    wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", msg_out_queue)
-    wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", msg_out_queue)
-    wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", msg_out_queue)
-    wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", msg_out_queue)
-    wemo_b1lt1 = device_wemo_b1lt1.Wemo_b1lt1("b1lt1", "192.168.86.27", msg_out_queue)
-    wemo_b1lt2 = device_wemo_b1lt2.Wemo_b1lt2("b1lt2", "192.168.86.28", msg_out_queue)
-    wemo_b2lt1 = device_wemo_b2lt1.Wemo_b2lt1("b2lt1", "192.168.86.29", msg_out_queue)
-    wemo_b2lt2 = device_wemo_b2lt2.Wemo_b2lt2("b2lt2", "192.168.86.30", msg_out_queue)
-    wemo_b3lt1 = device_wemo_b3lt1.Wemo_b3lt1("b3lt1", "192.168.86.31", msg_out_queue)
-    wemo_b3lt2 = device_wemo_b3lt2.Wemo_b3lt2("b3lt2", "192.168.86.32", msg_out_queue)
+# Process Class ***********************************************************************************
+class LogicProcess(multiprocessing.Process):
+    """ WEMO gateway process class and methods """
+    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        multiprocessing.Process.__init__(self, name="p11_logic_solver")
+        self.configure_logger(log_queue, log_configurer)
+        self.msg_in_queue = msg_in_queue
+        self.msg_out_queue = msg_out_queue
+        self.work_queue = multiprocessing.Queue(-1)
+        self.msg_in = str()
+        self.msg_to_process = str()
+        self.last_hb = datetime.datetime.now()
+        self.dst = USdst()
+        self.utc_offset = datetime.timedelta(hours=0)
+        self.in_msg_loop = bool()
+        self.main_loop = bool()
+        self.close_pending = False
+        self.create_devices()
+        self.create_home_flags()
 
 
-    # create home array
-    homeArray = [False, False, False] 
-    # create home time array (logs when a person first gets home)
-    baseTime = datetime.datetime.now() + datetime.timedelta(minutes=-15)
-    homeTime = [baseTime, baseTime, baseTime]
-    
+    def configure_logger(self, log_queue, log_configurer):
+        """ Method to configure multiprocess logging """
+        log_configurer(log_queue)
+        self.logger = logging.getLogger("p11_logic_solver")
+        self.logger.debug("Logging handler for p11_logic_solver process started")
 
-    while True:
-        # Monitor message queue for new messages
+
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close()
+
+
+    def create_devices(self):
+        """ Create devices in home """
+        self.rpi_screen = device_rpi.RPImain("rpi", self.msg_out_queue)
+        self.wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", self.msg_out_queue)
+        self.wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", self.msg_out_queue)
+        self.wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", self.msg_out_queue)
+        self.wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", self.msg_out_queue)
+        self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue)
+        self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue)
+        self.wemo_b1lt1 = device_wemo_b1lt1.Wemo_b1lt1("b1lt1", "192.168.86.27", self.msg_out_queue)
+        self.wemo_b1lt2 = device_wemo_b1lt2.Wemo_b1lt2("b1lt2", "192.168.86.28", self.msg_out_queue)
+        self.wemo_b2lt1 = device_wemo_b2lt1.Wemo_b2lt1("b2lt1", "192.168.86.29", self.msg_out_queue)
+        self.wemo_b2lt2 = device_wemo_b2lt2.Wemo_b2lt2("b2lt2", "192.168.86.30", self.msg_out_queue)
+        self.wemo_b3lt1 = device_wemo_b3lt1.Wemo_b3lt1("b3lt1", "192.168.86.31", self.msg_out_queue)
+        self.wemo_b3lt2 = device_wemo_b3lt2.Wemo_b3lt2("b3lt2", "192.168.86.32", self.msg_out_queue)
+
+
+    def create_home_flags(self):
+        """ Create an array of home/away values and an array of datetimes indicating when users
+        got home """
+        self.homeArray = [False, False, False]
+        self.homeTime = [datetime.datetime.now() + datetime.timedelta(minutes=-15),
+                         datetime.datetime.now() + datetime.timedelta(minutes=-15),
+                         datetime.datetime.now() + datetime.timedelta(minutes=-15)]
+
+
+    def process_in_msg_queue(self):
+        """ Method to cycle through incoming message queue, filtering out heartbeats and
+        mis-directed messages.  Messages corrected destined for this process are loaded
+        into the work queue """
+        self.in_msg_loop = True
+        while self.in_msg_loop is True:
+            try:
+                self.msg_in = self.msg_in_queue.get_nowait()
+            except:
+                self.in_msg_loop = False
+            if len(self.msg_in) != 0:
+                if self.msg_in[3:5] == "11":
+                    if self.msg_in[6:9] == "001":
+                        self.last_hb = datetime.datetime.now()
+                        self.logger.debug("heartbeat received")
+                    elif self.msg_in[6:9] == "999":
+                        self.logger.debug("Kill code received - Shutting down")
+                        self.close_pending = True
+                        self.in_msg_loop = False
+                    else:
+                        self.work_queue.put_nowait(self.msg_in)
+                    self.msg_in = str()
+                else:
+                    self.msg_out_queue.put_nowait(self.msg_in)
+                self.msg_in = str()
+            else:
+                self.in_msg_loop = False
+
+
+    def process_work_queue(self):
+        """ Method to perform work from the work queue """
+        # Get next message from internal queue or timeout trying to do so
         try:
-            msg_in = msg_in_queue.get_nowait()  
+            self.msg_to_process = self.work_queue.get_nowait()
         except:
             pass
-
-        # Process incoming message(s)
-        if len(msg_in) != 0:
-            if msg_in[3:5] == "11":
-                if msg_in[6:9] == "001":
-                    last_hb = time.time()
-                elif msg_in[6:9] == "100":
-                    if msg_in[10:] == "user1":
-                        homeArray[0] = False
-                        logging.log(logging.INFO, "User1 is no longer home")
-                    elif msg_in[10:] == "user2":
-                        homeArray[1] = False
-                        logging.log(logging.INFO, "User2 is no longer home")
-                    elif msg_in[10:] == "user3":
-                        homeArray[2] = False  
-                        logging.log(logging.INFO, "User3 is no longer home")                  
-                elif msg_in[6:9] == "101":
-                    if msg_in[10:] == "user1":
-                        homeArray[0] = True
-                        homeTime[0] = datetime.datetime.now()
-                        logging.log(logging.INFO, "User1 is home")
-                    elif msg_in[10:] == "user2":
-                        homeArray[1] = True
-                        homeTime[1] = datetime.datetime.now()
-                        logging.log(logging.INFO, "User2 is home")
-                    elif msg_in[10:] == "user3":
-                        homeArray[2] = True
-                        homeTime[2] = datetime.datetime.now() 
-                        logging.log(logging.INFO, "User3 is home")  
-                    else:
-                        pass
-                    msg_out_queue.put_nowait("02,11,166,%s,%s" % (msg_in[10:11], msg_in[12:]))
-                elif msg_in[6:9] == "163":
-                    if msg_in[10:11] == "0":
-                        if msg_in[12:] == "fylt1":
-                            pass
-                        elif msg_in[12:] == "bylt1":
-                            pass
-                        elif msg_in[12:] == "ewlt1":
-                            pass
-                        elif msg_in[12:] == "cclt1":
-                            pass
-                        elif msg_in[12:] == "lrlt1":
-                            pass
-                        elif msg_in[12:] == "drlt1":
-                            pass
-                        elif msg_in[12:] == "b1lt1":
-                            pass
-                        elif msg_in[12:] == "b1lt2":
-                            pass
-                        elif msg_in[12:] == "b2lt1":
-                            pass
-                        elif msg_in[12:] == "b2lt2":
-                            pass
-                        elif msg_in[12:] == "b3lt1":
-                            pass
-                        elif msg_in[12:] == "b3lt2":
-                            pass
-                    elif msg_in[10:11] == "1":
-                        if msg_in[12:] == "fylt1":
-                            pass
-                        elif msg_in[12:] == "bylt1":
-                            pass
-                        elif msg_in[12:] == "ewlt1":
-                            pass
-                        elif msg_in[12:] == "cclt1":
-                            pass
-                        elif msg_in[12:] == "lrlt1":
-                            pass
-                        elif msg_in[12:] == "drlt1":
-                            pass
-                        elif msg_in[12:] == "b1lt1":
-                            pass
-                        elif msg_in[12:] == "b1lt2":
-                            pass
-                        elif msg_in[12:] == "b2lt1":
-                            pass
-                        elif msg_in[12:] == "b2lt2":
-                            pass
-                        elif msg_in[12:] == "b3lt1":
-                            pass
-                        elif msg_in[12:] == "b3lt2":
-                            pass
-                elif msg_in[6:9] == "168":
-                    wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", msg_out_queue)
-                    wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", msg_out_queue)
-                    wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", msg_out_queue)
-                    wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", msg_out_queue)
-                    wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", msg_out_queue)
-                    wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", msg_out_queue)
-                    wemo_b1lt1 = device_wemo_b1lt1.Wemo_b1lt1("b1lt1", "192.168.86.27", msg_out_queue)
-                    wemo_b1lt2 = device_wemo_b1lt2.Wemo_b1lt2("b1lt2", "192.168.86.28", msg_out_queue)
-                    wemo_b2lt1 = device_wemo_b2lt1.Wemo_b2lt1("b2lt1", "192.168.86.29", msg_out_queue)
-                    wemo_b2lt2 = device_wemo_b2lt2.Wemo_b2lt2("b2lt2", "192.168.86.30", msg_out_queue)
-                    wemo_b3lt1 = device_wemo_b3lt1.Wemo_b3lt1("b3lt1", "192.168.86.31", msg_out_queue)
-                    wemo_b3lt2 = device_wemo_b3lt2.Wemo_b3lt2("b3lt2", "192.168.86.32", msg_out_queue)
-                elif msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
-                    close_pending = True
+        # If there is a message to process, do so
+        if len(self.msg_to_process) != 0:
+            # Process user "away" messages
+            if self.msg_to_process[6:9] == "100":
+                if self.msg_to_process[10:] == "user1":
+                    self.homeArray[0] = False
+                    self.logger.debug("User1 is no longer home")
+                if self.msg_to_process[10:] == "user2":
+                    self.homeArray[1] = False
+                    self.logger.debug("User2 is no longer home")
+                if self.msg_to_process[10:] == "user3":
+                    self.homeArray[2] = False
+                    self.logger.debug("User3 is no longer home")
+            elif self.msg_to_process[6:9] == "101":
+                if self.msg_to_process[10:] == "user1":
+                    self.homeArray[0] = True
+                    self.logger.debug("User1 is home")
+                if self.msg_to_process[10:] == "user2":
+                    self.homeArray[1] = True
+                    self.logger.debug("User2 is home")
+                if self.msg_to_process[10:] == "user3":
+                    self.homeArray[2] = True
+                    self.logger.debug("User3 is home")
+            elif self.msg_to_process[6:9] == "168":
+                self.create_devices()
             else:
-                msg_out_queue.put_nowait(msg_in)
-            pass  
-            msg_in = str()
-
-
-        # Determine UTC offset based on DST rules
-        if dst.is_active(datetime=datetime.datetime.now()) is True:
-            utcOffset = datetime.timedelta(hours=-5)
+                pass
+            # Clear message once all possibilities are checked
+            self.msg_to_process = str()
         else:
-            utcOffset = datetime.timedelta(hours=-6)
+            pass
 
 
-        # UPDATE ON AND OFF TIME RULES
-        rpi_screen.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
-        wemo_fylt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_bylt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_ewlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0), homeTime=homeTime)
-        wemo_cclt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))  
-        wemo_lrlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))
-        wemo_drlt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray, utcOffset=utcOffset, sunriseOffset=datetime.timedelta(minutes=0), sunsetOffset=datetime.timedelta(minutes=0))      
-        wemo_b1lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
-        wemo_b1lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)
-        wemo_b2lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
-        wemo_b2lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray) 
-        wemo_b3lt1.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray)        
-        wemo_b3lt2.check_rules(datetime=datetime.datetime.now(), homeArray=homeArray) 
+    def check_dst(self):
+        """ Determine DST offset based on current time/date """
+        if self.dst.is_active(datetime=datetime.datetime.now()) is True:
+            self.utc_offset = datetime.timedelta(hours=-5)
+        else:
+            self.utc_offset = datetime.timedelta(hours=-6)
+        return self.utc_offset
 
-        # Send commands when change-of-state detected in desired output state
-        wemo_fylt1.command()
-        wemo_bylt1.command()
-        rpi_screen.command()
-        wemo_ewlt1.command()
-        wemo_cclt1.command()
-        wemo_lrlt1.command()
-        wemo_drlt1.command()
-        wemo_b1lt1.command()
-        wemo_b1lt2.command()
-        wemo_b2lt1.command()
-        wemo_b2lt2.command()
-        wemo_b3lt1.command()
-        wemo_b3lt2.command()     
-   
-                               
-         # Only close down process once incoming message queue is empty
-        if (close_pending is True and len(msg_in) == 0 and msg_in_queue.empty() is True) or (time.time() > (last_hb + 30)):
-            break 
 
-        # Pause before re-checking queue
-        time.sleep(0.97)
+    def run_automation(self):
+        """ Run automation rule checks for automatic device output state control """
+        self.rpi_screen.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray)
+        self.wemo_fylt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_bylt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_ewlt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0),
+                                    homeTime=self.homeTime)
+        self.wemo_cclt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_lrlt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_drlt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b1lt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b1lt2.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b2lt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b2lt2.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b3lt1.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_b3lt2.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))
+
+
+    def run_commands(self):                                    
+        """ Monitor desired command state and send commands to target device when COS occurs """
+        self.rpi_screen.command()
+        self.wemo_fylt1.command()
+        self.wemo_bylt1.command()
+        self.wemo_ewlt1.command()
+        self.wemo_cclt1.command()
+        self.wemo_lrlt1.command()
+        self.wemo_drlt1.command()
+        self.wemo_b1lt1.command()
+        self.wemo_b1lt2.command()
+        self.wemo_b2lt1.command()
+        self.wemo_b2lt2.command()
+        self.wemo_b3lt1.command()
+        self.wemo_b3lt2.command()
+
+
+    def run(self):
+        """ Actual process loop.  Runs whenever start() method is called """
+        self.main_loop = True
+        while self.main_loop is True:
+            # Process incoming messages
+            self.process_in_msg_queue()
+
+            # Process tasks in internal work queue
+            if self.close_pending is False:
+                self.process_work_queue()
+                self.check_dst()
+                self.run_automation()
+                self.run_commands()
+
+            # Close process
+            if (self.close_pending is True or
+                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+                self.main_loop = False
+
+            # Pause before next process run
+            time.sleep(0.097)
+
+        # Shut down logger before exiting process
+        self.kill_logger()
