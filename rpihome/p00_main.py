@@ -26,11 +26,11 @@ from p12_db_interface import db_func
 from p13_home_away import home_func
 from p14_motion import motion_func
 from p15_rpi_screen import screen_func
-from p16_wemo_gateway import wemo_func
+from p16_wemo_gateway import WemoProcess
 from p17_nest_gateway import nest_func
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -38,10 +38,10 @@ __license__ = "GPL"
 __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
-__status__ = "Development"  
+__status__ = "Development"
 
 
-# Process Generator Helper Function ************************************************************************************
+# Process Generator Helper Function ***************************************************************
 def create_process(name, func_name, args):
     process = multiprocessing.Process(name=name, target=func_name, args=args)
     process.daemon = True
@@ -49,11 +49,11 @@ def create_process(name, func_name, args):
     return process
 
 
-# Main Routine *********************************************************************************************************
+# Main Routine ************************************************************************************
 def main():
     # Decide what processes to enable
-    enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True,
-              True, False]
+    enable = [True, True, True, False, False, False, False, False, False, False, False, True,
+              False, True, False, True, True, False]
 
     # Get Nest login info if necessary
     if enable[17] is True:
@@ -61,44 +61,46 @@ def main():
         nestPassword = input("NEST Password: ")
 
     # Define queues for InterruptedError-process communication
-    p00_queue = multiprocessing.Queue(-1)    
+    p00_queue = multiprocessing.Queue(-1)
     if enable[1] is True:
         p01_queue = multiprocessing.Queue(-1)
     if enable[2] is True:
         p02_queue = multiprocessing.Queue(-1)
-    if enable[11] is True:        
+    if enable[11] is True:
         p11_queue = multiprocessing.Queue(-1)
-    if enable[12] is True:    
+    if enable[12] is True:
         p12_queue = multiprocessing.Queue(-1)
-    if enable[13] is True:        
+    if enable[13] is True:
         p13_queue = multiprocessing.Queue(-1)
-    if enable[14] is True:        
+    if enable[14] is True:
         p14_queue = multiprocessing.Queue(-1)
-    if enable[15] is True:        
+    if enable[15] is True:
         p15_queue = multiprocessing.Queue(-1)
-    if enable[16] is True:        
+    if enable[16] is True:
         p16_queue = multiprocessing.Queue(-1)
-    if enable[17] is True:        
+    if enable[17] is True:
         p17_queue = multiprocessing.Queue(-1)
 
     # Set location of log file and crate subfolder if necessary
-    name="main"
+    name = "main"
     logfilepathgen = log_path.LogFilePath()
-    logfile = logfilepathgen.return_path_and_name_combined(name=name, path=os.path.dirname(sys.argv[0]))
+    logfile = logfilepathgen.return_path_and_name_combined(name=name,
+                                                           path=os.path.dirname(sys.argv[0]))
     process_path = os.path.dirname(sys.argv[0])
 
-    # Start global log handler process - This process retrieves log messages from the shared log queue and writes them
-    # to a file
-    if enable[1] is True: 
+    # Start global log handler process - This process retrieves log messages from the shared log
+    # queue and writes them to a file
+    if enable[1] is True:
         p01_process_alive_mem = None
-        p01_process = create_process("p01_log_handler", listener_process, (p01_queue, p00_queue,
-                                                                           multiprocess_logging.listener_configurer,
-                                                                           name, logfile))
+        p01_process = create_process("p01_log_handler", listener_process,
+                                     (p01_queue, p00_queue,
+                                      multiprocess_logging.listener_configurer,
+                                      name, logfile))
         p01_process_modtime = os.path.getmtime(os.path.join(process_path, "p01_log_handler.py"))
 
 
     # Start gui process to spawn the user interface
-    if enable[2] is True:   
+    if enable[2] is True:
         p02_process_alive_mem = None
         p02_process = create_process("p02_gui", gui_func, (p02_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, logfile, enable))
         p02_process_modtime = os.path.getmtime(os.path.join(process_path, "p02_gui.py"))
@@ -140,15 +142,19 @@ def main():
         p15_process = create_process("p15_rpi_screen", screen_func, (p15_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
         p15_process_modtime = os.path.getmtime(os.path.join(process_path, "p15_rpi_screen.py"))
 
-    # Start wemo gateway process 
-    # This process controls the interface to/from wemo devices on the network    
-    if enable[16] is True:         
+    # Start wemo gateway process - This process controls the interface to/from wemo devices on the
+    # network
+    if enable[16] is True:
         p16_process_alive_mem = None
-        p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+        #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue,
+        #multiprocess_logging.worker_configurer))
+        p16_process = WemoProcess(p16_queue, p00_queue, p01_queue,
+                                  multiprocess_logging.worker_configurer)
+        p16_process.start()
         p16_process_modtime = os.path.getmtime(os.path.join(process_path, "p16_wemo_gateway.py"))
 
-    # Start nest gateway process 
-    # This process controls the interface to/from nest thermostats on the network
+    # Start nest gateway process - This process controls the interface to/from nest thermostats
+    # on the network
     if enable[17] is True:
         p17_process_alive_mem = None
         p17_process = create_process("p17_nest_gw", nest_func, (p17_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer, nestUsername, nestPassword))
@@ -247,18 +253,24 @@ def main():
                 if p15_process.is_alive() is True:                
                     p15_process.join()
 
-        # If message is destined for process p16, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p16, forward.  If message is kill-code for that
+        # process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "16" and enable[16] is True:
             if p16_process.is_alive() is True:            
                 p16_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p16_process.is_alive() is False:
-                    p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
+                    p16_process = WemoProcess(p16_queue, p00_queue, p01_queue,
+                                              multiprocess_logging.worker_configurer)
+                    p16_process.start()
+                    #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue,
+                    #p01_queue, multiprocess_logging.worker_configurer))
             if msg_in[6:9] == "999":
                 if p16_process.is_alive() is True:                
                     p16_process.join()
         
-        # If message is destined for process p17, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p17, forward.  If message is kill-code for that
+        # process, join process
         elif len(msg_in) != 0 and msg_in[3:5] == "17" and enable[17] is True:
             if p17_process.is_alive() is True:            
                 p17_queue.put_nowait(msg_in)
@@ -457,8 +469,13 @@ def main():
                     p16_queue.put_nowait("00,16,999")
                     p16_process.join()
                     time.sleep(1)
-                    p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer))
-                    p16_process_modtime = os.path.getmtime(os.path.join(process_path, "p16_wemo_gateway.py"))  
+                    p16_process = WemoProcess(p16_queue, p00_queue, p01_queue,
+                                              multiprocess_logging.worker_configurer)
+                    p16_process.start()
+                    #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue,
+                    #p01_queue, multiprocess_logging.worker_configurer))
+                    p16_process_modtime = os.path.getmtime(os.path.join(process_path,
+                                                                        "p16_wemo_gateway.py"))  
 
         if enable[17] is True:
             if p17_process.is_alive() is True:

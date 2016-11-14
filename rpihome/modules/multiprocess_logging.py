@@ -52,6 +52,7 @@ def worker_configurer(queue):
     root = logging.getLogger()
     root.addHandler(hand)
     root.setLevel(logging.DEBUG)
+    return root
 
 
 def worker_process(queue, configurer):

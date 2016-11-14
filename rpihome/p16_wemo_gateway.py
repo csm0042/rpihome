@@ -1,18 +1,15 @@
 #!/usr/bin/python3
-""" p16_wemo_gateway.py:   
+""" p16_wemo_gateway.py:
 """
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
 import datetime
-import logging
 import multiprocessing
-import pywemo
 import time
 from rpihome.modules.wemo import WemoHelper
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -23,33 +20,56 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-
-class WemoProcessHelper(object):
-    def __init__(self, msg_in_queue, msg_out_queue, logger):
+# Process Class ***********************************************************************************
+class WemoProcess(multiprocessing.Process):
+    """ WEMO gateway process class and methods """
+    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        multiprocessing.Process.__init__(self, name="p16_wemo_gateway")
+        self.configure_logger(log_queue, log_configurer)
+        self.handlers = []
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
-        self.logger = logger
+        self.work_queue = multiprocessing.Queue(-1)
         self.msg_in = str()
         self.msg_to_process = str()
-        self.work_queue = multiprocessing.Queue(-1)
         self.wemo = WemoHelper(self.logger)
         self.last_hb = datetime.datetime.now()
-        self.run1 = bool()
-        self.run2 = bool()
+        self.in_msg_loop = bool()
+        self.main_loop = bool()
         self.close_pending = False
-        
+
+    def configure_logger(self, log_queue, log_configurer):
+        """ Method to configure multiprocess logging """
+        self.logger = log_configurer(log_queue)
+        self.logger.debug("Logging handler for p16_wemo_gateway process started")
+
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close()
+
     def process_in_msg_queue(self):
-        self.run1 = True
-        while self.run1 is True:
+        """ Method to cycle through incoming message queue, filtering out heartbeats and
+        mis-directed messages.  Messages corrected destined for this process are loaded
+        into the work queue """
+        self.in_msg_loop = True
+        while self.in_msg_loop is True:
             try:
                 self.msg_in = self.msg_in_queue.get_nowait()
             except:
-                self.run1 = False
+                self.in_msg_loop = False
             if len(self.msg_in) != 0:
                 if self.msg_in[3:5] == "16":
                     if self.msg_in[6:9] == "001":
                         self.last_hb = datetime.datetime.now()
-                        self.logger.log(logging.DEBUG, "heartbeat received")
+                        self.logger.debug("heartbeat received")
+                    elif self.msg_in[6:9] == "999":
+                        self.logger.debug("Kill code received - Shutting down")
+                        self.close_pending = True
+                        self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in)
                     self.msg_in = str()
@@ -57,14 +77,15 @@ class WemoProcessHelper(object):
                     self.msg_out_queue.put_nowait(self.msg_in)
                 self.msg_in = str()
             else:
-                self.run1 = False
+                self.in_msg_loop = False
 
     def process_work_queue(self):
+        """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
             self.msg_to_process = self.work_queue.get_nowait()
         except:
-            self.run2 = False
+            pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
             # Process wemo off commands
@@ -79,43 +100,29 @@ class WemoProcessHelper(object):
             # Process "find device" message
             if self.msg_to_process[6:9] == "169":
                 self.wemo.discover_device(self.msg_to_process)
-                #time.sleep(5)
-            # Process "kill process" message
-            if self.msg_to_process[6:9] == "999":
-                self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s"
-                                % self.msg_to_process)
-                self.close_pending = True
             # Clear msg-to-process string
             self.msg_to_process = str()
         else:
-            self.run2 = False
+            pass
 
+    def run(self):
+        """ Actual process loop.  Runs whenever start() method is called """
+        self.main_loop = True
+        while self.main_loop is True:
+            # Process incoming messages
+            self.process_in_msg_queue()
 
+            # Process tasks in internal work queue
+            if self.close_pending is False:
+                self.process_work_queue()
 
-# Wemo Gateway Process loop ***********************************************************************
-def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
-    log_configurer(log_queue)
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p16_wemo_gateway process started")
+            # Close process
+            if (self.close_pending is True or
+                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+                self.main_loop = False
 
-    process_helper = WemoProcessHelper(msg_in_queue, msg_out_queue, logger)
+            # Pause before next process run
+            time.sleep(0.097)
 
-    while True:
-        # Process incoming messages
-        process_helper.process_in_msg_queue()
-
-        # Process tasks in internal work queue
-        process_helper.process_work_queue()
-
-        # Close process
-        if ((process_helper.close_pending is True and msg_in_queue.empty() is True) or
-                datetime.datetime.now() > process_helper.last_hb + datetime.timedelta(seconds=30)):
-            break
-
-        # Pause before next process run
-        time.sleep(0.097)
-
-
-
-if __name__ == "__main__":
-    print("Called as main")
+        # Shut down logger before exiting process
+        self.kill_logger()
