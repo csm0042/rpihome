@@ -809,6 +809,8 @@ class MainWindow(object):
 
     def action050301b07b(self):
         logging.log(logging.DEBUG, "Button 050301b07b was pressed")
+        self.msg_out_queue.put_nowait("02,16,162,fylt1")
+        self.msg_out_queue.put_nowait("02,16,162,bylt1")
         self.msg_out_queue.put_nowait("02,16,162,lrlt1")
         self.msg_out_queue.put_nowait("02,16,162,drlt1")  
         self.msg_out_queue.put_nowait("02,16,162,cclt1")
@@ -1075,7 +1077,7 @@ class MainWindow(object):
             self.msg_in = str()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False and self.scanWemo is True:
+        if self.close_pending is False and self.scanWemo is True and 1==2:
             if self.index > 15:
                 self.index = 0
             if self.index == 0:

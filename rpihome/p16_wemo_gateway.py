@@ -9,7 +9,7 @@ import logging
 import multiprocessing
 import pywemo
 import time
-from modules.wemo import WemoHelper
+from rpihome.modules.wemo import WemoHelper
 
 
 # Authorship Info *****************************************************************************************************
@@ -25,23 +25,18 @@ __status__ = "Development"
 
 
 class WemoProcessHelper(object):
-    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
-        self.configure_logger(log_queue, log_configurer)
+    def __init__(self, msg_in_queue, msg_out_queue, logger):
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
+        self.logger = logger
         self.msg_in = str()
         self.msg_to_process = str()
         self.work_queue = multiprocessing.Queue(-1)
-        self.wemo = WemoHelper()
+        self.wemo = WemoHelper(self.logger)
         self.last_hb = datetime.datetime.now()
         self.run1 = bool()
         self.run2 = bool()
         self.close_pending = False
-
-    def configure_logger(self, log_queue, log_configurer):
-        log_configurer(log_queue)
-        self.logger = logging.getLogger("main")
-        self.logger.log(logging.DEBUG, "Logging handler for p16_wemo_gateway process started")        
         
     def process_in_msg_queue(self):
         self.run1 = True
@@ -75,7 +70,7 @@ class WemoProcessHelper(object):
             # Process wemo off commands
             if self.msg_to_process[6:9] == "160":
                 self.wemo.switch_off(self.msg_to_process)
-            # Process wemo on command                       
+            # Process wemo on command
             if self.msg_to_process[6:9] == "161":
                 self.wemo.switch_on(self.msg_to_process)
             # Process wemo state-request message
@@ -87,7 +82,8 @@ class WemoProcessHelper(object):
                 #time.sleep(5)
             # Process "kill process" message
             if self.msg_to_process[6:9] == "999":
-                self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s" % self.msg_to_process)
+                self.logger.log(logging.DEBUG, "Kill code received - Shutting down: %s"
+                                % self.msg_to_process)
                 self.close_pending = True
             # Clear msg-to-process string
             self.msg_to_process = str()
@@ -96,9 +92,13 @@ class WemoProcessHelper(object):
 
 
 
-# Wemo Gateway Process loop *******************************************************************************************
+# Wemo Gateway Process loop ***********************************************************************
 def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
-    process_helper = WemoProcessHelper(msg_in_queue, msg_out_queue, log_queue, log_configurer)
+    log_configurer(log_queue)
+    logger = logging.getLogger("main")
+    logger.log(logging.DEBUG, "Logging handler for p16_wemo_gateway process started")
+
+    process_helper = WemoProcessHelper(msg_in_queue, msg_out_queue, logger)
 
     while True:
         # Process incoming messages
@@ -107,8 +107,9 @@ def wemo_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
         # Process tasks in internal work queue
         process_helper.process_work_queue()
 
-        # Close process 
-        if (process_helper.close_pending is True and msg_in_queue.empty() is True) or datetime.datetime.now() > process_helper.last_hb + datetime.timedelta(seconds=30):
+        # Close process
+        if ((process_helper.close_pending is True and msg_in_queue.empty() is True) or
+                datetime.datetime.now() > process_helper.last_hb + datetime.timedelta(seconds=30)):
             break
 
         # Pause before next process run
