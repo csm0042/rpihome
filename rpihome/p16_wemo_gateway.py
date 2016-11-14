@@ -25,9 +25,9 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class WemoProcess(multiprocessing.Process):
     """ WEMO gateway process class and methods """
-    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
-        multiprocessing.Process.__init__(self, name="p16_wemo_gateway")
-        self.logger = self.configure_logger(log_queue, log_configurer)
+    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        multiprocessing.Process.__init__(self, name=name)
+        self.configure_logger(name, log_queue, log_configurer)
         self.handlers = []
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
@@ -41,12 +41,11 @@ class WemoProcess(multiprocessing.Process):
         self.close_pending = False
 
 
-    def configure_logger(self, log_queue, log_configurer):
+    def configure_logger(self, name, log_queue, log_configurer):
         """ Method to configure multiprocess logging """
         log_configurer(log_queue)
-        self.logger = logging.getLogger("p16_wemo_gateway")
-        self.logger.debug("Logging handler for p16_wemo_gateway process started")
-        return self.logger
+        self.logger = logging.getLogger(name)
+        self.logger.debug("Logging handler for %s process started" % name)
 
 
     def kill_logger(self):

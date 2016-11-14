@@ -109,7 +109,7 @@ def main():
     # Start logic solver process - this process runs the automation engine that decides when to turn various devices on/off
     if enable[11] is True:      
         p11_process_alive_mem = None    
-        p11_process = LogicProcess(p11_queue, p00_queue, p01_queue,
+        p11_process = LogicProcess("p11_logic_solver", p11_queue, p00_queue, p01_queue,
                                   multiprocess_logging.worker_configurer)
         p11_process.start()
         p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
@@ -150,7 +150,7 @@ def main():
         p16_process_alive_mem = None
         #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue,
         #multiprocess_logging.worker_configurer))
-        p16_process = WemoProcess(p16_queue, p00_queue, p01_queue,
+        p16_process = WemoProcess("p16_wemo_gateway", p16_queue, p00_queue, p01_queue,
                                   multiprocess_logging.worker_configurer)
         p16_process.start()
         p16_process_modtime = os.path.getmtime(os.path.join(process_path, "p16_wemo_gateway.py"))
@@ -206,7 +206,7 @@ def main():
                 p11_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p11_process.is_alive() is False:
-                    p11_process = LogicProcess(p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer)
+                    p11_process = LogicProcess("p11_logic_solver", p11_queue, p00_queue, p01_queue, multiprocess_logging.worker_configurer)
                     p11_process.start()       
             if msg_in[6:9] == "999":
                 if p11_process.is_alive() is True:                
@@ -263,7 +263,7 @@ def main():
                 p16_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p16_process.is_alive() is False:
-                    p16_process = WemoProcess(p16_queue, p00_queue, p01_queue,
+                    p16_process = WemoProcess("p16_wemo_gateway", p16_queue, p00_queue, p01_queue,
                                               multiprocess_logging.worker_configurer)
                     p16_process.start()
                     #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue,

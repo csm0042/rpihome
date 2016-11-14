@@ -40,9 +40,9 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class LogicProcess(multiprocessing.Process):
     """ WEMO gateway process class and methods """
-    def __init__(self, msg_in_queue, msg_out_queue, log_queue, log_configurer):
-        multiprocessing.Process.__init__(self, name="p11_logic_solver")
-        self.configure_logger(log_queue, log_configurer)
+    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        multiprocessing.Process.__init__(self, name=name)
+        self.configure_logger(name, log_queue, log_configurer)
         self.msg_in_queue = msg_in_queue
         self.msg_out_queue = msg_out_queue
         self.work_queue = multiprocessing.Queue(-1)
@@ -58,11 +58,11 @@ class LogicProcess(multiprocessing.Process):
         self.create_home_flags()
 
 
-    def configure_logger(self, log_queue, log_configurer):
+    def configure_logger(self, name, log_queue, log_configurer):
         """ Method to configure multiprocess logging """
         log_configurer(log_queue)
-        self.logger = logging.getLogger("p11_logic_solver")
-        self.logger.debug("Logging handler for p11_logic_solver process started")
+        self.logger = logging.getLogger(name)
+        self.logger.debug("Logging handler for %s process started" % name)
 
 
     def kill_logger(self):
