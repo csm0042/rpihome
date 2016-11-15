@@ -15,12 +15,12 @@ import multiprocessing
 import os
 import sys
 import time
+
 if __name__ == "__main__":
     sys.path.append("..")
-
+    
 from rpihome.modules.log_path import LogFilePath
 from rpihome.modules.multiprocess_logging import listener_configurer, worker_configurer
-
 from rpihome.p01_log_handler import listener_process
 from rpihome.p02_gui import MainWindow
 from rpihome.p11_logic_solver import LogicProcess
@@ -28,6 +28,8 @@ from rpihome.p13_home_away import HomeProcess
 from rpihome.p15_rpi_screen import RpiProcess
 from rpihome.p16_wemo_gateway import WemoProcess
 from rpihome.p17_nest_gateway import NestProcess
+
+
 
 
 # Authorship Info *********************************************************************************
