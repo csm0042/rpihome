@@ -26,34 +26,12 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Main gui process loop ************************************************************************************************
-def gui_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile, enable):
-    log_configurer(log_queue)
-    name = multiprocessing.current_process().name
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for gui process started")
-
-    # Create gui
-    gui = MainWindow(msg_in_queue, msg_out_queue, log_queue, logfile, enable)
-    logger.log(logging.DEBUG, "creating main window")
-
-    # Schedule "after" process to run oncmsg_oute main window is generated (used for periodic screen updates)
-    gui.window.after(500, gui.after_tasks)
-    logger.log(logging.DEBUG, "scheduling initial \"after\" task")
-    
-    # Start handler for window exit button
-    gui.window.protocol("WM_DELETE_WINDOW", gui.on_closing)
-
-    # Run mainloop() to activate gui and begin monitoring its inputs
-    logger.log(logging.DEBUG, "starting gui mainloop")
-    gui.window.mainloop()
-
-
-
 # Application GUI Class Definition *************************************************************************************
-class MainWindow(object):
-    def __init__(self, msg_in_queue, msg_out_queue, log_queue, logfile, enable):
-        self.log_queue = log_queue
+class MainWindow(multiprocessing.Process):
+    """ GUI process class and methods """
+    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile, enable):
+        multiprocessing.Process.__init__(self, name=name)
+        self.configure_logger(name, log_queue, log_configurer)
         self.logfile = logfile
         self.enable = enable
         self.text = str()
@@ -64,32 +42,69 @@ class MainWindow(object):
         self.last_hb = time.time()
         self.index = 0
         self.scanWemo = False
-
+        # Initialize pointer for alarm display window
         self.line = sum(1 for line in open(self.logfile)) - 50
         if self.line < 1:
             self.line = 1
+        # Set location of resource directory
+        self.basepath = os.path.dirname(sys.argv[0])
+        self.resourceDir = os.path.join(self.basepath, "resources/")
 
-        self.basepath = os.path.dirname(sys.argv[0])  
-        self.resourceDir = os.path.join(self.basepath, "resources/")      
 
-        self.helv08bold = ()
-        self.helv10bold = ()
-        self.helv12bold = ()
-        self.helv16bold = ()
-        self.helv36 = ()
-        self.button_elbow_NE_img = ()
-        self.button_elbow_NW_img = ()
-        self.button_elbow_SE_img = ()
-        self.button_elbow_SW_img = ()
-        self.button_green_round_left_img = ()
-        self.button_green_round_right_img = ()
-        self.button_red_round_left_img = ()
-        self.button_red_round_right_img = ()
+    def run(self):
+        """ Generate window and schedule after and close handlers """
+        # Create all parts of application window
+        self.logger.debug("Begining generation of application window")
+        self.draw_window()
+        self.logger.debug("Finished generation of application window")
+        # Schedule "after" process to run once main loop has started
+        self.window.after(500, self.after_tasks)
+        self.logger.debug("Scheduled initial \"after\" task")
+        # Start handler for window exit button
+        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.logger.debug("Added \"on-close\" handler")
+        # Run mainloop() to activate gui and begin monitoring its inputs
+        self.logger.debug("Started gui mainloop")
+        self.window.mainloop()        
 
+
+    def configure_logger(self, name, log_queue, log_configurer):
+        """ Method to configure multiprocess logging """
+        log_configurer(log_queue)
+        self.logger = logging.getLogger(name)
+        self.logger.debug("Logging handler for %s process started" % name)
+
+
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close() 
+
+
+    def draw_window(self):
+        """ Called to draw a complete application.  It does this by calling methods to create
+        individaual sections as necessary """
+        # Create initial application object
         self.gen_main_window()
+        # Define fonts and images
         self.define_fonts()
         self.define_images()
-        self.divide_screen()
+        # Begin dividing aplication window into sections
+        self.divide_main_window()
+        self.divide_frame01()
+        self.divide_frame02()
+        self.divide_frame03()
+        self.divide_frame04()
+        self.divide_frame05()
+        self.divide_frame06()
+        self.divide_frame0102()
+        self.divide_frame0302()
+        self.divide_frame0402()
+        self.divide_frame0602()
+        # Begin adding widgets to frames
         self.top_divider_bar1()
         self.alarm_log_window()
         self.bottom_divider_bar1()
@@ -105,43 +120,59 @@ class MainWindow(object):
         self.frame050301c_packed = False
         self.frame0503d_content()
         self.frame050301d.pack_forget()
-        self.frame050301d_packed = False                
+        self.frame050301d_packed = False                    
     
+
     def gen_main_window(self):
-        # CREATE PRIMARY (ROOT) WINDOW
+        """ Method to create the main tkinter window """
         self.window = tk.Tk()   
         self.window.title("RPi Home")
         self.window.geometry("%sx%s+%s+%s" % (800, 810, 1, 1))
         self.window.config(background="black") 
-        logging.log(logging.DEBUG, "Main application window created")
+        self.logger.debug("Main application window created")
+
 
     def define_fonts(self):
-        # Define fonts used in the application
+        """ Method to define fonts used throughout the application """
         self.helv08bold = font.Font(family="Helvetica", size=8, weight="bold")
         self.helv10bold = font.Font(family="Helvetica", size=10, weight="bold")
         self.helv12bold = font.Font(family="Helvetica", size=12, weight="bold")
         self.helv16bold = font.Font(family="Helvetica", size=16, weight="bold")
         self.helv36 = font.Font(family="Helvetica", size=36, weight="bold")
 
-    def define_images(self):
-        # DEFINE IMAGES
-        self.button_elbow_NE_img = tk.PhotoImage(file=self.resourceDir + "Elbow-blue-up-left.png")
-        self.button_elbow_NW_img = tk.PhotoImage(file=self.resourceDir + "Elbow-blue-up-right.png")
-        self.button_elbow_SE_img = tk.PhotoImage(file=self.resourceDir + "Elbow-blue-down-left.png")
-        self.button_elbow_SW_img = tk.PhotoImage(file=self.resourceDir + "Elbow-blue-down-right.png")
-        self.button_green_round_left_img = tk.PhotoImage(file=self.resourceDir + "button_green_round_left.png")
-        self.button_green_round_right_img = tk.PhotoImage(file=self.resourceDir + "button_green_round_right.png")
-        self.button_151_195_225_round_left_img = tk.PhotoImage(file=self.resourceDir + "button_151,195,225_round_left.png")
-        self.button_151_195_225_round_right_img = tk.PhotoImage(file=self.resourceDir + "button_151,195,225_round_right.png") 
-        self.button_red_round_left_img = tk.PhotoImage(file=self.resourceDir + "button_red_round_left.png")
-        self.button_red_round_right_img = tk.PhotoImage(file=self.resourceDir + "button_red_round_right.png")
-        self.button_square_green_img = tk.PhotoImage(file=self.resourceDir + "button-square-green.png")
-        self.button_square_red_img = tk.PhotoImage(file=self.resourceDir + "button-square-red.png")        
 
-    def divide_screen(self):
+    def define_images(self):
+        """ Method to define image widgets using files from resource directory """
+        self.button_elbow_NE_img = (
+            tk.PhotoImage(file=self.resourceDir + "Elbow-blue-up-left.png"))
+        self.button_elbow_NW_img = (
+            tk.PhotoImage(file=self.resourceDir + "Elbow-blue-up-right.png"))
+        self.button_elbow_SE_img = (
+            tk.PhotoImage(file=self.resourceDir + "Elbow-blue-down-left.png"))
+        self.button_elbow_SW_img = (
+            tk.PhotoImage(file=self.resourceDir + "Elbow-blue-down-right.png"))
+        self.button_green_round_left_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_green_round_left.png"))
+        self.button_green_round_right_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_green_round_right.png"))
+        self.button_151_195_225_round_left_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_151,195,225_round_left.png"))
+        self.button_151_195_225_round_right_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_151,195,225_round_right.png")) 
+        self.button_red_round_left_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_red_round_left.png"))
+        self.button_red_round_right_img = (
+            tk.PhotoImage(file=self.resourceDir + "button_red_round_right.png"))
+        self.button_square_green_img = (
+            tk.PhotoImage(file=self.resourceDir + "button-square-green.png"))
+        self.button_square_red_img = (
+            tk.PhotoImage(file=self.resourceDir + "button-square-red.png"))      
+
+
+    def divide_main_window(self):
         self.screen1 = tk.Frame(self.window, background="black")
         self.screen1.pack(side="top", fill="both", expand=True, padx=0, pady=0)
-        logging.log(logging.DEBUG, "Overlayed 1 primary frame over-top of application (root) window")
+        self.logger.debug("Overlayed 1 primary frame over-top of application (root) window")
         self.frame01 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame01.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame01.pack_propagate(False)
@@ -160,8 +191,10 @@ class MainWindow(object):
         self.frame06 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame06.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame06.pack_propagate(False)
-        logging.log(logging.DEBUG, "Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
+        self.logger.debug("Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
 
+
+    def divide_frame01(self):
         # split frame 1 into 2 sections along a vertical axis
         self.frame0101 = tk.Frame(self.frame01, background="yellow", height=50, width=105)
         self.frame0101.pack(side="left", fill="none", expand=False, padx=0, pady=0)  
@@ -170,6 +203,8 @@ class MainWindow(object):
         self.frame0102.pack(side="left", fill="x", expand=True, padx=1, pady=1)  
         self.frame0102.pack_propagate(False)
 
+
+    def divide_frame02(self):
         # split frame 2 into 3 sections along a vertical axis
         self.frame0201 = tk.Frame(self.frame02, background="#2350b5", height=200, width=85)
         self.frame0201.pack(side="left", fill="y", expand=False, padx=0, pady=0)  
@@ -181,6 +216,8 @@ class MainWindow(object):
         self.frame0203.pack(side="left", fill="both", expand=True, padx=0, pady=0)
         self.frame0203.pack_propagate(False) 
 
+
+    def divide_frame03(self):
         # split frame 3 into 2 sections along a vertical axis
         self.frame0301 = tk.Frame(self.frame03, background="yellow", height=50, width=105)
         self.frame0301.pack(side="left", fill="none", expand=False, padx=0, pady=0)  
@@ -189,6 +226,8 @@ class MainWindow(object):
         self.frame0302.pack(side="left", fill="x", expand=True, padx=1, pady=1)  
         self.frame0302.pack_propagate(False)
 
+
+    def divide_frame04(self):
         # split frame 4 into 2 sections along a vertical axis
         self.frame0401 = tk.Frame(self.frame04, background="yellow", height=50, width=105)
         self.frame0401.pack(side="left", fill="none", expand=False, padx=0, pady=0)   
@@ -197,6 +236,8 @@ class MainWindow(object):
         self.frame0402.pack(side="left", fill="x", expand=True, padx=1, pady=1)  
         self.frame0402.pack_propagate(False)
 
+
+    def divide_frame05(self):
         # split frame 5 into 3 sections along a vertical axis
         #self.frame0501 = tk.Frame(self.frame05, background="#2350b5", height=400, width=85)
         self.frame0501 = tk.Frame(self.frame05, background="black", height=400, width=85)
@@ -208,6 +249,8 @@ class MainWindow(object):
         self.frame0503 = tk.Frame(self.frame05, background="black", height=400, width=695)
         self.frame0503.pack(side="left", fill="both", expand=True, padx=0, pady=0)
 
+
+    def divide_frame06(self):
         # split frame 6 into 2 sections along a vertical axis
         self.frame0601 = tk.Frame(self.frame06, background="yellow", height=50, width=105)
         self.frame0601.pack(side="left", fill="none", expand=False, padx=0, pady=0)   
@@ -216,6 +259,8 @@ class MainWindow(object):
         self.frame0602.pack(side="left", fill="x", expand=True, padx=1, pady=1) 
         self.frame0602.pack_propagate(False)
 
+
+    def divide_frame0102(self):
         # split frame 0102 into 2 sections along a horizontal axis
         self.frame010201 = tk.Frame(self.frame0102, background="#2350b5", height=17, width=695)
         self.frame010201.pack(side="top", fill="x", expand=True, padx=0, pady=0)  
@@ -224,6 +269,8 @@ class MainWindow(object):
         self.frame010202.pack(side="top", fill="both", expand=True, padx=0, pady=0) 
         self.frame010202.pack_propagate(False)
 
+
+    def divide_frame0302(self):
         # split frame 0302 into 2 sections along a horizontal axis
         self.frame030201 = tk.Frame(self.frame0302, background="black", height=31, width=695)
         self.frame030201.pack(anchor="nw", side="top", fill="x", expand=True, padx=0, pady=0) 
@@ -232,6 +279,8 @@ class MainWindow(object):
         self.frame030202.pack(anchor="nw", side="top", fill="both", expand=True, padx=0, pady=0) 
         self.frame030202.pack_propagate(False)
 
+
+    def divide_frame0402(self):
         # split frame 0102 into 2 sections along a horizontal axis
         self.frame040201 = tk.Frame(self.frame0402, background="#2350b5", height=17, width=695)
         self.frame040201.pack(side="top", fill="x", expand=True, padx=0, pady=0)  
@@ -240,11 +289,14 @@ class MainWindow(object):
         self.frame040202.pack(side="top", fill="both", expand=True, padx=0, pady=0) 
         self.frame040202.pack_propagate(False)     
 
+
+    def divide_frame0602(self):
         # split frame 0302 into 2 sections along a horizontal axis
         self.frame060201 = tk.Frame(self.frame0602, background="black", height=31, width=695)
         self.frame060201.pack(side="top", fill="x", expand=True, padx=0, pady=0)   
         self.frame060202 = tk.Frame(self.frame0602, background="#2350b5", height=17, width=695)
         self.frame060202.pack(side="top", fill="both", expand=True, padx=0, pady=0)   
+
 
     def top_divider_bar1(self):
         self.button010101 = tk.Button(self.frame0101, anchor="nw", background="black", borderwidth=0, command=self.action010101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_NW_img, justify="right", relief="flat", text="010101", height=50, width=105)
@@ -524,24 +576,24 @@ class MainWindow(object):
         linecache.clearcache()
 
     def action010101(self):
-        logging.log(logging.DEBUG, "Button 010101 was pressed")
+        self.logger.debug("Button 010101 was pressed")
         pass
 
     def action030101(self):
-        logging.log(logging.DEBUG, "Button 030101 was pressed")
+        self.logger.debug("Button 030101 was pressed")
         pass 
 
     def action040101(self):
-        logging.log(logging.DEBUG, "Button 040101 was pressed")
+        self.logger.debug("Button 040101 was pressed")
         pass
 
     def action060101(self):
-        logging.log(logging.DEBUG, "Button 060101 was pressed")
+        self.logger.debug("Button 060101 was pressed")
         pass 
 
     def action050101(self):
         self.scanWemo = False
-        logging.log(logging.DEBUG, "Button 050101 was pressed")
+        self.logger.debug("Button 050101 was pressed")
         if self.frame050301a_packed is False:
             self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301a.pack_propagate(False)
@@ -559,7 +611,7 @@ class MainWindow(object):
         pass
 
     def action050102(self):
-        logging.log(logging.DEBUG, "Button 050102 was pressed")
+        self.logger.debug("Button 050102 was pressed")
         self.scanWemo = True
         if self.frame050301b_packed is False:
             self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -579,7 +631,7 @@ class MainWindow(object):
 
     def action050103(self):
         self.scanWemo = False
-        logging.log(logging.DEBUG, "Button 050103 was pressed")
+        self.logger.debug("Button 050103 was pressed")
         if self.frame050301c_packed is False:
             self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301c.pack_propagate(False)
@@ -598,7 +650,7 @@ class MainWindow(object):
 
     def action050104(self):
         self.scanWemo = False
-        logging.log(logging.DEBUG, "Button 050103 was pressed")
+        self.logger.debug("Button 050103 was pressed")
         if self.frame050301d_packed is False:
             self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301d.pack_propagate(False)
@@ -616,188 +668,188 @@ class MainWindow(object):
         pass              
 
     def action050301a01a(self):
-        logging.log(logging.DEBUG, "Button 050301a01a was pressed")
+        self.logger.debug("Button 050301a01a was pressed")
         self.msg_out_queue.put_nowait("02,01,900")
 
     def action050301a01b(self):
-        logging.log(logging.DEBUG, "Button 050301a01b was pressed")
+        self.logger.debug("Button 050301a01b was pressed")
         self.msg_out_queue.put_nowait("02,01,???")        
 
     def action050301a01c(self):
-        logging.log(logging.DEBUG, "Button 050301a01c was pressed")
+        self.logger.debug("Button 050301a01c was pressed")
         self.msg_out_queue.put_nowait("02,01,999")
 
     def action050301a02a(self):
-        logging.log(logging.DEBUG, "Button 050301a02a was pressed")
+        self.logger.debug("Button 050301a02a was pressed")
         self.msg_out_queue.put_nowait("02,11,900")
 
     def action050301a02b(self):
-        logging.log(logging.DEBUG, "Button 050301a02b was pressed")
+        self.logger.debug("Button 050301a02b was pressed")
         self.msg_out_queue.put_nowait("02,11,???")         
 
     def action050301a02c(self):
-        logging.log(logging.DEBUG, "Button 050301a02c was pressed")
+        self.logger.debug("Button 050301a02c was pressed")
         self.msg_out_queue.put_nowait("02,11,999")
 
     def action050301a03a(self):
-        logging.log(logging.DEBUG, "Button 050301a03a was pressed")
+        self.logger.debug("Button 050301a03a was pressed")
         self.msg_out_queue.put_nowait("02,12,900")
 
     def action050301a03b(self):
-        logging.log(logging.DEBUG, "Button 050301a03b was pressed")
+        self.logger.debug("Button 050301a03b was pressed")
         self.msg_out_queue.put_nowait("02,12,???")         
 
     def action050301a03c(self):
-        logging.log(logging.DEBUG, "Button 050301a03c was pressed")
+        self.logger.debug("Button 050301a03c was pressed")
         self.msg_out_queue.put_nowait("02,12,999")
 
     def action050301a04a(self):
-        logging.log(logging.DEBUG, "Button 050301a04a was pressed")
+        self.logger.debug("Button 050301a04a was pressed")
         self.msg_out_queue.put_nowait("02,13,900")
 
     def action050301a04b(self):
-        logging.log(logging.DEBUG, "Button 050301a04b was pressed")
+        self.logger.debug("Button 050301a04b was pressed")
         self.msg_out_queue.put_nowait("02,13,???")         
 
     def action050301a04c(self):
-        logging.log(logging.DEBUG, "Button 050301a04c was pressed")
+        self.logger.debug("Button 050301a04c was pressed")
         self.msg_out_queue.put_nowait("02,13,999")
 
     def action050301a05a(self):
-        logging.log(logging.DEBUG, "Button 050301a05a was pressed")
+        self.logger.debug("Button 050301a05a was pressed")
         self.msg_out_queue.put_nowait("02,14,900")
 
     def action050301a05b(self):
-        logging.log(logging.DEBUG, "Button 050301a05b was pressed")
+        self.logger.debug("Button 050301a05b was pressed")
         self.msg_out_queue.put_nowait("02,14,???")         
 
     def action050301a05c(self):
-        logging.log(logging.DEBUG, "Button 050301a05c was pressed")
+        self.logger.debug("Button 050301a05c was pressed")
         self.msg_out_queue.put_nowait("02,14,999")
 
     def action050301a06a(self):
-        logging.log(logging.DEBUG, "Button 050301a06a was pressed")
+        self.logger.debug("Button 050301a06a was pressed")
         self.msg_out_queue.put_nowait("02,15,900")
 
     def action050301a06b(self):
-        logging.log(logging.DEBUG, "Button 050301a06b was pressed")
+        self.logger.debug("Button 050301a06b was pressed")
         self.msg_out_queue.put_nowait("02,15,???")         
 
     def action050301a06c(self):
-        logging.log(logging.DEBUG, "Button 050301a06c was pressed")
+        self.logger.debug("Button 050301a06c was pressed")
         self.msg_out_queue.put_nowait("02,15,999")
 
     def action050301a07a(self):
-        logging.log(logging.DEBUG, "Button 050301a07a was pressed")
+        self.logger.debug("Button 050301a07a was pressed")
         self.msg_out_queue.put_nowait("02,16,900")
         self.msg_out_queue.put_nowait("02,11,168")
 
     def action050301a07b(self):
-        logging.log(logging.DEBUG, "Button 050301a07b was pressed")
+        self.logger.debug("Button 050301a07b was pressed")
         self.msg_out_queue.put_nowait("02,16,???")         
 
     def action050301a07c(self):
-        logging.log(logging.DEBUG, "Button 050301a07c was pressed")
+        self.logger.debug("Button 050301a07c was pressed")
         self.msg_out_queue.put_nowait("02,16,999")
 
     def action050301a08a(self):
-        logging.log(logging.DEBUG, "Button 050301a08a was pressed")
+        self.logger.debug("Button 050301a08a was pressed")
         self.msg_out_queue.put_nowait("02,17,900")
 
     def action050301a08b(self):
-        logging.log(logging.DEBUG, "Button 050301a08b was pressed")
+        self.logger.debug("Button 050301a08b was pressed")
         self.msg_out_queue.put_nowait("02,17,???")         
 
     def action050301a08c(self):
-        logging.log(logging.DEBUG, "Button 050301a08c was pressed")
+        self.logger.debug("Button 050301a08c was pressed")
         self.msg_out_queue.put_nowait("02,17,999")        
 
     def action050301b01a(self):
-        logging.log(logging.DEBUG, "Button 050301b01a was pressed")
+        self.logger.debug("Button 050301b01a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,fylt1")
         self.button050301b01b.config(image=self.button_square_green_img)
 
     def action050301b01b(self):
-        logging.log(logging.DEBUG, "Button 050301b01b was pressed")
+        self.logger.debug("Button 050301b01b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,fylt1")
 
     def action050301b01c(self):
-        logging.log(logging.DEBUG, "Button 050301b01C was pressed")
+        self.logger.debug("Button 050301b01C was pressed")
         self.msg_out_queue.put_nowait("02,16,160,fylt1") 
         self.button050301b01b.config(image=self.button_square_red_img)               
 
     def action050301b02a(self):
-        logging.log(logging.DEBUG, "Button 050301b02a was pressed")
+        self.logger.debug("Button 050301b02a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,bylt1")
         self.button050301b02b.config(image=self.button_square_green_img)
 
     def action050301b02b(self):
-        logging.log(logging.DEBUG, "Button 050301b02b was pressed")
+        self.logger.debug("Button 050301b02b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,bylt1")
 
     def action050301b02c(self):
-        logging.log(logging.DEBUG, "Button 050301b02c was pressed")
+        self.logger.debug("Button 050301b02c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,bylt1")  
         self.button050301b02b.config(image=self.button_square_red_img)              
 
     def action050301b03a(self):
-        logging.log(logging.DEBUG, "Button 050301b03a was pressed")
+        self.logger.debug("Button 050301b03a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,ewlt1")
         self.button050301b03b.config(image=self.button_square_green_img)
 
     def action050301b03b(self):
-        logging.log(logging.DEBUG, "Button 050301b03b was pressed")
+        self.logger.debug("Button 050301b03b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,ewlt1")
 
     def action050301b03c(self):
-        logging.log(logging.DEBUG, "Button 050301b03c was pressed")
+        self.logger.debug("Button 050301b03c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,ewlt1")
         self.button050301b03b.config(image=self.button_square_red_img)        
 
     def action050301b04a(self):
-        logging.log(logging.DEBUG, "Button 050301b04a was pressed")
+        self.logger.debug("Button 050301b04a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,cclt1")
         self.button050301b04b.config(image=self.button_square_green_img)
 
     def action050301b04b(self):
-        logging.log(logging.DEBUG, "Button 050301b04b was pressed")
+        self.logger.debug("Button 050301b04b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,cclt1")
 
     def action050301b04c(self):
-        logging.log(logging.DEBUG, "Button 050301b04c was pressed")
+        self.logger.debug("Button 050301b04c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,cclt1")    
         self.button050301b04b.config(image=self.button_square_red_img)            
 
     def action050301b05a(self):
-        logging.log(logging.DEBUG, "Button 050301b05a was pressed")
+        self.logger.debug("Button 050301b05a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,lrlt1")
         self.button050301b05b.config(image=self.button_square_green_img)
 
     def action050301b05b(self):
-        logging.log(logging.DEBUG, "Button 050301b05b was pressed")
+        self.logger.debug("Button 050301b05b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,lrlt1")
 
     def action050301b05c(self):
-        logging.log(logging.DEBUG, "Button 050301b05c was pressed")
+        self.logger.debug("Button 050301b05c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,lrlt1")  
         self.button050301b05b.config(image=self.button_square_red_img)              
 
     def action050301b06a(self):
-        logging.log(logging.DEBUG, "Button 050301b06a was pressed")
+        self.logger.debug("Button 050301b06a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,drlt1")
         self.button050301b06b.config(image=self.button_square_green_img)
 
     def action050301b06b(self):
-        logging.log(logging.DEBUG, "Button 050301b06b was pressed")
+        self.logger.debug("Button 050301b06b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,drlt1")
 
     def action050301b06c(self):
-        logging.log(logging.DEBUG, "Button 050301b06c was pressed")
+        self.logger.debug("Button 050301b06c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,drlt1") 
         self.button050301b06b.config(image=self.button_square_red_img)               
 
     def action050301b07a(self):
-        logging.log(logging.DEBUG, "Button 050301b07a was pressed")
+        self.logger.debug("Button 050301b07a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,lrlt1")
         self.msg_out_queue.put_nowait("02,16,161,drlt1")  
         self.msg_out_queue.put_nowait("02,16,161,cclt1")
@@ -808,7 +860,7 @@ class MainWindow(object):
         self.button050301b06b.config(image=self.button_square_green_img)            
 
     def action050301b07b(self):
-        logging.log(logging.DEBUG, "Button 050301b07b was pressed")
+        self.logger.debug("Button 050301b07b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,fylt1")
         self.msg_out_queue.put_nowait("02,16,162,bylt1")
         self.msg_out_queue.put_nowait("02,16,162,lrlt1")
@@ -817,7 +869,7 @@ class MainWindow(object):
         self.msg_out_queue.put_nowait("02,16,162,ewlt1") 
 
     def action050301b07c(self):
-        logging.log(logging.DEBUG, "Button 050301b07c was pressed")
+        self.logger.debug("Button 050301b07c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,lrlt1")
         self.msg_out_queue.put_nowait("02,16,160,drlt1")  
         self.msg_out_queue.put_nowait("02,16,160,cclt1")
@@ -828,91 +880,91 @@ class MainWindow(object):
         self.button050301b06b.config(image=self.button_square_red_img)
 
     def action050301b08a(self):
-        logging.log(logging.DEBUG, "Button 050301b08a was pressed")
+        self.logger.debug("Button 050301b08a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b1lt1")
         self.button050301b08b.config(image=self.button_square_green_img)        
 
     def action050301b08b(self):
-        logging.log(logging.DEBUG, "Button 050301b08b was pressed")
+        self.logger.debug("Button 050301b08b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b1lt1")
 
     def action050301b08c(self):
-        logging.log(logging.DEBUG, "Button 050301b08c was pressed")
+        self.logger.debug("Button 050301b08c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b1lt1")    
         self.button050301b08b.config(image=self.button_square_red_img)            
 
     def action050301b09a(self):
-        logging.log(logging.DEBUG, "Button 050301b09a was pressed")
+        self.logger.debug("Button 050301b09a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b1lt2")
         self.button050301b09b.config(image=self.button_square_green_img)         
 
     def action050301b09b(self):
-        logging.log(logging.DEBUG, "Button 050301b09b was pressed")
+        self.logger.debug("Button 050301b09b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b1lt2")   
 
     def action050301b09c(self):
-        logging.log(logging.DEBUG, "Button 050301b09c was pressed")
+        self.logger.debug("Button 050301b09c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b1lt2")    
         self.button050301b09b.config(image=self.button_square_red_img)                   
 
     def action050301b10a(self):
-        logging.log(logging.DEBUG, "Button 050301b10a was pressed")
+        self.logger.debug("Button 050301b10a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b2lt1")
         self.button050301b10b.config(image=self.button_square_green_img)          
 
     def action050301b10b(self):
-        logging.log(logging.DEBUG, "Button 050301b10b was pressed")
+        self.logger.debug("Button 050301b10b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b2lt1")
 
     def action050301b10c(self):
-        logging.log(logging.DEBUG, "Button 050301b10c was pressed")
+        self.logger.debug("Button 050301b10c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b2lt1")   
         self.button050301b10b.config(image=self.button_square_red_img)              
 
     def action050301b11a(self):
-        logging.log(logging.DEBUG, "Button 050301b11a was pressed")
+        self.logger.debug("Button 050301b11a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b2lt2")
         self.button050301b11b.config(image=self.button_square_green_img)         
 
     def action050301b11b(self):
-        logging.log(logging.DEBUG, "Button 050301b11b was pressed")
+        self.logger.debug("Button 050301b11b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b2lt2") 
 
     def action050301b11c(self):
-        logging.log(logging.DEBUG, "Button 050301b11c was pressed")
+        self.logger.debug("Button 050301b11c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b2lt2")   
         self.button050301b11b.config(image=self.button_square_red_img)               
 
     def action050301b12a(self):
-        logging.log(logging.DEBUG, "Button 050301b12a was pressed")
+        self.logger.debug("Button 050301b12a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b3lt1")
         self.button050301b12b.config(image=self.button_square_green_img)         
 
     def action050301b12b(self):
-        logging.log(logging.DEBUG, "Button 050301b12b was pressed")
+        self.logger.debug("Button 050301b12b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b3lt1")
 
     def action050301b12c(self):
-        logging.log(logging.DEBUG, "Button 050301b12c was pressed")
+        self.logger.debug("Button 050301b12c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b3lt1")  
         self.button050301b12b.config(image=self.button_square_red_img)               
 
     def action050301b13a(self):
-        logging.log(logging.DEBUG, "Button 050301b13a was pressed")
+        self.logger.debug("Button 050301b13a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b3lt2")
         self.button050301b13b.config(image=self.button_square_green_img)         
 
     def action050301b13b(self):
-        logging.log(logging.DEBUG, "Button 050301b13b was pressed")
+        self.logger.debug("Button 050301b13b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b3lt2") 
 
     def action050301b13c(self):
-        logging.log(logging.DEBUG, "Button 050301b13c was pressed")
+        self.logger.debug("Button 050301b13c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b3lt2")  
         self.button050301b13b.config(image=self.button_square_red_img)               
 
     def action050301b14a(self):
-        logging.log(logging.DEBUG, "Button 050301b14a was pressed")
+        self.logger.debug("Button 050301b14a was pressed")
         self.msg_out_queue.put_nowait("02,16,161,b1lt1")
         self.msg_out_queue.put_nowait("02,16,161,b1lt2")
         self.msg_out_queue.put_nowait("02,16,161,b2lt1")
@@ -927,7 +979,7 @@ class MainWindow(object):
         self.button050301b13b.config(image=self.button_square_green_img)                                                           
 
     def action050301b14b(self):
-        logging.log(logging.DEBUG, "Button 050301b14b was pressed")
+        self.logger.debug("Button 050301b14b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,b1lt1")
         self.msg_out_queue.put_nowait("02,16,162,b1lt2")
         self.msg_out_queue.put_nowait("02,16,162,b2lt1")
@@ -936,7 +988,7 @@ class MainWindow(object):
         self.msg_out_queue.put_nowait("02,16,162,b3lt2")  
 
     def action050301b14c(self):
-        logging.log(logging.DEBUG, "Button 050301b14c was pressed")
+        self.logger.debug("Button 050301b14c was pressed")
         self.msg_out_queue.put_nowait("02,16,160,b1lt1")
         self.msg_out_queue.put_nowait("02,16,160,b1lt2")
         self.msg_out_queue.put_nowait("02,16,160,b2lt1")
@@ -951,25 +1003,25 @@ class MainWindow(object):
         self.button050301b13b.config(image=self.button_square_red_img)                       
 
     def action050301c01a(self):
-        logging.log(logging.DEBUG, "Button 050301c01a was pressed")
+        self.logger.debug("Button 050301c01a was pressed")
         #self.msg_out_queue.put_nowait("02,16,161,fylt1")
         self.button050301c01b.config(image=self.button_square_green_img)
 
     def action050301c01b(self):
-        logging.log(logging.DEBUG, "Button 050301c01b was pressed")
+        self.logger.debug("Button 050301c01b was pressed")
         self.msg_out_queue.put_nowait("02,16,162,fylt1")
 
     def action050301c01c(self):
-        logging.log(logging.DEBUG, "Button 050301c01C was pressed")
+        self.logger.debug("Button 050301c01C was pressed")
         #self.msg_out_queue.put_nowait("02,16,160,fylt1") 
         self.button050301c01b.config(image=self.button_square_red_img)    
 
     def after_tasks(self):
-        #logging.log(logging.DEBUG, "Running \"after\" task")
+        #self.logger.debug("Running \"after\" task")
         # Process incoming message queue
         try:
             self.msg_in = self.msg_in_queue.get_nowait()    
-            #logging.log(logging.DEBUG, "Checked in msg queue and found msg: %s" % self.msg_in)   
+            #self.logger.debug("Checked in msg queue and found msg: %s" % self.msg_in)   
         except:
             pass
         # Process incoming message
@@ -977,7 +1029,7 @@ class MainWindow(object):
             if self.msg_in[3:5] == "02":
                 
                 if self.msg_in[6:9] == "001":
-                    #logging.log(logging.DEBUG, "Heartbeat received: %s" % self.msg_in)
+                    #self.logger.debug("Heartbeat received: %s" % self.msg_in)
                     self.last_hb = time.time()
                 
                 elif self.msg_in[6:9] == "002":
@@ -1069,7 +1121,7 @@ class MainWindow(object):
                             self.button050301b13b.config(image=self.button_square_green_img)                                                                            
                                        
                 elif self.msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % self.msg_in)
+                    self.logger.debug("Kill code received - Shutting down: %s" % self.msg_in)
                     self.close_pending = True
             else:
                 self.msg_out_queue.put_nowait(self.msg_in)
@@ -1115,10 +1167,10 @@ class MainWindow(object):
         else:
             # Update visual aspects of main window (text, etc)
             self.update_alarm_window()
-            #logging.log(logging.DEBUG, "Log viewer window updated")
+            #self.logger.debug("Log viewer window updated")
             # Re-schedule after task to run again in another 1000ms
             self.window.after(500, self.after_tasks)
-            #logging.log(logging.DEBUG, "Re-scheduled next after event")
+            #self.logger.debug("Re-scheduled next after event")
         pass
 
 
@@ -1128,63 +1180,63 @@ class MainWindow(object):
             # Kill p167(nest gateway)
             try:
                 self.msg_out_queue.put_nowait("02,17,999")
-                logging.log(logging.DEBUG, "Kill code sent to p17_nest_gateway process")
+                self.logger.debug("Kill code sent to p17_nest_gateway process")
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p17_nest_gateway process.  Queue already closed")
+                self.logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
             # Kill p16 (wemo gateway)
             try:
                 self.msg_out_queue.put_nowait("02,16,999")
-                logging.log(logging.DEBUG, "Kill code sent to p16_wemo_gateway process") 
+                self.logger.debug("Kill code sent to p16_wemo_gateway process") 
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
+                self.logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
             # Kill p15 (rpi screen)
             try:
                 self.msg_out_queue.put_nowait("02,15,999")
-                logging.log(logging.DEBUG, "Kill code sent to p15_rpi_screen process")  
+                self.logger.debug("Kill code sent to p15_rpi_screen process")  
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
             # Kill p14 (motion detector)
             try:
                 self.msg_out_queue.put_nowait("02,14,999")
-                logging.log(logging.DEBUG, "Kill code sent to p14_motion process") 
+                self.logger.debug("Kill code sent to p14_motion process") 
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p14_motion process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
             # Kill p13 (home / away)
             try:
                 self.msg_out_queue.put_nowait("02,13,999")
-                logging.log(logging.DEBUG, "Kill code sent to p13_home_away process")   
+                self.logger.debug("Kill code sent to p13_home_away process")   
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p13_home_away process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
             # Kill p12 (db interface)
             try:
                 self.msg_out_queue.put_nowait("02,12,999")
-                logging.log(logging.DEBUG, "Kill code sent to p12_db_interface process") 
+                self.logger.debug("Kill code sent to p12_db_interface process") 
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
+                self.logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
             # Kill p11 (logic solver)
             try:
                 self.msg_out_queue.put_nowait("02,11,999")
-                logging.log(logging.DEBUG, "Kill code sent to p11_logic_solver process")
+                self.logger.debug("Kill code sent to p11_logic_solver process")
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p11_logic_solver process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
             # Kill p02 (gui)
             try:
                 self.msg_out_queue.put_nowait("02,02,999")
-                logging.log(logging.DEBUG, "Kill code sent to p02_gui process")  
+                self.logger.debug("Kill code sent to p02_gui process")  
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p02_gui process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                
             # Kill p01 (log handler)
             try:
                 self.msg_out_queue.put_nowait("02,01,999")  
-                logging.log(logging.DEBUG, "Kill code sent to p01_logger process")     
+                self.logger.debug("Kill code sent to p01_logger process")     
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p01_log_handler process.  Queue already closed")                                           
+                self.logger.debug("Could not send kill-code to p01_log_handler process.  Queue already closed")                                           
             # Kill p00 (main)
             try:
                 self.msg_out_queue.put_nowait("02,00,999")      
-                logging.log(logging.DEBUG, "Kill code sent to p00_main process")
+                self.logger.debug("Kill code sent to p00_main process")
             except:
-                logging.log(logging.DEBUG, "Could not send kill-code to p00_main process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window

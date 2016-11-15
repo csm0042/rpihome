@@ -1,19 +1,19 @@
 #!/usr/bin/python3
-""" p12_db_interface.py: 
+""" p15_rpi_screen.py: Wake / sleep control for the RPI Home main control screen.  
+     
 """
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
 import logging
 import multiprocessing
-import mysql.connector
-import mysql.connector.errorcode as errorcode
+import platform
+import subprocess
 import time
 
 
 # Authorship Info *****************************************************************************************************
 __author__ = "Christopher Maue"
-__copyright__ = "Copyright 2016, The Maue-Home Project"
+__copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
 __license__ = "GPL"
 __version__ = "1.0.0"
@@ -23,12 +23,12 @@ __status__ = "Development"
 
 
 
-# DB interface Process loop **********************************************************************************************
-def db_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
+# Main gui process loop **********************************************************************************************
+def screen_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
     log_configurer(log_queue)
     name = multiprocessing.current_process().name
     logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p12_db_interface process started")
+    logger.log(logging.DEBUG, "Logging handler for p15_RPI_screen process started")
 
     msg_in = str()
     close_pending = False
@@ -43,11 +43,24 @@ def db_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
 
         # Process incoming message
         if len(msg_in) != 0:
-            if msg_in[3:5] == "12":
+            if msg_in[3:5] == "15":
+                
                 if msg_in[6:9] == "001":
-                    #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
+                    # Process heartbeat message
                     last_hb = time.time()
+                if msg_in[6:9] == "150":
+                    # Process screen command message
+                    command = msg_in[10:]
+                    if platform.system().lower() != "windows":
+                        try:
+                            output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
+                            logging.log(logging.DEBUG, "Sending command [ %s ] to terminal" % str(command))
+                        except:
+                            logging.log(logging.DEBUG, "Command [ %s ] failed" % str(command))
+                    else:
+                        logging.log(logging.DEBUG, "Error sending command [ %s ] to terminal.  On windows machine, not RPI" % str(command))
                 if msg_in[6:9] == "999":
+                    # process kill message
                     logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
                     close_pending = True
             else:
@@ -60,4 +73,4 @@ def db_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
             break    
 
         # Pause before re-checking queue
-        time.sleep(0.15) 
+        time.sleep(0.21)        
