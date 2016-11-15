@@ -6,7 +6,6 @@
 import datetime
 import logging
 import multiprocessing
-import os
 import time
 from rpihome.modules.wemo import WemoHelper
 
@@ -45,7 +44,7 @@ class WemoProcess(multiprocessing.Process):
         """ Method to configure multiprocess logging """
         log_configurer(log_queue)
         self.logger = logging.getLogger(name)
-        self.logger.debug("Logging handler for %s process started" % name)
+        self.logger.debug("Logging handler for %s process started", str(name))
 
 
     def kill_logger(self):

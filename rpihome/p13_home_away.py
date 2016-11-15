@@ -4,7 +4,6 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import datetime
-import httplib2
 import logging
 import multiprocessing
 import platform

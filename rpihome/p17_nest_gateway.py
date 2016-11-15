@@ -1,15 +1,17 @@
 #!/usr/bin/python3
-""" p17_nest_gateway.py:   
+""" p17_nest_gateway.py:
 """
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import nest
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
+import datetime
 import logging
 import multiprocessing
 import time
 
+import nest
 
-# Authorship Info ************************************************************************************
+
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -20,44 +22,106 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Nest Gateway Process loop **************************************************************************
-def nest_func(msg_in_queue, msg_out_queue, log_queue, log_configurer, username, password):
-    log_configurer(log_queue)
-    name = multiprocessing.current_process().name
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p17_nest_gateway process started")
+# Process Class ***********************************************************************************
+class NestProcess(multiprocessing.Process):
+    """ Nest gateway process class and methods """
+    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer,
+                 username, password):
+        multiprocessing.Process.__init__(self, name=name)
+        self.username = username
+        self.password = password
+        self.configure_logger(name, log_queue, log_configurer)
+        self.handlers = []
+        self.msg_in_queue = msg_in_queue
+        self.msg_out_queue = msg_out_queue
+        self.work_queue = multiprocessing.Queue(-1)
+        self.msg_in = str()
+        self.msg_to_process = str()
+        self.last_hb = datetime.datetime.now()
+        self.in_msg_loop = bool()
+        self.main_loop = bool()
+        self.close_pending = False
 
-    msg_in = str()
-    close_pending = False
-    last_hb = time.time()
-    napi = nest.Nest(username, password)
 
-    while True:
-        # Monitor message queue for new messages
+    def configure_logger(self, name, log_queue, log_configurer):
+        """ Method to configure multiprocess logging """
+        log_configurer(log_queue)
+        self.logger = logging.getLogger(name)
+        self.logger.debug("Logging handler for %s process started", str(name))
+
+
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close()
+
+
+    def process_in_msg_queue(self):
+        """ Method to cycle through incoming message queue, filtering out heartbeats and
+        mis-directed messages.  Messages corrected destined for this process are loaded
+        into the work queue """
+        self.in_msg_loop = True
+        while self.in_msg_loop is True:
+            try:
+                self.msg_in = self.msg_in_queue.get_nowait()
+            except:
+                self.in_msg_loop = False
+            if len(self.msg_in) != 0:
+                if self.msg_in[3:5] == "17":
+                    if self.msg_in[6:9] == "001":
+                        self.last_hb = datetime.datetime.now()
+                        self.logger.debug("heartbeat received")
+                    elif self.msg_in[6:9] == "999":
+                        self.logger.debug("Kill code received - Shutting down")
+                        self.close_pending = True
+                        self.in_msg_loop = False
+                    else:
+                        self.work_queue.put_nowait(self.msg_in)
+                    self.msg_in = str()
+                else:
+                    self.msg_out_queue.put_nowait(self.msg_in)
+                self.msg_in = str()
+            else:
+                self.in_msg_loop = False
+
+    def process_work_queue(self):
+        """ Method to perform work from the work queue """
+        # Get next message from internal queue or timeout trying to do so
         try:
-            msg_in = msg_in_queue.get_nowait()  
+            self.msg_to_process = self.work_queue.get_nowait()
         except:
             pass
-
-        # Process incoming message
-        if len(msg_in) != 0:
-            if msg_in[3:5] == "17":
-                if msg_in[6:9] == "001":
-                    #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
-                    last_hb = time.time()                      
-                elif msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
-                    close_pending = True   
-                else:
-                    pass                             
-            else:
-                msg_out_queue.put_nowait(msg_in)
+        # If there is a message to process, do so
+        if len(self.msg_to_process) != 0:
+            # Process wemo off commands
             pass
-            msg_in = str()            
+            # Clear msg-to-process string
+            self.msg_to_process = str()
+        else:
+            pass
 
-        # Only close down process once incoming message queue is empty
-        if (close_pending is True and len(msg_in) == 0 and msg_in_queue.empty() is True) or (time.time() > (last_hb + 30)):
-            break    
+    def run(self):
+        """ Actual process loop.  Runs whenever start() method is called """
+        self.nest = nest.Nest(self.username, self.password)
+        self.main_loop = True
+        while self.main_loop is True:
+            # Process incoming messages
+            self.process_in_msg_queue()
 
-        # Pause before re-checking queue
-        time.sleep(5.197)
+            # Process tasks in internal work queue
+            if self.close_pending is False:
+                self.process_work_queue()
+
+            # Close process
+            if (self.close_pending is True or
+                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+                self.main_loop = False
+
+            # Pause before next process run
+            time.sleep(0.097)
+
+        # Shut down logger before exiting process
+        self.kill_logger()

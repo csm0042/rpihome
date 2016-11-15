@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" logic.py: Decision making engine for the RPi Home application  
+""" logic.py: Decision making engine for the RPi Home application
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
