@@ -10,9 +10,9 @@ import multiprocessing
 import platform
 import time
 
-from rules import home_user1
-from rules import home_user2
-from rules import home_user3
+from rpihome.rules.home_user1 import HomeUser1
+from rpihome.rules.home_user2 import HomeUser2
+from rpihome.rules.home_user3 import HomeUser3
 
 
 # Authorship Info *****************************************************************************************************
@@ -26,100 +26,172 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Home / Away Process loop **********************************************************************************************
-def home_func(msg_in_queue, msg_out_queue, log_queue, log_configurer):
-    log_configurer(log_queue)
-    name = multiprocessing.current_process().name
-    logger = logging.getLogger("main")
-    logger.log(logging.DEBUG, "Logging handler for p13_home_away process started")
+# Process Class ***********************************************************************************
+class HomeProcess(multiprocessing.Process):
+    """ WEMO gateway process class and methods """
+    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer):
+        multiprocessing.Process.__init__(self, name=name)
+        self.configure_logger(name, log_queue, log_configurer)
+        self.handlers = []
+        self.msg_in_queue = msg_in_queue
+        self.msg_out_queue = msg_out_queue
+        self.work_queue = multiprocessing.Queue(-1)
+        self.msg_in = str()
+        self.msg_to_process = str()
+        self.user1 = HomeUser1(self.msg_out_queue)
+        self.user2 = HomeUser2(self.msg_out_queue)
+        self.user3 = HomeUser3(self.msg_out_queue)
+        self.last_hb = datetime.datetime.now()
+        self.in_msg_loop = bool()
+        self.main_loop = bool()
+        self.close_pending = False
 
-    msg_in = str()
-    close_pending = False
-    last_hb = time.time()
 
-    user1 = home_user1.HomeUser1(msg_out_queue)
-    user2 = home_user2.HomeUser2(msg_out_queue)
-    user3 = home_user3.HomeUser3(msg_out_queue)
+    def configure_logger(self, name, log_queue, log_configurer):
+        """ Method to configure multiprocess logging """
+        log_configurer(log_queue)
+        self.logger = logging.getLogger(name)
+        self.logger.debug("Logging handler for %s process started" % name)
 
 
-    while True:
-        # Monitor message queue for new messages
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close()
+
+
+    def process_in_msg_queue(self):
+        """ Method to cycle through incoming message queue, filtering out heartbeats and
+        mis-directed messages.  Messages corrected destined for this process are loaded
+        into the work queue """
+        self.in_msg_loop = True
+        while self.in_msg_loop is True:
+            try:
+                self.msg_in = self.msg_in_queue.get_nowait()
+            except:
+                self.in_msg_loop = False
+            if len(self.msg_in) != 0:
+                if self.msg_in[3:5] == "13":
+                    if self.msg_in[6:9] == "001":
+                        self.last_hb = datetime.datetime.now()
+                        self.logger.debug("heartbeat received")
+                    elif self.msg_in[6:9] == "999":
+                        self.logger.debug("Kill code received - Shutting down")
+                        self.close_pending = True
+                        self.in_msg_loop = False
+                    else:
+                        self.work_queue.put_nowait(self.msg_in)
+                    self.msg_in = str()
+                else:
+                    self.msg_out_queue.put_nowait(self.msg_in)
+                self.msg_in = str()
+            else:
+                self.in_msg_loop = False
+
+
+    def process_work_queue(self):
+        """ Method to perform work from the work queue """
+        # Get next message from internal queue or timeout trying to do so
         try:
-            msg_in = msg_in_queue.get_nowait()  
+            self.msg_to_process = self.work_queue.get_nowait()
         except:
             pass
-
-        # Process incoming message
-        if len(msg_in) != 0:
-            # 13 = This process ID
-            if msg_in[3:5] == "13":
-                # 001 = Heartbeat message from main
-                if msg_in[6:9] == "001":
-                    #logging.log(logging.DEBUG, "Heartbeat received: %s" % msg_in)
-                    last_hb = time.time()
-                # 130 = Home-Away mode set to away (override)
-                if msg_in[6:9] == "130":
-                    logging.log(logging.DEBUG, "Setting home/away mode for %s to \"away\"" % msg_in[10:])
-                    if msg_in[10:] == "user1":
-                        user1.mode = 0
-                    if msg_in[10:] == "user2":
-                        user2.mode = 0
-                    if msg_in[10:] == "user3":
-                        user3.mode = 0                       
-                # 131 = Home-Away mode set to home (override)
-                if msg_in[6:9] == "131":
-                    logging.log(logging.DEBUG, "Setting home/away mode for %s to \"home\"" % msg_in[10:])
-                    if msg_in[10:] == "user1":
-                        user1.mode = 1
-                    if msg_in[10:] == "user2":
-                        user2.mode = 1
-                    if msg_in[10:] == "user3":
-                        user3.mode = 1                
-                # 132 = Home-Away mode set to auto (by schedule)
-                if msg_in[6:9] == "132":
-                    logging.log(logging.DEBUG, "Setting home/away mode for %s to auto (by schedule)" % msg_in[10:])
-                    if msg_in[10:] == "user1":
-                        user1.mode = 2
-                    if msg_in[10:] == "user2":
-                        user2.mode = 2
-                    if msg_in[10:] == "user3":
-                        user3.mode = 2 
-                # 133 = Home-Away mode set to auto (arp/ping-based)
-                if msg_in[6:9] == "133":
-                    logging.log(logging.DEBUG, "Setting home/away mode for %s to auto (by arp/ping)" % msg_in[10:])
-                    if msg_in[10:] == "user1":
-                        user1.mode = 3
-                    if msg_in[10:] == "user2":
-                        user2.mode = 3
-                    if msg_in[10:] == "user3":
-                        user3.mode = 3                                  
-                # 999 = Shutdown command from main
-                if msg_in[6:9] == "999":
-                    logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
-                    close_pending = True
-            else:
-                # Re-route message back to main
-                msg_out_queue.put_nowait(msg_in)
+        # If there is a message to process, do so
+        if len(self.msg_to_process) != 0:
+            # 130 = Home-Away mode set to away (override)
+            if self.msg_to_process[6:9] == "130":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 0
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 0
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 0
+            # 131 = Home-Away mode set to home (override)
+            if self.msg_to_process[6:9] == "131":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 1
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 1
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 1
+            # 132 = Home-Away mode set to auto (by schedule)
+            if self.msg_to_process[6:9] == "132":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 2
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 2
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 2
+            # 133 = Home-Away mode set to auto (arp/ping based)
+            if self.msg_to_process[6:9] == "133":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 3
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 3
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 3
+            # 134 = Home-Away mode set to auto (by ping with delay)
+            if self.msg_to_process[6:9] == "134":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 4
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 4
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 4
+            # 135 = Home-Away mode set to auto (schedule w/ping)
+            if self.msg_to_process[6:9] == "135":
+                if self.msg_to_process[10:] == "user1":
+                    self.user1.mode = 5
+                if self.msg_to_process[10:] == "user2":
+                    self.user2.mode = 5
+                if self.msg_to_process[10:] == "user3":
+                    self.user3.mode = 5
+            # Clear msg-to-process string
+            self.msg_to_process = str()
+        else:
             pass
-            # Clear message string to prevent processing it multiple times
-            msg_in = str()            
-                                
-
-        # Determine if user is home
-        user1.by_mode(mode=5, datetime=datetime.datetime.now(), ip="192.168.86.40")     
-        user2.by_mode(mode=2, datetime=datetime.datetime.now(), ip="192.168.86.42")        
-        user3.by_mode(mode=2, datetime=datetime.datetime.now(), ip="192.168.86.43") 
-
-        user1.command()
-        user2.command()
-        user3.command()       
 
 
+    def run_automation(self):
+        """ Run automation rule determines if user is home or away """
+        self.user1.by_mode(
+            mode=5, datetime=datetime.datetime.now(), ip="192.168.86.40")
+        self.user2.by_mode(
+            mode=2, datetime=datetime.datetime.now(), ip="192.168.86.42")
+        self.user3.by_mode(
+            mode=2, datetime=datetime.datetime.now(), ip="192.168.86.42")
 
-        # Only close down process once incoming message queue is empty
-        if (close_pending is True and len(msg_in) == 0 and msg_in_queue.empty() is True) or (time.time() > (last_hb + 30)):
-            break                                        
-             
 
-        # Pause before re-checking queue
-        time.sleep(0.107)  
+    def run_commands(self):
+        """ Monitor home/away state and send commands to target device when COS occurs """
+        self.user1.command()
+        self.user2.command()
+        self.user3.command()
+
+
+    def run(self):
+        """ Actual process loop.  Runs whenever start() method is called """
+        self.main_loop = True
+        while self.main_loop is True:
+            # Process incoming messages
+            self.process_in_msg_queue()
+
+            # Process tasks in internal work queue
+            if self.close_pending is False:
+                self.process_work_queue()
+                self.run_automation()
+                self.run_commands()
+
+            # Close process
+            if (self.close_pending is True or
+                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+                self.main_loop = False
+
+            # Pause before next process run
+            time.sleep(0.097)
+
+        # Shut down logger before exiting process
+        self.kill_logger()

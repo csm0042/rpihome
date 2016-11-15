@@ -22,7 +22,7 @@ from rpihome.modules.multiprocess_logging import listener_configurer, worker_con
 from p01_log_handler import listener_process
 from p02_gui import MainWindow
 from p11_logic_solver import LogicProcess
-from p13_home_away import home_func
+from p13_home_away import HomeProcess
 from p15_rpi_screen import screen_func
 from p16_wemo_gateway import WemoProcess
 from p17_nest_gateway import nest_func
@@ -103,7 +103,6 @@ def main():
 
 
     # Start logic solver process
-    # this process runs the automation engine that decides when to turn various devices on/off
     if enable[11] is True:
         p11_process_alive_mem = None
         p11_process = LogicProcess(
@@ -112,29 +111,22 @@ def main():
         p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
 
 
-    # Start home/away detection process 
-    # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
-    if enable[13] is True:                
+    # Start home/away detection process
+    if enable[13] is True:
         p13_process_alive_mem = None
-        p13_process = create_process("p13_home_away", home_func, (p13_queue, p00_queue, p01_queue, worker_configurer))
+        p13_process = HomeProcess(
+            "p13_home_away", p13_queue, p00_queue, p01_queue, worker_configurer)
+        p13_process.start()
         p13_process_modtime = os.path.getmtime(os.path.join(process_path, "p13_home_away.py"))    
 
-    # Start motion detector process 
-    # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen 
-    if enable[14] is True:                  
-        p14_process_alive_mem = None
-        p14_process = create_process("p14_motion", motion_func, (p14_queue, p00_queue, p01_queue, worker_configurer))
-        p14_process_modtime = os.path.getmtime(os.path.join(process_path, "p14_motion.py"))    
 
-    # Start screen wake/sleep process 
-    # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
+    # Start screen wake/sleep process
     if enable[15] is True:             
         p15_process_alive_mem = None
         p15_process = create_process("p15_rpi_screen", screen_func, (p15_queue, p00_queue, p01_queue, worker_configurer))
         p15_process_modtime = os.path.getmtime(os.path.join(process_path, "p15_rpi_screen.py"))
 
-    # Start wemo gateway process - This process controls the interface to/from wemo devices on the
-    # network
+    # Start wemo gateway process
     if enable[16] is True:
         p16_process_alive_mem = None
         #p16_process = create_process("p16_wemo_gw", wemo_func, (p16_queue, p00_queue, p01_queue,
@@ -168,49 +160,59 @@ def main():
                 logging.log(logging.DEBUG, "Kill code received - Shutting down: %s" % msg_in)
                 close_pending = True 
 
-        # If message is destined for process p01, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p01, forward.  If message is kill-code for that process,
+        # join process
         elif len(msg_in) != 0 and msg_in[3:5] == "01" and enable[1] is True:
             p01_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p01_process.is_alive() is False:
-                    p01_process = create_process("p01_log_handler", listener_process, (p01_queue, p00_queue, listener_configurer, name, logfile))
+                    p01_process = create_process(
+                        "p01_log_handler", listener_process, (p01_queue, p00_queue, listener_configurer,
+                        name, logfile))
             if msg_in[6:9] == "999":
                 if p01_process.is_alive() is True:
                     p01_process.join()
 
-        # If message is destined for process p02, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p02, forward.  If message is kill-code for that process,
+        # join process
         elif len(msg_in) != 0 and msg_in[3:5] == "02" and enable[2] is True:
             if p02_process.is_alive() is True:
                 p02_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p02_process.is_alive() is False:
-                    p02_process = MainWindow("p02_gui", p02_queue, p00_queue, p01_queue, worker_configurer, logfile, enable)
+                    p02_process = MainWindow(
+                        "p02_gui", p02_queue, p00_queue, p01_queue, worker_configurer, logfile, enable)
                     p02_process.start()           
             if msg_in[6:9] == "999":
                 if p02_process.is_alive() is True:                
                     p02_process.join()
 
-        # If message is destined for process p11, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p11, forward.  If message is kill-code for that process,
+        # join process
         elif len(msg_in) != 0 and msg_in[3:5] == "11" and enable[11] is True:
-            if p11_process.is_alive() is True:            
+            if p11_process.is_alive() is True:
                 p11_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p11_process.is_alive() is False:
-                    p11_process = LogicProcess("p11_logic_solver", p11_queue, p00_queue, p01_queue, worker_configurer)
-                    p11_process.start()       
+                    p11_process = LogicProcess(
+                        "p11_logic_solver", p11_queue, p00_queue, p01_queue, worker_configurer)
+                    p11_process.start()
             if msg_in[6:9] == "999":
-                if p11_process.is_alive() is True:                
+                if p11_process.is_alive() is True:
                     p11_process.join()
 
-        # If message is destined for process p13, forward.  If message is kill-code for that process, join process
+        # If message is destined for process p13, forward.  If message is kill-code for that process,
+        # join process
         elif len(msg_in) != 0 and msg_in[3:5] == "13" and enable[13] is True:
-            if p13_process.is_alive() is True:            
+            if p13_process.is_alive() is True:
                 p13_queue.put_nowait(msg_in)
             if msg_in[6:9] == "900":
                 if p13_process.is_alive() is False:
-                    p13_process = create_process("p13_home_away", home_func, (p13_queue, p00_queue, p01_queue, worker_configurer))           
+                    p13_process = HomeProcess(
+                        "p13_home_away", p13_queue, p00_queue, p01_queue, worker_configurer)
+                    p13_process.start()
             if msg_in[6:9] == "999":
-                if p13_process.is_alive() is True:                
+                if p13_process.is_alive() is True:
                     p13_process.join()
  
         # If message is destined for process p15, forward.  If message is kill-code for that process, join process
