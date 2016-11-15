@@ -82,6 +82,7 @@ def main():
         name=name, path=os.path.dirname(sys.argv[0]))
     process_path = os.path.dirname(sys.argv[0])
 
+
     # Start global log handler process - This process retrieves log messages from the shared log
     # queue and writes them to a file
     if enable[1] is True:
@@ -99,16 +100,17 @@ def main():
             "p02_gui", p02_queue, p00_queue, p01_queue, worker_configurer, logfile, enable)
         p02_process.start()
         p02_process_modtime = os.path.getmtime(os.path.join(process_path, "p02_gui.py"))
-   
 
-    # Start logic solver process - this process runs the automation engine that decides when to turn various devices on/off
-    if enable[11] is True:      
-        p11_process_alive_mem = None    
+
+    # Start logic solver process
+    # this process runs the automation engine that decides when to turn various devices on/off
+    if enable[11] is True:
+        p11_process_alive_mem = None
         p11_process = LogicProcess(
             "p11_logic_solver", p11_queue, p00_queue, p01_queue, worker_configurer)
         p11_process.start()
         p11_process_modtime = os.path.getmtime(os.path.join(process_path, "p11_logic_solver.py"))
-    
+
 
     # Start home/away detection process 
     # This process monitors various triggers and sends sleep and wake commands when necessary to the RPI screen
