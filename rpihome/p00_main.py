@@ -121,9 +121,8 @@ class MainProcess(object):
     def create_gui_process(self):
         """ Spawns a process specific to the user interface """
         self.p02_alive_mem = None
-        self.p02 = MainWindow(
-            "p02_gui", self.p02_queue, self.p00_queue, self.p01_queue,
-            worker_configurer, self.logfile, self.enable)
+        self.logfile = LogFilePath().return_path_and_name_combined(name="p02", path=self.process_path)
+        self.p02 = MainWindow(name="p02_gui", msgin=self.p02_queue, msgout=self.p00_queue, logfile=self.logfile, enable=self.enable, logremote=False)
         self.p02.start()
         self.p02_modtime = os.path.getmtime(os.path.join(self.process_path, "p02_gui.py"))
 

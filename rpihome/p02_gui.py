@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
 
+from modules.multiprocess_logging import worker_configurer
 
 # Authorship Info ******************************************************************************************************
 __author__ = "Christopher Maue"
@@ -29,30 +30,86 @@ __status__ = "Development"
 # Application GUI Class Definition *************************************************************************************
 class MainWindow(multiprocessing.Process):
     """ GUI process class and methods """
-    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer, logfile, enable):
-        multiprocessing.Process.__init__(self, name=name)
-        self.configure_logger(name, log_queue, log_configurer)
-        self.logfile = logfile
-        self.enable = enable
+    def __init__(self, **kwargs):
+        # Set default input parameter values
+        self.name = "undefined"
+        self.msg_in_queue = multiprocessing.Queue(-1)
+        self.msg_out_queue = multiprocessing.Queue(-1)
+        self.logfile = "logfile"
+        self.enable = [True]*18
+        self.log_remote = False
+        # Update default elements based on any parameters passed in
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "name":
+                    self.name = value
+                if key == "msgin":
+                    self.msg_in_queue = value
+                if key == "msgout":
+                    self.msg_out_queue = value
+                if key == "logqueue":
+                    self.log_queue = value
+                if key == "logfile":
+                    self.logfile = value
+                if key == "enable":
+                    self.enable = value
+                if key == "logremote":
+                    self.log_remote = value
+        # Initialize parent class
+        multiprocessing.Process.__init__(self, name=self.name)
+        # Create remaining class elements
         self.text = str()
-        self.msg_in_queue = msg_in_queue
-        self.msg_out_queue = msg_out_queue
         self.msg_in = str()
         self.close_pending = False
         self.last_hb = time.time()
         self.index = 0
         self.scanWemo = False
         # Initialize pointer for alarm display window
-        self.line = sum(1 for line in open(self.logfile)) - 50
-        if self.line < 1:
+        if os.path.isfile(self.logfile):
+            self.line = sum(1 for line in open(self.logfile)) - 50
+            if self.line < 1:
+                self.line = 1
+        else:
             self.line = 1
         # Set location of resource directory
         self.basepath = os.path.dirname(sys.argv[0])
         self.resourceDir = os.path.join(self.basepath, "resources/")
 
 
+    def configure_remote_logger(self):
+        """ Method to configure multiprocess logging """
+        worker_configurer(self.log_queue)
+        self.logger = logging.getLogger(self.name)
+        self.logger.debug("Logging handler for %s process started", self.name)
+
+
+    def configure_local_logger(self):
+        """ Method to configure local logging """
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.DEBUG)
+        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
+        self.logger.debug("Logging handler for %s process started", self.name)        
+
+
+    def kill_logger(self):
+        """ Shut down logger when process exists """
+        self.handlers = list(self.logger.handlers)
+        for i in iter(self.handlers):
+            self.logger.removeHandler(i)
+            i.flush()
+            i.close()
+
+
     def run(self):
         """ Generate window and schedule after and close handlers """
+        # Configure logging
+        if self.log_remote is True:
+            self.configure_remote_logger()
+        else:
+            self.configure_local_logger()
         # Create all parts of application window
         self.logger.debug("Begining generation of application window")
         self.draw_window()
@@ -65,23 +122,7 @@ class MainWindow(multiprocessing.Process):
         self.logger.debug("Added \"on-close\" handler")
         # Run mainloop() to activate gui and begin monitoring its inputs
         self.logger.debug("Started gui mainloop")
-        self.window.mainloop()        
-
-
-    def configure_logger(self, name, log_queue, log_configurer):
-        """ Method to configure multiprocess logging """
-        log_configurer(log_queue)
-        self.logger = logging.getLogger(name)
-        self.logger.debug("Logging handler for %s process started" % name)
-
-
-    def kill_logger(self):
-        """ Shut down logger when process exists """
-        self.handlers = list(self.logger.handlers)
-        for i in iter(self.handlers):
-            self.logger.removeHandler(i)
-            i.flush()
-            i.close() 
+        self.window.mainloop()             
 
 
     def draw_window(self):
