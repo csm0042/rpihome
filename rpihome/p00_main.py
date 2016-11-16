@@ -48,6 +48,7 @@ class MainProcess(object):
     """ This class runs the main process of rpihome application """
     def __init__(self):
         """ Regular init stuff """
+        self.init_complete = False
         self.name = "p00_main"
         self.handlers = []
         self.msg_in = str()
@@ -76,6 +77,7 @@ class MainProcess(object):
         self.create_wemo_process()
         self.create_nest_process()
         self.update_gui()
+        self.init_complete = True
 
 
     def create_process_queues(self):
@@ -129,7 +131,6 @@ class MainProcess(object):
         """ Spawns a process specific to the user interface """
         self.p02_alive_mem = None
         self.p02_queue = multiprocessing.Queue(-1)
-        self.logfile = LogFilePath().return_path_and_name_combined(name="p02", path=self.process_path)
         self.p02 = MainWindow(name="p02_gui",
                               msgin=self.p02_queue,
                               msgout=self.p00_queue,
@@ -293,42 +294,48 @@ class MainProcess(object):
             # Start / Stop p01 process
             if self.msg_to_process[3:5] == "01":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_remote_log_handler_process()
+                    if self.p01.is_alive() is False:
+                        self.create_remote_log_handler_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p01.is_alive():                    
                         self.p01.join()
             # Start / Stop p11 process
             elif self.msg_to_process[3:5] == "11":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_logic_process()
+                    if self.p11.is_alive() is False:                    
+                        self.create_logic_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p11.is_alive():                    
                         self.p11.join()
             # Start / Stop p13 process
             elif self.msg_to_process[3:5] == "13":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_home_process()
+                    if self.p13.is_alive() is False:                    
+                        self.create_home_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p13.is_alive():
                         self.p13.join()
             # Start / Stop p15 process
             elif self.msg_to_process[3:5] == "15":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_screen_process()
+                    if self.p15.is_alive() is False:                    
+                        self.create_screen_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p15.is_alive():                    
                         self.p15.join()   
             # Start / Stop p16 process
             elif self.msg_to_process[3:5] == "16":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_wemo_process()
+                    if self.p16.is_alive() is False:                    
+                        self.create_wemo_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p16.is_alive():                    
                         self.p16.join()
             # Start / Stop p17 process
             elif self.msg_to_process[3:5] == "17":
                 if self.msg_to_process[6:9] == "900":
-                    self.create_nest_process()
+                    if self.p17.is_alive() is False:                    
+                        self.create_nest_process()
                 elif self.msg_to_process[6:9] == "999":
                     if self.p17.is_alive():
                         self.p17.join()                                      
