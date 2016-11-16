@@ -2,7 +2,7 @@
 """ gui.py:   
 """
 
-# Import Required Libraries (Standard, Third Party, Local) *************************************************************
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
 import copy
 import linecache
 import logging
@@ -16,7 +16,7 @@ from tkinter import messagebox
 
 from modules.multiprocess_logging import worker_configurer
 
-# Authorship Info ******************************************************************************************************
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -27,7 +27,7 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Application GUI Class Definition *************************************************************************************
+# Application GUI Class Definition ****************************************************************
 class MainWindow(multiprocessing.Process):
     """ GUI process class and methods """
     def __init__(self, **kwargs):
@@ -38,6 +38,7 @@ class MainWindow(multiprocessing.Process):
         self.logfile = "logfile"
         self.enable = [True]*18
         self.log_remote = False
+        self.display_file = None
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -55,6 +56,8 @@ class MainWindow(multiprocessing.Process):
                     self.enable = value
                 if key == "logremote":
                     self.log_remote = value
+                if key == "displayfile":
+                    self.display_file = value
         # Initialize parent class
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
@@ -65,8 +68,8 @@ class MainWindow(multiprocessing.Process):
         self.index = 0
         self.scanWemo = False
         # Initialize pointer for alarm display window
-        if os.path.isfile(self.logfile):
-            self.line = sum(1 for line in open(self.logfile)) - 50
+        if os.path.isfile(self.display_file):
+            self.line = sum(1 for line in open(self.display_file)) - 50
             if self.line < 1:
                 self.line = 1
         else:
@@ -78,8 +81,9 @@ class MainWindow(multiprocessing.Process):
 
     def configure_remote_logger(self):
         """ Method to configure multiprocess logging """
-        worker_configurer(self.log_queue)
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger(self.name)        
+        self.handler = logging.handlers.QueueHandler(self.log_queue)
+        self.logger.addHandler(self.handler)
         self.logger.debug("Logging handler for %s process started", self.name)
 
 
@@ -592,7 +596,7 @@ class MainWindow(multiprocessing.Process):
 
     def update_alarm_window(self):
         # Determine size of logfile (number of lines)
-        self.num_lines = sum(1 for line in open(self.logfile))
+        self.num_lines = sum(1 for line in open(self.display_file))
         # If line index is larger than logfile (meaning log file was reset), reset index to match log-file size
         if self.line > (self.num_lines + 1):
             self.line = self.num_lines
@@ -601,18 +605,18 @@ class MainWindow(multiprocessing.Process):
                 self.line = 1
         # Read line from file
         try:
-            self.text = linecache.getline(self.logfile, self.line)
+            self.text = linecache.getline(self.display_file, self.line)
         except:
             print("could not access file")
             self.text = str()
         # Processing logfile
         self.iter = 1
         while len(self.text) != 0 and self.iter < 1000:
-            if (self.text.find("|  \"GET /") < 0) and (self.text.find("|  \"POST /") < 0) and (self.text.find("|  Starting new HTTP connection") < 0) and (self.text.find("|  Starting new HTTPS connection") < 0) and (self.text.find("|  Error fetching") < 0):
+            if self.text.find("heartbeat") == -1:
                 self.text020301.insert(tk.END, self.text)
                 self.text020301.yview_pickplace("end")
             self.line += 1
-            self.text = linecache.getline(self.logfile, self.line)
+            self.text = linecache.getline(self.display_file, self.line)
             self.iter += 1
         linecache.clearcache()
 

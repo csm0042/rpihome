@@ -48,6 +48,7 @@ class MainProcess(object):
     """ This class runs the main process of rpihome application """
     def __init__(self):
         """ Regular init stuff """
+        self.name = "p00_main"
         self.handlers = []
         self.msg_in = str()
         self.msg_to_process = str()
@@ -66,8 +67,8 @@ class MainProcess(object):
         self.nest_password = str()
         # Spawn individual processes
         self.create_process_queues()
-        self.create_mp_log_handler()
-        self.configure_local_logger()
+        self.create_remote_log_handler_process()
+        self.configure_remote_logger()
         self.create_gui_process()
         self.create_logic_process()
         self.create_home_process()
@@ -81,32 +82,25 @@ class MainProcess(object):
         """ Create queues used for inter-process communication """
         self.p00_queue = multiprocessing.Queue(-1)
         self.p01_queue = multiprocessing.Queue(-1)
-        self.p02_queue = multiprocessing.Queue(-1)
-        self.p11_queue = multiprocessing.Queue(-1)
-        self.p13_queue = multiprocessing.Queue(-1)
-        self.p15_queue = multiprocessing.Queue(-1)
-        self.p16_queue = multiprocessing.Queue(-1)
-        self.p17_queue = multiprocessing.Queue(-1)
 
 
-    def create_mp_log_handler(self):
-        """ Creates a separate process to run the multiprocess logger.  This Process
-        monitors a shared queue and writes those log messages to a file """
-        self.p01_alive_mem = None
-        self.p01 = multiprocessing.Process(name="p01_log_handler",
-                                           target=listener_process,
-                                           args=(self.p01_queue, self.p00_queue,
-                                                 listener_configurer, self.logfile))
-        self.p01.start()
-        self.p01_modtime = os.path.getmtime(os.path.join(self.process_path, "p01_log_handler.py"))
+    def configure_remote_logger(self):
+        """ Method to configure multiprocess logging """
+        self.logger = logging.getLogger(self.name)        
+        handler = logging.handlers.QueueHandler(self.p01_queue)
+        self.logger.addHandler(handler)
+        self.logger.debug("Logging handler for %s process started", "p00_main")
 
 
     def configure_local_logger(self):
-        """ Configures the local logger for this process.  Log messages are handled by
-        a queue that delivers them to the common handler running in a separate process """
-        worker_configurer(self.p01_queue)
-        self.logger = logging.getLogger("p00_main")
-        self.logger.debug("Logging handler for %s process started", "p00_main")
+        """ Method to configure local logging """
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+        formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
+        self.handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.debug("Logging handler for %s process started", self.name)        
 
 
     def kill_local_logger(self):
@@ -118,11 +112,35 @@ class MainProcess(object):
             i.close()
 
 
+    def create_remote_log_handler_process(self):
+        """ Creates a separate process to run the multiprocess logger.  This Process
+        monitors a shared queue and writes those log messages to a file """
+        self.p01_alive_mem = None
+        self.p01 = multiprocessing.Process(name="p01_log_handler",
+                                           target=listener_process,
+                                           args=(self.p01_queue, self.p00_queue,
+                                                 listener_configurer, self.logfile))
+        self.p01.start()
+        self.p01_modtime = os.path.getmtime(os.path.join(self.process_path, "p01_log_handler.py"))
+            
+
+
     def create_gui_process(self):
         """ Spawns a process specific to the user interface """
         self.p02_alive_mem = None
+        self.p02_queue = multiprocessing.Queue(-1)
         self.logfile = LogFilePath().return_path_and_name_combined(name="p02", path=self.process_path)
-        self.p02 = MainWindow(name="p02_gui", msgin=self.p02_queue, msgout=self.p00_queue, logfile=self.logfile, enable=self.enable, logremote=False)
+        self.p02 = MainWindow(name="p02_gui",
+                              msgin=self.p02_queue,
+                              msgout=self.p00_queue,
+                              logfile=(LogFilePath().return_path_and_name_combined(
+                                  name="p02",
+                                  path=self.process_path)),
+                              displayfile=(LogFilePath().return_path_and_name_combined(
+                                  name="p11",
+                                  path=self.process_path)),
+                              enable=self.enable,
+                              logremote=False)
         self.p02.start()
         self.p02_modtime = os.path.getmtime(os.path.join(self.process_path, "p02_gui.py"))
 
@@ -130,8 +148,14 @@ class MainProcess(object):
     def create_logic_process(self):
         """ Spawns a process for the logic solver """
         self.p11_alive_mem = None
-        self.p11 = LogicProcess(
-            "p11_logic_solver", self.p11_queue, self.p00_queue, self.p01_queue, worker_configurer)
+        self.p11_queue = multiprocessing.Queue(-1)
+        self.p11 = LogicProcess(name="p11_logic_solver",
+                                msgin=self.p11_queue,
+                                msgout=self.p00_queue,
+                                logfile=(LogFilePath().return_path_and_name_combined(
+                                    name="p11",
+                                    path=self.process_path)),
+                                    logremote=False)
         self.p11.start()
         self.p11_modtime = os.path.getmtime(os.path.join(self.process_path, "p11_logic_solver.py"))
 
@@ -139,38 +163,59 @@ class MainProcess(object):
     def create_home_process(self):
         """ Spawns a process for the home/away monitor """
         self.p13_alive_mem = None
-        self.p13 = HomeProcess(
-            "p13_home_away", self.p13_queue, self.p00_queue, self.p01_queue, worker_configurer)
-        self.p13.start()
+        self.p13_queue = multiprocessing.Queue(-1)
+        self.p13 = HomeProcess(name="p13_home_away",
+                                msgin=self.p13_queue,
+                                msgout=self.p00_queue,
+                                logfile=(LogFilePath().return_path_and_name_combined(
+                                    name="p13",
+                                    path=self.process_path)),
+                                    logremote=False)
+        self.p13.start()        
         self.p13_modtime = os.path.getmtime(os.path.join(self.process_path, "p13_home_away.py"))
 
 
     def create_screen_process(self):
         """ Spawns a process for the home/away monitor """
         self.p15_alive_mem = None
-        self.p15 = RpiProcess(
-            "p15_rpi_screen", self.p15_queue, self.p00_queue, self.p01_queue, worker_configurer)
-        self.p15.start()
+        self.p15_queue = multiprocessing.Queue(-1)
+        self.p15 = RpiProcess(name="p15_rpi_screen",
+                                msgin=self.p15_queue,
+                                msgout=self.p00_queue,
+                                logfile=(LogFilePath().return_path_and_name_combined(
+                                    name="p15",
+                                    path=self.process_path)),
+                                    logremote=False)
+        self.p15.start()         
         self.p15_modtime = os.path.getmtime(os.path.join(self.process_path, "p15_rpi_screen.py"))
 
 
     def create_wemo_process(self):
         """ Spawns a process for the wemo communication gateway """
         self.p16_alive_mem = None
-        self.p16 = WemoProcess(
-            "p16_wemo_gateway", self.p16_queue, self.p00_queue, self.p01_queue, worker_configurer)
-        self.p16.start()
+        self.p16_queue = multiprocessing.Queue(-1)
+        self.p16 = WemoProcess(name="p16_wemo_gateway",
+                                msgin=self.p16_queue,
+                                msgout=self.p00_queue,
+                                logfile=(LogFilePath().return_path_and_name_combined(
+                                    name="p16",
+                                    path=self.process_path)),
+                                    logremote=False)
+        self.p16.start()          
         self.p16_modtime = os.path.getmtime(os.path.join(self.process_path, "p16_wemo_gateway.py"))
 
 
     def create_nest_process(self):
         """ Spawns a process for the NEST communication gateway """
-        self.nest_username = input("Please enter Nest Username: ")
-        self.nest_password = input("Please enter Nest Password: ")
         self.p17_alive_mem = None
-        self.p17 = NestProcess(
-            "p17_nest_gateway", self.p17_queue, self.p00_queue, self.p01_queue, worker_configurer,
-            self.nest_username, self.nest_password)
+        self.p17_queue = multiprocessing.Queue(-1)
+        self.p17 = NestProcess(name="p17_nest_gateway",
+                                msgin=self.p17_queue,
+                                msgout=self.p00_queue,
+                                logfile=(LogFilePath().return_path_and_name_combined(
+                                    name="p17",
+                                    path=self.process_path)),
+                                    logremote=False)
         self.p17.start()
         self.p17_modtime = os.path.getmtime(os.path.join(self.process_path, "p17_nest_gateway.py"))
 
@@ -245,8 +290,48 @@ class MainProcess(object):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
-            # Do stuff
-            pass
+            # Start / Stop p01 process
+            if self.msg_to_process[3:5] == "01":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_remote_log_handler_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p01.is_alive():                    
+                        self.p01.join()
+            # Start / Stop p11 process
+            elif self.msg_to_process[3:5] == "11":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_logic_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p11.is_alive():                    
+                        self.p11.join()
+            # Start / Stop p13 process
+            elif self.msg_to_process[3:5] == "13":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_home_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p13.is_alive():
+                        self.p13.join()
+            # Start / Stop p15 process
+            elif self.msg_to_process[3:5] == "15":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_screen_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p15.is_alive():                    
+                        self.p15.join()   
+            # Start / Stop p16 process
+            elif self.msg_to_process[3:5] == "16":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_wemo_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p16.is_alive():                    
+                        self.p16.join()
+            # Start / Stop p17 process
+            elif self.msg_to_process[3:5] == "17":
+                if self.msg_to_process[6:9] == "900":
+                    self.create_nest_process()
+                elif self.msg_to_process[6:9] == "999":
+                    if self.p17.is_alive():
+                        self.p17.join()                                      
             # Clear msg-to-process string
             self.msg_to_process = str()
         else:

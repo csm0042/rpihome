@@ -21,8 +21,7 @@ __status__ = "Development"
 
 # Wemo Device Helper Class ***************************************************************************************************
 class WemoHelper(object):
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self):
         self.device_list = []
         self.device_name = str()
         self.found = False
@@ -44,10 +43,10 @@ class WemoHelper(object):
             if (device.name.lower()).find(self.device_name) != -1:
                 self.found = True
                 device.off()
-                self.logger.log(logging.DEBUG, "OFF command sent to device: %s" % self.device_name)
+                logging.log(logging.DEBUG, "OFF command sent to device: %s" % self.device_name)
         # If match is not found, log error and continue
         if self.found is False:
-            self.logger.log(logging.DEBUG, "Could not find device: %s on the network" %
+            logging.log(logging.DEBUG, "Could not find device: %s on the network" %
                             self.device_name)
 
     def switch_on(self, msg_in):
@@ -61,10 +60,10 @@ class WemoHelper(object):
             if (device.name.lower()).find(self.device_name) != -1:
                 self.found = True
                 device.on()
-                self.logger.log(logging.DEBUG, "ON command sent to device: %s" % self.device_name)
+                logging.log(logging.DEBUG, "ON command sent to device: %s" % self.device_name)
         # If match is not found, log error and continue
         if self.found is False:
-            self.logger.log(logging.DEBUG, "Could not find device: %s on the network" %
+            logging.log(logging.DEBUG, "Could not find device: %s on the network" %
                             self.device_name)
 
     def query_status(self, msg_in, msg_out):
@@ -73,7 +72,7 @@ class WemoHelper(object):
         self.device_name = str(msg_in[10:]).lower()
         self.request_from = str(msg_in[0:2])
         self.found = False
-        self.logger.log(logging.DEBUG, "Querrying status for device: %s" % str(self.device_name))
+        logging.log(logging.DEBUG, "Querrying status for device: %s" % str(self.device_name))
         # Search list of existing devices on network for matching device name
         for index, device in enumerate(self.device_list):
             # If match is found, get status update from device, then send response message to
@@ -83,24 +82,24 @@ class WemoHelper(object):
                 self.state = device.get_state(force_update=True)
                 msg_out.put_nowait("16,%s,163,%s,%s" %
                                    (self.request_from, str(self.state), self.device_name))
-                self.logger.log(logging.DEBUG, "Response message [%s] sent for device: %s" %
+                logging.log(logging.DEBUG, "Response message [%s] sent for device: %s" %
                                 (str(self.state), self.device_name))
             if self.found is False:
-                self.logger.log(logging.DEBUG, "Could not find device: %s on network" %
+                logging.log(logging.DEBUG, "Could not find device: %s on network" %
                                 str(self.device_name))
 
     def discover_device(self, msg_in):
         """ Searches for a wemo device on the network at a particular IP address and appends it to
         the master device list if found """
         self.device_address = msg_in[10:]
-        self.logger.log(logging.DEBUG, "Searching for wemo device at: %s" %
+        logging.log(logging.DEBUG, "Searching for wemo device at: %s" %
                         self.device_address)
         # Probe device at specified IP address for port it is listening on
         try:
             self.port = None
             self.port = pywemo.ouimeaux_device.probe_wemo(self.device_address)
         except:
-            self.logger.log(logging.DEBUG, "Error discovering port of wemo device at address: %s" %
+            logging.log(logging.DEBUG, "Error discovering port of wemo device at address: %s" %
                             str(self.device_address))
             self.port = None
         # If port is found, probe device for type and other attributes
@@ -110,7 +109,7 @@ class WemoHelper(object):
                 self.device = None
                 self.device = pywemo.discovery.device_from_description(self.url, None)
             except:
-                self.logger.log(logging.DEBUG, "Error discovering attributes for device at \
+                logging.log(logging.DEBUG, "Error discovering attributes for device at \
                                 address: %s, port: %s" %
                                 (str(self.device_address), str(self.port)))
         # If device is found and probe was successful, check existing device list to
@@ -120,11 +119,11 @@ class WemoHelper(object):
             for index, device in enumerate(self.device_list):
                 if self.device.name == device.name:
                     self.found = True
-                    self.logger.log(logging.DEBUG, "Device: %s already exists in device \
+                    logging.log(logging.DEBUG, "Device: %s already exists in device \
                                     list at address: %s and port: %s" %
                                     (self.device.name, self.device_address, self.port))
             # If not found in list, add it
             if self.found is False:
-                self.logger.log(logging.DEBUG, "Found wemo device name: %s at: %s, port: %s" %
+                logging.log(logging.DEBUG, "Found wemo device name: %s at: %s, port: %s" %
                                 (self.device.name, self.device_address, self.port))
                 self.device_list.append(copy.copy(self.device))

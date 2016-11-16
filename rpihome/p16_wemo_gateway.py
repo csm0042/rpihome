@@ -24,27 +24,57 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class WemoProcess(multiprocessing.Process):
     """ WEMO gateway process class and methods """
-    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer):
-        multiprocessing.Process.__init__(self, name=name)
-        self.configure_logger(name, log_queue, log_configurer)
-        self.handlers = []
-        self.msg_in_queue = msg_in_queue
-        self.msg_out_queue = msg_out_queue
+    def __init__(self, **kwargs):
+        # Set default input parameter values
+        self.name = "undefined"
+        self.msg_in_queue = multiprocessing.Queue(-1)
+        self.msg_out_queue = multiprocessing.Queue(-1)
+        self.logfile = "logfile"
+        self.log_remote = False    
+        # Update default elements based on any parameters passed in
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "name":
+                    self.name = value
+                if key == "msgin":
+                    self.msg_in_queue = value
+                if key == "msgout":
+                    self.msg_out_queue = value
+                if key == "logqueue":
+                    self.log_queue = value
+                if key == "logfile":
+                    self.logfile = value
+                if key == "logremote":
+                    self.log_remote = value
+        # Initialize parent class 
+        multiprocessing.Process.__init__(self, name=self.name)
+        # Create remaining class elements        
         self.work_queue = multiprocessing.Queue(-1)
         self.msg_in = str()
         self.msg_to_process = str()
-        self.wemo = WemoHelper(self.logger)
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = bool()
         self.main_loop = bool()
         self.close_pending = False
 
 
-    def configure_logger(self, name, log_queue, log_configurer):
+    def configure_remote_logger(self):
         """ Method to configure multiprocess logging """
-        log_configurer(log_queue)
-        self.logger = logging.getLogger(name)
-        self.logger.debug("Logging handler for %s process started", str(name))
+        self.logger = logging.getLogger(self.name)        
+        self.handler = logging.handlers.QueueHandler(self.log_queue)
+        self.logger.addHandler(self.handler)
+        self.logger.debug("Logging handler for %s process started", self.name)
+
+
+    def configure_local_logger(self):
+        """ Method to configure local logging """
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.DEBUG)
+        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
+        self.logger.debug("Logging handler for %s process started", self.name)
 
 
     def kill_logger(self):
@@ -112,6 +142,14 @@ class WemoProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        # Configure logging
+        if self.log_remote is True:
+            self.configure_remote_logger()
+        else:
+            self.configure_local_logger()
+        # Create wemo helper object
+        self.wemo = WemoHelper()
+        # Main process loop
         self.main_loop = True
         while self.main_loop is True:
             # Process incoming messages

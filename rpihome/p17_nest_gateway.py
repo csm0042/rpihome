@@ -4,8 +4,11 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ****************************************
 import datetime
+import linecache
 import logging
 import multiprocessing
+import os
+import sys
 import time
 
 import nest
@@ -25,15 +28,33 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class NestProcess(multiprocessing.Process):
     """ Nest gateway process class and methods """
-    def __init__(self, name, msg_in_queue, msg_out_queue, log_queue, log_configurer,
-                 username, password):
-        multiprocessing.Process.__init__(self, name=name)
-        self.username = username
-        self.password = password
-        self.configure_logger(name, log_queue, log_configurer)
-        self.handlers = []
-        self.msg_in_queue = msg_in_queue
-        self.msg_out_queue = msg_out_queue
+    def __init__(self, **kwargs):
+        # Set default input parameter values
+        self.name = "undefined"
+        self.msg_in_queue = multiprocessing.Queue(-1)
+        self.msg_out_queue = multiprocessing.Queue(-1)
+        self.logfile = "logfile"
+        self.log_remote = False    
+        # Update default elements based on any parameters passed in
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "name":
+                    self.name = value
+                if key == "msgin":
+                    self.msg_in_queue = value
+                if key == "msgout":
+                    self.msg_out_queue = value
+                if key == "logqueue":
+                    self.log_queue = value
+                if key == "logfile":
+                    self.logfile = value
+                if key == "logremote":
+                    self.log_remote = value
+        # Initialize parent class 
+        multiprocessing.Process.__init__(self, name=self.name)
+        # Create remaining class elements        
+        self.username = str()
+        self.password = str()
         self.work_queue = multiprocessing.Queue(-1)
         self.msg_in = str()
         self.msg_to_process = str()
@@ -43,11 +64,23 @@ class NestProcess(multiprocessing.Process):
         self.close_pending = False
 
 
-    def configure_logger(self, name, log_queue, log_configurer):
+    def configure_remote_logger(self):
         """ Method to configure multiprocess logging """
-        log_configurer(log_queue)
-        self.logger = logging.getLogger(name)
-        self.logger.debug("Logging handler for %s process started", str(name))
+        self.logger = logging.getLogger(self.name)        
+        self.handler = logging.handlers.QueueHandler(self.log_queue)
+        self.logger.addHandler(self.handler)
+        self.logger.debug("Logging handler for %s process started", self.name)
+
+
+    def configure_local_logger(self):
+        """ Method to configure local logging """
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.DEBUG)
+        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
+        self.logger.debug("Logging handler for %s process started", self.name)
 
 
     def kill_logger(self):
@@ -105,7 +138,23 @@ class NestProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        # Configure logging
+        if self.log_remote is True:
+            self.configure_remote_logger()
+        else:
+            self.configure_local_logger()
+        # Get credentials for login
+        self.credentials_file = os.path.join(os.path.dirname(sys.argv[0]), "credentials/nest.txt")
+        if os.path.isfile(self.credentials_file):
+            self.username = linecache.getline(self.credentials_file, 1)
+            self.password = linecache.getline(self.credentials_file, 2)
+        else:
+            self.username = "username"
+            self.password = "password"
+        # Login to Nest account
         self.nest = nest.Nest(self.username, self.password)
+        print(self.nest)
+        # Main process loop
         self.main_loop = True
         while self.main_loop is True:
             # Process incoming messages
