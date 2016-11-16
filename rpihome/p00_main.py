@@ -57,11 +57,8 @@ class MainProcess(object):
         self.work_queue = multiprocessing.Queue(-1)
         self.close_pending = False
         self.process_path = os.path.dirname(sys.argv[0])
-        self.logfile = LogFilePath().return_path_and_name_combined(
-            name="p01", path=self.process_path)
-        self.enable = [
-            True, True, True, False, False, False, False, False, False, False, False, True, False,
-            True, False, True, True, True]
+        self.logfile = LogFilePath().return_path_and_name_combined(name="p01", path=self.process_path)
+        self.enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True, True, True]
         self.nest_username = str()
         self.nest_password = str()
         # Spawn individual processes

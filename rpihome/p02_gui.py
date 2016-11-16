@@ -4,6 +4,7 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ****************************************
 import copy
+import datetime
 import linecache
 import logging
 import multiprocessing
@@ -66,6 +67,9 @@ class MainWindow(multiprocessing.Process):
         self.close_pending = False
         self.last_hb = time.time()
         self.index = 0
+        self.time_to_go = datetime.time(6,30)
+        self.datetime_to_go = str()
+        self.time_remaining = str()
         self.scanWemo = False
         # Initialize pointer for alarm display window
         if os.path.isfile(self.display_file):
@@ -151,11 +155,19 @@ class MainWindow(multiprocessing.Process):
         self.divide_frame0602()
         # Begin adding widgets to frames
         self.top_divider_bar1()
-        self.alarm_log_window()
         self.bottom_divider_bar1()
         self.top_divider_bar2()
         self.bottom_divider_bar2()
+        # Top Window selector buttons
+        self.frame0201_buttons()
+        # Top window content
+        self.status_window()
+        self.alarm_log_window()
+        self.frame0203b.pack_forget()
+        self.frame0203b_packed = False
+        # Bottom window selector buttons
         self.frame0501_buttons()
+        # Bottom window content
         self.frame0503a_content()
         self.frame0503b_content()
         self.frame050301b.pack_forget()
@@ -172,7 +184,7 @@ class MainWindow(multiprocessing.Process):
         """ Method to create the main tkinter window """
         self.window = tk.Tk()   
         self.window.title("RPi Home")
-        self.window.geometry("%sx%s+%s+%s" % (800, 810, 1, 1))
+        self.window.geometry("%sx%s+%s+%s" % (840, 810, 1, 1))
         self.window.config(background="black") 
         self.logger.debug("Main application window created")
 
@@ -182,7 +194,9 @@ class MainWindow(multiprocessing.Process):
         self.helv08bold = font.Font(family="Helvetica", size=8, weight="bold")
         self.helv10bold = font.Font(family="Helvetica", size=10, weight="bold")
         self.helv12bold = font.Font(family="Helvetica", size=12, weight="bold")
+        self.helv14bold = font.Font(family="Helvetica", size=14, weight="bold")
         self.helv16bold = font.Font(family="Helvetica", size=16, weight="bold")
+        self.helv24bold = font.Font(family="Helvetica", size=24, weight="bold")
         self.helv36 = font.Font(family="Helvetica", size=36, weight="bold")
 
 
@@ -251,7 +265,7 @@ class MainWindow(multiprocessing.Process):
 
     def divide_frame02(self):
         # split frame 2 into 3 sections along a vertical axis
-        self.frame0201 = tk.Frame(self.frame02, background="#2350b5", height=200, width=85)
+        self.frame0201 = tk.Frame(self.frame02, background="black", height=200, width=85)
         self.frame0201.pack(side="left", fill="y", expand=False, padx=0, pady=0)  
         self.frame0201.pack_propagate(False)  
         self.frame0202 = tk.Frame(self.frame02, background="black", height=200, width=20)
@@ -346,26 +360,64 @@ class MainWindow(multiprocessing.Process):
     def top_divider_bar1(self):
         self.button010101 = tk.Button(self.frame0101, anchor="nw", background="black", borderwidth=0, command=self.action010101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_NW_img, justify="right", relief="flat", text="010101", height=50, width=105)
         self.button010101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
-        self.label010202 = tk.Label(self.frame010202, anchor="e", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="APPLICATION LOG")
+        self.label010202 = tk.Label(self.frame010202, anchor="e", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="CURRENT STATUS")
         self.label010202.pack(side="right", fill="both", expand=True, padx=10, pady=7)  
+
 
     def bottom_divider_bar1(self):
         self.button030101 = tk.Button(self.frame0301, anchor="sw", background="black", borderwidth=0, command=self.action030101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_SW_img, justify="right", relief="flat", text="030101", height=50, width=105)
         self.button030101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
 
+
     def top_divider_bar2(self):
         self.button040101 = tk.Button(self.frame0401, anchor="nw", background="black", borderwidth=0, command=self.action040101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_NW_img, justify="right", relief="flat", text="040101", height=50, width=105)
         self.button040101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
-        self.label040202 = tk.Label(self.frame040202, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="CURRENT STATUS")
+        self.label040202 = tk.Label(self.frame040202, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="right", relief="flat", text="SERVICES")
         self.label040202.pack(side="right", fill="none", expand=False, padx=10, pady=7) 
   
+
     def bottom_divider_bar2(self):
         self.button060101 = tk.Button(self.frame0601, anchor="sw", background="black", borderwidth=0, command=self.action060101, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_elbow_SW_img, justify="right", relief="flat", text="060101", height=50, width=105)
         self.button060101.pack(side="left", fill="both", expand=True, padx=0, pady=0)
 
+
+    def frame0201_buttons(self):
+        """ FRAME 02 SCREEN SELECTOR BUTTONS """
+        self.button020101 = tk.Button(self.frame0201, background="#2350b5", borderwidth=0, command=self.action020101, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="STATUS", height=3, width=10)
+        self.button020101.pack(side="top", fill="x", expand=False, padx=0, pady=1)
+        self.button020102 = tk.Button(self.frame0201, background="#2350b5", borderwidth=0, command=self.action020102, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="LOGS", height=3, width=10)
+        self.button020102.pack(side="top", fill="x", expand=False, padx=0, pady=1)   
+        self.button0201xx = tk.Button(self.frame0201, background="#2350b5", borderwidth=0, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", height=3, width=10)
+        self.button0201xx.pack(side="top", fill="both", expand=True, padx=0, pady=1)          
+
+
+    def status_window(self):
+        self.frame0203a = tk.Frame(self.frame0203, background="black")
+        self.frame0203a.pack(side="top", fill="both", expand=True, padx=0, pady=0)
+        self.label0203a01 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT DATE & TIME")
+        self.label0203a01.pack(side="top", fill="both", expand=False, padx=0, pady=2)
+        self.text0203a01 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv24bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
+        self.text0203a01.pack(side="top", fill="both", expand=True, padx=0, pady=2)
+        self.label0203a02 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT CONDITIONS")
+        self.label0203a02.pack(side="top", fill="both", expand=False, padx=0, pady=2)        
+        self.text0203a02 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv14bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
+        self.text0203a02.pack(side="top", fill="both", expand=True, padx=0, pady=2)
+        self.label0203a03 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="TOMORROW'S FORECAST")
+        self.label0203a03.pack(side="top", fill="both", expand=False, padx=0, pady=2)        
+        self.text0203a03 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv14bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
+        self.text0203a03.pack(side="top", fill="both", expand=True, padx=0, pady=2)              
+        self.frame0203a_packed = True
+        self.frame0203a.pack_propagate(False)
+
+
     def alarm_log_window(self):
-        self.text020301 = tk.Text(self.frame0203, background="black", borderwidth=0, font=self.helv08bold, foreground="white", highlightthickness=0, height=10, width=12, wrap="word")
-        self.text020301.pack(side="left", fill="both", expand=True, padx=0, pady=10)
+        self.frame0203b = tk.Frame(self.frame0203, background="black")
+        self.frame0203b.pack(side="top", fill="both", expand=True, padx=0, pady=0)         
+        self.text0203b01 = tk.Text(self.frame0203b, background="black", borderwidth=0, font=self.helv08bold, foreground="white", highlightthickness=0, height=10, width=12, wrap="word")
+        self.text0203b01.pack(side="left", fill="both", expand=True, padx=0, pady=10)
+        self.frame0203b_packed = True
+        self.frame0203b.pack_propagate(False)        
+
 
     def frame0501_buttons(self):
         """ FRAME 05 SCREEN SELECTOR BUTTONS """
@@ -451,6 +503,7 @@ class MainWindow(multiprocessing.Process):
             self.button050301a08a.grid(row=8, column=0, padx=0, pady=0)
             self.button050301a08b.grid(row=8, column=1, padx=0, pady=0)        
             self.button050301a08c.grid(row=8, column=2, padx=0, pady=0)        
+
 
     def frame0503b_content(self):
         """ LIGHTING CONTROL SCREEN """
@@ -613,16 +666,69 @@ class MainWindow(multiprocessing.Process):
         self.iter = 1
         while len(self.text) != 0 and self.iter < 1000:
             if self.text.find("heartbeat") == -1:
-                self.text020301.insert(tk.END, self.text)
-                self.text020301.yview_pickplace("end")
+                self.text0203b01.insert(tk.END, self.text)
+                self.text0203b01.yview_pickplace("end")
             self.line += 1
             self.text = linecache.getline(self.display_file, self.line)
             self.iter += 1
         linecache.clearcache()
 
+    def update_status_window(self):
+        self.text0203a01.delete(1.0, tk.END)
+        self.dt = datetime.datetime.now()
+        self.datetime_to_go = datetime.datetime.combine(self.dt.date(), self.time_to_go)
+        self.start_time = self.datetime_to_go + datetime.timedelta(minutes=-60)
+        self.end_time = self.datetime_to_go + datetime.timedelta(minutes=30)
+        if self.start_time <= self.dt <= self.end_time:
+            if self.dt <= self.datetime_to_go:
+                self.time_remaining = self.datetime_to_go - self.dt
+                self.label0203a01.config(foreground="orange", text="TIME TO GO")
+                self.text0203a01.insert(tk.END, ("%s" % self.time_remaining))
+                self.text0203a01.config(foreground="orange")
+            else:
+                self.time_remaining = self.dt - self.datetime_to_go
+                self.label0203a01.config(foreground="red", text="WE ARE LATE!!")
+                self.text0203a01.insert(tk.END, ("%s" % self.time_remaining))
+                self.text0203a01.config(foreground="red")
+        else:
+            self.label0203a01.config(foreground="yellow", text="CURRENT DATE & TIME")
+            self.text0203a01.insert(tk.END, self.dt.strftime("%Y-%m-%d     %H:%M:%S"))
+            self.text0203a01.config(foreground="white")
+        # Current condition display
+        self.text0203a02.delete(1.0, tk.END)
+        self.text0203a02.insert(tk.END, "60 Degrees and sunny with calm winds") 
+        # Forecast display
+        self.text0203a03.delete(1.0, tk.END)
+        self.text0203a03.insert(tk.END, "Colder and windy, with a low of 40 and high of 50 degrees")                  
+
+
     def action010101(self):
         self.logger.debug("Button 010101 was pressed")
         pass
+
+
+    def action020101(self):
+        if self.frame0203a_packed is False:
+            self.frame0203a.pack(anchor="nw", side="top", fill="both", expand=True, padx=0, pady=0)
+            self.frame0203a.pack_propagate(False)
+            self.frame0203a_packed = True
+            self.label010202.config(text="CURRENT STATUS") 
+        pass
+        if self.frame0203b_packed is True:
+            self.frame0203b.pack_forget()
+            self.frame0203b_packed = False
+
+    def action020102(self):
+        if self.frame0203b_packed is False:
+            self.frame0203b.pack(anchor="nw", side="top", fill="both", expand=True, padx=0, pady=0)
+            self.frame0203b.pack_propagate(False)
+            self.frame0203b_packed = True
+            self.label010202.config(text="SYSTEM LOG")
+        pass
+        if self.frame0203a_packed is True:
+            self.frame0203a.pack_forget()
+            self.frame0203a_packed = False
+
 
     def action030101(self):
         self.logger.debug("Button 030101 was pressed")
@@ -631,10 +737,7 @@ class MainWindow(multiprocessing.Process):
     def action040101(self):
         self.logger.debug("Button 040101 was pressed")
         pass
-
-    def action060101(self):
-        self.logger.debug("Button 060101 was pressed")
-        pass 
+ 
 
     def action050101(self):
         self.scanWemo = False
@@ -642,7 +745,8 @@ class MainWindow(multiprocessing.Process):
         if self.frame050301a_packed is False:
             self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301a.pack_propagate(False)
-            self.frame050301a_packed = True 
+            self.frame050301a_packed = True
+            self.label040202.config(text="SYSTEM SERVICES")
         pass           
         if self.frame050301b_packed is True:
             self.frame050301b.pack_forget()
@@ -661,7 +765,8 @@ class MainWindow(multiprocessing.Process):
         if self.frame050301b_packed is False:
             self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301b.pack_propagate(False)
-            self.frame050301b_packed = True 
+            self.frame050301b_packed = True
+            self.label040202.config(text="INTERIOR LIGHTING")
         pass           
         if self.frame050301a_packed is True:
             self.frame050301a.pack_forget()
@@ -681,6 +786,7 @@ class MainWindow(multiprocessing.Process):
             self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301c.pack_propagate(False)
             self.frame050301c_packed = True 
+            self.label040202.config(text="HOME/AWAY STATUS")
         pass           
         if self.frame050301a_packed is True:
             self.frame050301a.pack_forget()
@@ -699,7 +805,8 @@ class MainWindow(multiprocessing.Process):
         if self.frame050301d_packed is False:
             self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301d.pack_propagate(False)
-            self.frame050301d_packed = True 
+            self.frame050301d_packed = True
+            self.label040202.config(text="ENVIRONMENTAL CONTROL")
         pass           
         if self.frame050301a_packed is True:
             self.frame050301a.pack_forget()
@@ -1061,6 +1168,10 @@ class MainWindow(multiprocessing.Process):
         #self.msg_out_queue.put_nowait("02,16,160,fylt1") 
         self.button050301c01b.config(image=self.button_square_red_img)    
 
+    def action060101(self):
+        self.logger.debug("Button 060101 was pressed")
+        pass        
+
     def after_tasks(self):
         #self.logger.debug("Running \"after\" task")
         # Process incoming message queue
@@ -1211,8 +1322,10 @@ class MainWindow(multiprocessing.Process):
             self.window.destroy()
         else:
             # Update visual aspects of main window (text, etc)
-            self.update_alarm_window()
-            #self.logger.debug("Log viewer window updated")
+            if self.frame0203a_packed is True:
+                self.update_status_window()
+            if self.frame0203b_packed is True:
+                self.update_alarm_window()
             # Re-schedule after task to run again in another 1000ms
             self.window.after(500, self.after_tasks)
             #self.logger.debug("Re-scheduled next after event")
