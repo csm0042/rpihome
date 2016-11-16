@@ -30,8 +30,6 @@ from rpihome.p16_wemo_gateway import WemoProcess
 from rpihome.p17_nest_gateway import NestProcess
 
 
-
-
 # Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
@@ -98,10 +96,17 @@ class MainProcess(object):
         """ Method to configure local logging """
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG)
-        handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-        formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
-        self.handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile,
+                                                                 when="h",
+                                                                 interval=1,
+                                                                 backupCount=24,
+                                                                 encoding=None,
+                                                                 delay=False,
+                                                                 utc=False,
+                                                                 atTime=None)
+        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
         self.logger.debug("Logging handler for %s process started", self.name)        
 
 

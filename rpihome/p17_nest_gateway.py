@@ -153,7 +153,6 @@ class NestProcess(multiprocessing.Process):
             self.password = "password"
         # Login to Nest account
         self.nest = nest.Nest(self.username, self.password)
-        print(self.nest)
         # Main process loop
         self.main_loop = True
         while self.main_loop is True:
