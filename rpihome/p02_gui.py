@@ -71,6 +71,9 @@ class MainWindow(multiprocessing.Process):
         self.datetime_to_go = str()
         self.time_remaining = str()
         self.scanWemo = False
+        self.current_conditions = ""
+        self.current_forecast = ""
+        self.tomorrow_forecast = ""
         # Initialize pointer for alarm display window
         if os.path.isfile(self.display_file):
             self.line = sum(1 for line in open(self.display_file)) - 50
@@ -396,16 +399,12 @@ class MainWindow(multiprocessing.Process):
         self.frame0203a.pack(side="top", fill="both", expand=True, padx=0, pady=0)
         self.label0203a01 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT DATE & TIME")
         self.label0203a01.pack(side="top", fill="both", expand=False, padx=0, pady=2)
-        self.text0203a01 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv24bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
+        self.text0203a01 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv24bold, foreground="white", highlightthickness=0, height=1, width=30, wrap="word")
         self.text0203a01.pack(side="top", fill="both", expand=True, padx=0, pady=2)
-        self.label0203a02 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT CONDITIONS")
+        self.label0203a02 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="WEATHER FORECAST")
         self.label0203a02.pack(side="top", fill="both", expand=False, padx=0, pady=2)        
-        self.text0203a02 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv14bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
-        self.text0203a02.pack(side="top", fill="both", expand=True, padx=0, pady=2)
-        self.label0203a03 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="TOMORROW'S FORECAST")
-        self.label0203a03.pack(side="top", fill="both", expand=False, padx=0, pady=2)        
-        self.text0203a03 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv14bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
-        self.text0203a03.pack(side="top", fill="both", expand=True, padx=0, pady=2)              
+        self.text0203a02 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv10bold, foreground="white", highlightthickness=0, height=1, width=30, wrap="word")
+        self.text0203a02.pack(side="top", fill="both", expand=True, padx=0, pady=2)             
         self.frame0203a_packed = True
         self.frame0203a.pack_propagate(False)
 
@@ -696,10 +695,11 @@ class MainWindow(multiprocessing.Process):
             self.text0203a01.config(foreground="white")
         # Current condition display
         self.text0203a02.delete(1.0, tk.END)
-        self.text0203a02.insert(tk.END, "60 Degrees and sunny with calm winds") 
-        # Forecast display
-        self.text0203a03.delete(1.0, tk.END)
-        self.text0203a03.insert(tk.END, "Colder and windy, with a low of 40 and high of 50 degrees")                  
+        self.text0203a02.insert(tk.END, self.current_conditions)
+        self.text0203a02.insert(tk.END, "\n")
+        self.text0203a02.insert(tk.END, self.current_forecast)
+        self.text0203a02.insert(tk.END, "\n")
+        self.text0203a02.insert(tk.END, self.tomorrow_forecast)                 
 
 
     def action010101(self):
@@ -1185,7 +1185,6 @@ class MainWindow(multiprocessing.Process):
             if self.msg_in[3:5] == "02":
                 
                 if self.msg_in[6:9] == "001":
-                    #self.logger.debug("Heartbeat received: %s" % self.msg_in)
                     self.last_hb = time.time()
                 
                 elif self.msg_in[6:9] == "002":
@@ -1205,7 +1204,7 @@ class MainWindow(multiprocessing.Process):
                         self.button050301a07b.config(image=self.button_square_green_img)
                     elif self.msg_in[0:2] == "17":
                         self.button050301a08b.config(image=self.button_square_green_img)
-                
+        
                 elif self.msg_in[6:9] == "003":
                     if self.msg_in[0:2] == "01":
                         self.button050301a01b.config(image=self.button_square_red_img)
@@ -1223,6 +1222,15 @@ class MainWindow(multiprocessing.Process):
                         self.button050301a07b.config(image=self.button_square_red_img)
                     elif self.msg_in[0:2] == "17":
                         self.button050301a08b.config(image=self.button_square_red_img)
+
+                elif self.msg_in[6:9] == "020":
+                    self.current_conditions = self.msg_in[10:]
+
+                elif self.msg_in[6:9] == "021":
+                    self.current_forecast = self.msg_in[10:]
+
+                elif self.msg_in[6:9] == "022":
+                    self.tomorrow_forecast = self.msg_in[10:]                                    
                 
                 elif self.msg_in[6:9] == "163":
                     if self.msg_in[10:11] == "0":
@@ -1262,7 +1270,7 @@ class MainWindow(multiprocessing.Process):
                         elif self.msg_in[12:] == "lrlt1":
                             self.button050301b05b.config(image=self.button_square_green_img)
                         elif self.msg_in[12:] == "drlt1":
-                            self.button050301b06b.config(image=self.button_square_green_img)                        
+                            self.button050301b06b.config(image=self.button_square_green_img)
                         elif self.msg_in[12:] == "b1lt1":
                             self.button050301b08b.config(image=self.button_square_green_img)
                         elif self.msg_in[12:] == "b1lt2":

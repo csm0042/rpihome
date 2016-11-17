@@ -107,7 +107,6 @@ class HomeProcess(multiprocessing.Process):
                 if self.msg_in[3:5] == "13":
                     if self.msg_in[6:9] == "001":
                         self.last_hb = datetime.datetime.now()
-                        self.logger.debug("heartbeat received")
                     elif self.msg_in[6:9] == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True

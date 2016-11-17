@@ -62,6 +62,17 @@ class NestProcess(multiprocessing.Process):
         self.in_msg_loop = bool()
         self.main_loop = bool()
         self.close_pending = False
+        self.structure = []
+        self.current_condition = str()
+        self.current_temp = str()
+        self.current_wind_dir = str()
+        self.current_humid = str()
+        self.result = str()        
+        self.forecast = []
+        self.forecast_condition = str()
+        self.forecast_temp_low = str()
+        self.forecast_temp_high = str()
+        self.forecast_humid = str()
 
 
     def configure_remote_logger(self):
@@ -106,7 +117,6 @@ class NestProcess(multiprocessing.Process):
                 if self.msg_in[3:5] == "17":
                     if self.msg_in[6:9] == "001":
                         self.last_hb = datetime.datetime.now()
-                        self.logger.debug("heartbeat received")
                     elif self.msg_in[6:9] == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
@@ -129,12 +139,49 @@ class NestProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
-            # Process wemo off commands
-            pass
+            if self.msg_to_process[6:9] == "020":
+                self.msg_out_queue.put_nowait("17,02,020," + self.current_conditions())
+            elif self.msg_to_process[6:9] == "021":
+                self.msg_out_queue.put_nowait("17,02,021," + self.current_forecast())
+            elif self.msg_to_process[6:9] == "022":
+                self.msg_out_queue.put_nowait("17,02,022," + self.tomorrow_forecast())
             # Clear msg-to-process string
             self.msg_to_process = str()
         else:
             pass
+
+
+    def current_conditions(self):
+        self.structure = self.nest.structures[0]
+        self.current_temp = str(int((self.structure.weather.current.temperature * 1.8) + 32))
+        self.current_condition = self.structure.weather.current.condition
+        self.current_wind_dir = self.structure.weather.current.wind.direction
+        self.current_humid = str(int(self.structure.weather.current.humidity))
+        self.result = ("Currently:    %s    Temp: %s F:    Winds: %s    Humidity: %s percent" % (self.current_condition, self.current_temp, self.current_wind_dir, self.current_humid))
+        return self.result
+
+
+    def current_forecast(self):
+        self.structure = self.nest.structures[0]
+        self.forecast = self.structure.weather.daily[0]
+        self.forecast_condition = self.forecast.condition
+        self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
+        self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
+        self.forecast_humid = str(int(self.forecast.humidity))
+        self.result = ("Today:        %s     Low: %s F     High: %s F    Humidity: %s percent" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
+        return self.result  
+
+
+    def tomorrow_forecast(self):
+        self.structure = self.nest.structures[0]
+        self.forecast = self.structure.weather.daily[1]
+        self.forecast_condition = self.forecast.condition
+        self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
+        self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
+        self.forecast_humid = str(int(self.forecast.humidity))
+        self.result = ("Tomorrow:     %s    Low: %s F    High: %s F    Humidity: %s percent" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
+        return self.result              
+        
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
@@ -151,6 +198,12 @@ class NestProcess(multiprocessing.Process):
         else:
             self.username = "username"
             self.password = "password"
+        # clean up extracted data
+        self.username = str(self.username).lstrip()
+        self.username = str(self.username).rstrip()
+        self.password = str(self.password).lstrip()
+        self.password = str(self.password).rstrip()
+        print(self.username + self.password)
         # Login to Nest account
         self.nest = nest.Nest(self.username, self.password)
         # Main process loop

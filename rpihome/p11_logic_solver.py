@@ -69,6 +69,7 @@ class LogicProcess(multiprocessing.Process):
         self.msg_in = str()
         self.msg_to_process = str()
         self.last_hb = datetime.datetime.now()
+        self.last_forecast_update = datetime.datetime.now() + datetime.timedelta(minutes=-15)
         self.dst = USdst()
         self.utc_offset = datetime.timedelta(hours=0)
         self.in_msg_loop = bool()
@@ -132,6 +133,14 @@ class LogicProcess(multiprocessing.Process):
                          datetime.datetime.now() + datetime.timedelta(minutes=-15)]
 
 
+    def update_forecast(self):
+        """ Requests a forecast update from the nest module """
+        self.msg_out_queue.put_nowait("11,17,020")
+        self.msg_out_queue.put_nowait("11,17,021")
+        self.msg_out_queue.put_nowait("11,17,022")
+        self.last_forecast_update = datetime.datetime.now()
+
+
     def process_in_msg_queue(self):
         """ Method to cycle through incoming message queue, filtering out heartbeats and
         mis-directed messages.  Messages corrected destined for this process are loaded
@@ -146,7 +155,6 @@ class LogicProcess(multiprocessing.Process):
                 if self.msg_in[3:5] == "11":
                     if self.msg_in[6:9] == "001":
                         self.last_hb = datetime.datetime.now()
-                        self.logger.debug("heartbeat received")
                     elif self.msg_in[6:9] == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
@@ -313,6 +321,8 @@ class LogicProcess(multiprocessing.Process):
                 self.check_dst()
                 self.run_automation()
                 self.run_commands()
+                if datetime.datetime.now() > self.last_forecast_update + datetime.timedelta(minutes=15):
+                    self.update_forecast()
 
             # Close process
             if (self.close_pending is True or
