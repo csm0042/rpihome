@@ -161,9 +161,11 @@ class LogicProcess(multiprocessing.Process):
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
                     self.msg_in = str()
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                    
                 self.msg_in = str()
             else:
                 self.in_msg_loop = False
@@ -178,6 +180,7 @@ class LogicProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
             # Process user "away" messages
             if self.msg_to_process[6:9] == "100":
                 if self.msg_to_process[10:] == "user1":

@@ -51,6 +51,7 @@ def listener_process(msg_in_queue, msg_out_queue, log_configurer, logfile):
                 else:
                     # If message isn't destined for this process, drop it into the queue for the main process so it can re-forward it to the proper recipient.
                     msg_out_queue.put_nowait(msg_in)
+                    self.logger.debug("Redirecting message [%s] back to main", msg_in)                     
                 pass
                 msg_in = None
         

@@ -123,9 +123,11 @@ class NestProcess(multiprocessing.Process):
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)
                     self.msg_in = str()
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)
                 self.msg_in = str()
             else:
                 self.in_msg_loop = False
@@ -139,48 +141,114 @@ class NestProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
             if self.msg_to_process[6:9] == "020":
-                self.msg_out_queue.put_nowait("17,02,020," + self.current_conditions())
+                self.connect()
+                self.response = "17,02,020," + self.current_conditions()
+                self.msg_out_queue.put_nowait(self.response)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))
             elif self.msg_to_process[6:9] == "021":
-                self.msg_out_queue.put_nowait("17,02,021," + self.current_forecast())
+                self.connect()
+                self.response = "17,02,021," + self.current_forecast()
+                self.msg_out_queue.put_nowait(self.response)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))                
             elif self.msg_to_process[6:9] == "022":
-                self.msg_out_queue.put_nowait("17,02,022," + self.tomorrow_forecast())
+                self.connect()
+                self.response = "17,02,022," + self.tomorrow_forecast()
+                self.msg_out_queue.put_nowait(self.response)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))                
             # Clear msg-to-process string
             self.msg_to_process = str()
         else:
             pass
 
+    
+    def connect(self):
+        # Get credentials for login
+        self.credentials_file = os.path.join(os.path.dirname(sys.argv[0]), "credentials/nest.txt")
+        if os.path.isfile(self.credentials_file):
+            self.logger.debug("Credential file found, reading attributes from file")
+            self.username = linecache.getline(self.credentials_file, 1)
+            self.password = linecache.getline(self.credentials_file, 2)
+        else:
+            self.logger.debug("Credential file NOT found, continuing with default values")
+            self.username = "username"
+            self.password = "password"
+        # clean up extracted data
+        self.username = str(self.username).lstrip()
+        self.username = str(self.username).rstrip()
+        self.password = str(self.password).lstrip()
+        self.password = str(self.password).rstrip()
+        # Login to Nest account
+        self.logger.debug("Attempting to connect to NEST account")
+        try:
+            self.nest = nest.Nest(self.username, self.password)
+            self.logger.debug("Connection successful")
+        except:
+            self.nest = None
+            self.logger.debug("Could not connect to NEST account")
+
 
     def current_conditions(self):
-        self.structure = self.nest.structures[0]
-        self.current_temp = str(int((self.structure.weather.current.temperature * 1.8) + 32))
-        self.current_condition = self.structure.weather.current.condition
-        self.current_wind_dir = self.structure.weather.current.wind.direction
-        self.current_humid = str(int(self.structure.weather.current.humidity))
-        self.result = ("Currently:    %s    Temp: %s F:    Winds: %s    Humidity: %s percent" % (self.current_condition, self.current_temp, self.current_wind_dir, self.current_humid))
-        return self.result
+        if self.nest is not None:
+            self.logger.debug("Attempting to parse data on current conditons from NEST data")
+            try:
+                self.structure = self.nest.structures[0]
+                self.current_temp = str(int((self.structure.weather.current.temperature * 1.8) + 32))
+                self.current_condition = self.structure.weather.current.condition
+                self.current_wind_dir = self.structure.weather.current.wind.direction
+                self.current_humid = str(int(self.structure.weather.current.humidity))
+                self.result = ("%s,%s,%s,%s" % (self.current_condition, self.current_temp, self.current_wind_dir, self.current_humid))
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)
+                return self.result
+            except:
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                return "??,??,??,??"
+        else:
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            return "??,??,??,??" 
 
 
     def current_forecast(self):
-        self.structure = self.nest.structures[0]
-        self.forecast = self.structure.weather.daily[0]
-        self.forecast_condition = self.forecast.condition
-        self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
-        self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
-        self.forecast_humid = str(int(self.forecast.humidity))
-        self.result = ("Today:        %s     Low: %s F     High: %s F    Humidity: %s percent" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
-        return self.result  
+        if self.nest is not None:
+            self.logger.debug("Attempting to parse data on today's forecast from NEST data")
+            try:
+                self.structure = self.nest.structures[0]
+                self.forecast = self.structure.weather.daily[0]
+                self.forecast_condition = self.forecast.condition
+                self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
+                self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
+                self.forecast_humid = str(int(self.forecast.humidity))
+                self.result = ("%s,%s,%s,%s" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                
+                return self.result
+            except:
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                return "??,??,??,??"
+        else:
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            return "??,??,??,??"             
 
 
     def tomorrow_forecast(self):
-        self.structure = self.nest.structures[0]
-        self.forecast = self.structure.weather.daily[1]
-        self.forecast_condition = self.forecast.condition
-        self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
-        self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
-        self.forecast_humid = str(int(self.forecast.humidity))
-        self.result = ("Tomorrow:     %s    Low: %s F    High: %s F    Humidity: %s percent" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
-        return self.result              
+        if self.nest is not None:
+            self.logger.debug("Attempting to parse data on tomorrow's forecast from NEST data")     
+            try:
+                self.structure = self.nest.structures[0]
+                self.forecast = self.structure.weather.daily[1]
+                self.forecast_condition = self.forecast.condition
+                self.forecast_temp_low = str(int((self.forecast.temperature[0] * 1.8) + 32))
+                self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
+                self.forecast_humid = str(int(self.forecast.humidity))
+                self.result = ("%s,%s,%s,%s" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                       
+                return self.result
+            except:
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                return "??,??,??,??" 
+        else:
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            return "??,??,??,??"             
         
 
     def run(self):
@@ -191,20 +259,7 @@ class NestProcess(multiprocessing.Process):
         else:
             self.configure_local_logger()
         # Get credentials for login
-        self.credentials_file = os.path.join(os.path.dirname(sys.argv[0]), "credentials/nest.txt")
-        if os.path.isfile(self.credentials_file):
-            self.username = linecache.getline(self.credentials_file, 1)
-            self.password = linecache.getline(self.credentials_file, 2)
-        else:
-            self.username = "username"
-            self.password = "password"
-        # clean up extracted data
-        self.username = str(self.username).lstrip()
-        self.username = str(self.username).rstrip()
-        self.password = str(self.password).lstrip()
-        self.password = str(self.password).rstrip()
-        # Login to Nest account
-        self.nest = nest.Nest(self.username, self.password)
+        self.connect()
         # Main process loop
         self.main_loop = True
         while self.main_loop is True:

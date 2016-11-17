@@ -71,9 +71,9 @@ class MainWindow(multiprocessing.Process):
         self.datetime_to_go = str()
         self.time_remaining = str()
         self.scanWemo = False
-        self.current_conditions = ""
-        self.current_forecast = ""
-        self.tomorrow_forecast = ""
+        self.current_conditions = ["??"] * 4
+        self.current_forecast = ["??"] * 4
+        self.tomorrow_forecast = ["??"] * 4
         # Initialize pointer for alarm display window
         if os.path.isfile(self.display_file):
             self.line = sum(1 for line in open(self.display_file)) - 50
@@ -194,6 +194,8 @@ class MainWindow(multiprocessing.Process):
 
     def define_fonts(self):
         """ Method to define fonts used throughout the application """
+        self.helv04bold = font.Font(family="Helvetica", size=4, weight="bold")
+        self.helv06bold = font.Font(family="Helvetica", size=6, weight="bold")
         self.helv08bold = font.Font(family="Helvetica", size=8, weight="bold")
         self.helv10bold = font.Font(family="Helvetica", size=10, weight="bold")
         self.helv12bold = font.Font(family="Helvetica", size=12, weight="bold")
@@ -397,14 +399,99 @@ class MainWindow(multiprocessing.Process):
     def status_window(self):
         self.frame0203a = tk.Frame(self.frame0203, background="black")
         self.frame0203a.pack(side="top", fill="both", expand=True, padx=0, pady=0)
+        # Date and time header
         self.label0203a01 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT DATE & TIME")
-        self.label0203a01.pack(side="top", fill="both", expand=False, padx=0, pady=2)
-        self.text0203a01 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv24bold, foreground="white", highlightthickness=0, height=1, width=30, wrap="word")
-        self.text0203a01.pack(side="top", fill="both", expand=True, padx=0, pady=2)
-        self.label0203a02 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="WEATHER FORECAST")
-        self.label0203a02.pack(side="top", fill="both", expand=False, padx=0, pady=2)        
-        self.text0203a02 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv10bold, foreground="white", highlightthickness=0, height=1, width=30, wrap="word")
-        self.text0203a02.pack(side="top", fill="both", expand=True, padx=0, pady=2)             
+        self.label0203a01.grid(row=0, column=0, rowspan=1, columnspan=8, sticky="w")
+        # Date and time text field
+        self.text0203a01 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv24bold, foreground="white", highlightthickness=0, height=1, width=24, wrap="word")
+        self.text0203a01.grid(row=1, column=0, rowspan=1, columnspan=8, sticky="w")
+        
+        # Horizontal divider
+        self.label0203a03 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="  ")
+        self.label0203a03.grid(row=2, column=0, rowspan=1, columnspan=8, sticky="w")
+        
+        # Current condition variable text - condition summary    
+        self.label0203a04 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="CURRENT CONDITIONS: ")
+        self.label0203a04.grid(row=3, column=0, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a04 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=15, wrap="word")
+        self.text0203a04.grid(row=3, column=1, rowspan=1, columnspan=1, sticky="ew") 
+        
+        # Current condition row label - temp
+        self.label0203a05 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="TEMP (F): ")
+        self.label0203a05.grid(row=3, column=2, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a05 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a05.grid(row=3, column=3, rowspan=1, columnspan=1, sticky="ew")   
+        
+        # Current condition row label - winds
+        self.label0203a06 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="WINDS: ")
+        self.label0203a06.grid(row=3, column=4, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a06 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a06.grid(row=3, column=5, rowspan=1, columnspan=1, sticky="ew")  
+        
+        # Current condition row label - humidity
+        self.label0203a07 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="HUMIDITY: ")
+        self.label0203a07.grid(row=3, column=6, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a07 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a07.grid(row=3, column=7, rowspan=1, columnspan=1, sticky="ew")  
+
+        # Horizontal divider
+        self.label0203a08 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv06bold, foreground="yellow", justify="left", text="  ")
+        self.label0203a08.grid(row=4, column=0, rowspan=1, columnspan=8, sticky="w")
+        
+        # Current condition variable text - condition summary    
+        self.label0203a09 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="TODAY'S FORECAST: ")
+        self.label0203a09.grid(row=5, column=0, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a09 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=15, wrap="word")
+        self.text0203a09.grid(row=5, column=1, rowspan=1, columnspan=1, sticky="ew") 
+        
+        # Current condition row label - temp
+        self.label0203a10 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="LOW (F): ")
+        self.label0203a10.grid(row=5, column=2, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a10 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a10.grid(row=5, column=3, rowspan=1, columnspan=1, sticky="ew")   
+        
+        # Current condition row label - winds
+        self.label0203a11 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="HIGH (F): ")
+        self.label0203a11.grid(row=5, column=4, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a11 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a11.grid(row=5, column=5, rowspan=1, columnspan=1, sticky="ew")  
+        
+        # Current condition row label - humidity
+        self.label0203a12 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="HUMIDITY: ")
+        self.label0203a12.grid(row=5, column=6, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a12 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a12.grid(row=5, column=7, rowspan=1, columnspan=1, sticky="ew")
+
+        # Horizontal divider
+        self.label0203a13 = tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv06bold, foreground="yellow", justify="left", text="  ")
+        self.label0203a13.grid(row=6, column=0, rowspan=1, columnspan=8, sticky="w")
+        
+        # Current condition variable text - condition summary    
+        self.label0203a14 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="TOMORROW'S FORECAST: ")
+        self.label0203a14.grid(row=7, column=0, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a14 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=15, wrap="word")
+        self.text0203a14.grid(row=7, column=1, rowspan=1, columnspan=1, sticky="ew") 
+        
+        # Current condition row label - temp
+        self.label0203a15 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="LOW (F): ")
+        self.label0203a15.grid(row=7, column=2, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a15 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a15.grid(row=7, column=3, rowspan=1, columnspan=1, sticky="ew")   
+        
+        # Current condition row label - winds
+        self.label0203a16 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="HIGH (F): ")
+        self.label0203a16.grid(row=7, column=4, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a16 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a16.grid(row=7, column=5, rowspan=1, columnspan=1, sticky="ew")  
+        
+        # Current condition row label - humidity
+        self.label0203a17 =  tk.Label(self.frame0203a, anchor="w", background="black", font=self.helv10bold, foreground="yellow", justify="left", text="HUMIDITY: ")
+        self.label0203a17.grid(row=7, column=6, rowspan=1, columnspan=1, sticky="w")  
+        self.text0203a17 = tk.Text(self.frame0203a, background="black", borderwidth=0, font=self.helv12bold, foreground="white", highlightthickness=0, height=1, width=4, wrap="word")
+        self.text0203a17.grid(row=7, column=7, rowspan=1, columnspan=1, sticky="ew")        
+
+
+        # Set flags for packed frame
         self.frame0203a_packed = True
         self.frame0203a.pack_propagate(False)
 
@@ -691,15 +778,34 @@ class MainWindow(multiprocessing.Process):
                 self.text0203a01.config(foreground="red")
         else:
             self.label0203a01.config(foreground="yellow", text="CURRENT DATE & TIME")
-            self.text0203a01.insert(tk.END, self.dt.strftime("%Y-%m-%d     %H:%M:%S"))
+            self.text0203a01.insert(tk.END, self.dt.strftime("%Y-%m-%d     %I:%M:%S %p"))
             self.text0203a01.config(foreground="white")
         # Current condition display
-        self.text0203a02.delete(1.0, tk.END)
-        self.text0203a02.insert(tk.END, self.current_conditions)
-        self.text0203a02.insert(tk.END, "\n")
-        self.text0203a02.insert(tk.END, self.current_forecast)
-        self.text0203a02.insert(tk.END, "\n")
-        self.text0203a02.insert(tk.END, self.tomorrow_forecast)                 
+        self.text0203a04.delete(1.0, tk.END)
+        self.text0203a04.insert(tk.END, self.current_conditions[0])
+        self.text0203a05.delete(1.0, tk.END)
+        self.text0203a05.insert(tk.END, self.current_conditions[1])
+        self.text0203a06.delete(1.0, tk.END)
+        self.text0203a06.insert(tk.END, self.current_conditions[2])
+        self.text0203a07.delete(1.0, tk.END)
+        self.text0203a07.insert(tk.END, self.current_conditions[3])
+        self.text0203a09.delete(1.0, tk.END)
+        self.text0203a09.insert(tk.END, self.current_forecast[0])
+        self.text0203a10.delete(1.0, tk.END)
+        self.text0203a10.insert(tk.END, self.current_forecast[1])
+        self.text0203a11.delete(1.0, tk.END)
+        self.text0203a11.insert(tk.END, self.current_forecast[2])
+        self.text0203a12.delete(1.0, tk.END)
+        self.text0203a12.insert(tk.END, self.current_forecast[3])  
+        self.text0203a14.delete(1.0, tk.END)
+        self.text0203a14.insert(tk.END, self.tomorrow_forecast[0])
+        self.text0203a15.delete(1.0, tk.END)
+        self.text0203a15.insert(tk.END, self.tomorrow_forecast[1])
+        self.text0203a16.delete(1.0, tk.END)
+        self.text0203a16.insert(tk.END, self.tomorrow_forecast[2])
+        self.text0203a17.delete(1.0, tk.END)
+        self.text0203a17.insert(tk.END, self.tomorrow_forecast[3])              
+                 
 
 
     def action010101(self):
@@ -1182,6 +1288,7 @@ class MainWindow(multiprocessing.Process):
             pass
         # Process incoming message
         if len(self.msg_in) != 0:
+            self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in)
             if self.msg_in[3:5] == "02":
                 
                 if self.msg_in[6:9] == "001":
@@ -1224,13 +1331,16 @@ class MainWindow(multiprocessing.Process):
                         self.button050301a08b.config(image=self.button_square_red_img)
 
                 elif self.msg_in[6:9] == "020":
-                    self.current_conditions = self.msg_in[10:]
+                    self.current_conditions = (self.msg_in[10:]).split(sep=",")
+                    self.logger.debug("Current condition response [%s] received from nest gateway", self.msg_in)
 
                 elif self.msg_in[6:9] == "021":
-                    self.current_forecast = self.msg_in[10:]
+                    self.current_forecast = (self.msg_in[10:]).split(sep=",")
+                    self.logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in)                    
 
                 elif self.msg_in[6:9] == "022":
-                    self.tomorrow_forecast = self.msg_in[10:]                                    
+                    self.tomorrow_forecast = (self.msg_in[10:]).split(sep=",")      
+                    self.logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in)                                                 
                 
                 elif self.msg_in[6:9] == "163":
                     if self.msg_in[10:11] == "0":
@@ -1289,6 +1399,7 @@ class MainWindow(multiprocessing.Process):
                     self.close_pending = True
             else:
                 self.msg_out_queue.put_nowait(self.msg_in)
+                self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                
             pass  
             self.msg_in = str()
 
