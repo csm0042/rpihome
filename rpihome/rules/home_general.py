@@ -185,20 +185,26 @@ class HomeGeneral(object):
                 if key == "lastseen":
                     self.last_seen = value                    
         # Query local arp table
-        self.output = subprocess.Popen("arp -a", shell=True, stdout=subprocess.PIPE).communicate()
+        logging.debug("Running arp command and looking for [%s]", self.mac)
+        #self.output = subprocess.Popen("arp -a", shell=True, stdout=subprocess.PIPE).communicate()
+        self.output = subprocess.Popen("arp -a").communicate()
         self.last_arp = self.dt
         # Search result for mac id
         self.index = str(self.output).find(self.mac)
         # If not found, try again replacing : in address with -
-        if self.index <= 0:
+        if self.index < 0:
+            logging.debug("Mac ID [%s] not found.  Trying again with ':' in place of '-'", self.mac)
             self.mac = self.mac.replace(":", "-")
             self.index = str(self.output).find(self.mac)
+        if self.index >= 0:
+            logging.debug("Mac ID [%s] found", self.mac)
+            self.last_seen = self.dt
         # Determine if device was seen recently enough to be considered "home"
         if self.dt <= self.last_seen + datetime.timedelta(minutes=30):
             self.yes = True
         else:
+            logging.debug("Mac ID [%s] not found for the past 30 minutes.  Setting state to \"away\"", self.mac)
             self.yes = False
-            print("arp failed")
         # Return result
         return self.yes
 
@@ -219,10 +225,11 @@ class HomeGeneral(object):
         self.last_ping = self.dt 
         # Determine if user is home based on ping
         if self.result == 0:
+            logging.debug("Ping successful for [%s]", self.ip)
             self.yes = True
-        else: 
+        else:
+            logging.debug("Ping failed for [%s]", self.ip)
             self.yes = False  
-            print("ping failed")
         # Return result
         return self.yes
 
@@ -240,6 +247,7 @@ class HomeGeneral(object):
         # Evaluate home/away based on arp tables and ping's if necessary
         if self.yes is True and self.dt.time().hour >= 20:
             self.yes is True
+            logging.debug("User is home and it's after 8pm")
         else:
             if self.dt > self.last_arp + datetime.timedelta(seconds=15):
                 self.yes = self.by_arp(datetime=self.dt, mac=self.mac)

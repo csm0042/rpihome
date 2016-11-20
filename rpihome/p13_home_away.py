@@ -65,18 +65,11 @@ class HomeProcess(multiprocessing.Process):
         self.close_pending = False
 
 
-    def configure_remote_logger(self):
-        """ Method to configure multiprocess logging """
-        self.logger = logging.getLogger(self.name)        
-        self.handler = logging.handlers.QueueHandler(self.log_queue)
-        self.logger.addHandler(self.handler)
-        self.logger.debug("Logging handler for %s process started", self.name)
-
-
     def configure_local_logger(self):
         """ Method to configure local logging """
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG)
+        self.logger.propagate = False
         self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
         self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
         self.handler.setFormatter(self.formatter)
@@ -207,10 +200,7 @@ class HomeProcess(multiprocessing.Process):
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
         # Configure logging
-        if self.log_remote is True:
-            self.configure_remote_logger()
-        else:
-            self.configure_local_logger()
+        self.configure_local_logger()
         # Main process loop        
         self.main_loop = True
         while self.main_loop is True:

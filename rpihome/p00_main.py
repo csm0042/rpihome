@@ -21,7 +21,6 @@ if __name__ == "__main__":
     
 from rpihome.modules.log_path import LogFilePath
 from rpihome.modules.multiprocess_logging import listener_configurer, worker_configurer
-from rpihome.p01_log_handler import listener_process
 from rpihome.p02_gui import MainWindow
 from rpihome.p11_logic_solver import LogicProcess
 from rpihome.p13_home_away import HomeProcess
@@ -54,17 +53,16 @@ class MainProcess(object):
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = True
         self.main_loop = True
+        self.p00_queue = multiprocessing.Queue(-1)
         self.work_queue = multiprocessing.Queue(-1)
         self.close_pending = False
         self.process_path = os.path.dirname(sys.argv[0])
         self.logfile = LogFilePath().return_path_and_name_combined(name="p01", path=self.process_path)
-        self.enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True, True, True]
+        self.enable = [True, False, True, False, False, False, False, False, False, False, False, True, False, True, False, True, True, True]
         self.nest_username = str()
         self.nest_password = str()
         # Spawn individual processes
-        self.create_process_queues()
-        self.create_remote_log_handler_process()
-        self.configure_remote_logger()
+        self.configure_local_logger()
         self.create_gui_process()
         self.create_logic_process()
         self.create_home_process()
@@ -75,24 +73,11 @@ class MainProcess(object):
         self.init_complete = True
 
 
-    def create_process_queues(self):
-        """ Create queues used for inter-process communication """
-        self.p00_queue = multiprocessing.Queue(-1)
-        self.p01_queue = multiprocessing.Queue(-1)
-
-
-    def configure_remote_logger(self):
-        """ Method to configure multiprocess logging """
-        self.logger = logging.getLogger(self.name)        
-        handler = logging.handlers.QueueHandler(self.p01_queue)
-        self.logger.addHandler(handler)
-        self.logger.debug("Logging handler for %s process started", "p00_main")
-
-
     def configure_local_logger(self):
         """ Method to configure local logging """
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG)
+        self.logger.propagate = False
         self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile,
                                                                  when="h",
                                                                  interval=1,
@@ -114,19 +99,6 @@ class MainProcess(object):
             self.logger.removeHandler(i)
             i.flush()
             i.close()
-
-
-    def create_remote_log_handler_process(self):
-        """ Creates a separate process to run the multiprocess logger.  This Process
-        monitors a shared queue and writes those log messages to a file """
-        self.p01_alive_mem = None
-        self.p01 = multiprocessing.Process(name="p01_log_handler",
-                                           target=listener_process,
-                                           args=(self.p01_queue, self.p00_queue,
-                                                 listener_configurer, self.logfile))
-        self.p01.start()
-        self.p01_modtime = os.path.getmtime(os.path.join(self.process_path, "p01_log_handler.py"))
-            
 
 
     def create_gui_process(self):
@@ -245,12 +217,7 @@ class MainProcess(object):
                     else:
                         self.work_queue.put_nowait(self.msg_in)
                     self.msg_in = str()
-                # Message forwarding to p01
-                elif self.msg_in[3:5] == "01":
-                    self.p01_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
-                # Message forwarding to p01
+                # Message forwarding to p02
                 elif self.msg_in[3:5] == "02":
                     self.p02_queue.put_nowait(self.msg_in)
                     if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
@@ -293,16 +260,8 @@ class MainProcess(object):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process) != 0:
-            # Start / Stop p01 process
-            if self.msg_to_process[3:5] == "01":
-                if self.msg_to_process[6:9] == "900":
-                    if self.p01.is_alive() is False:
-                        self.create_remote_log_handler_process()
-                elif self.msg_to_process[6:9] == "999":
-                    if self.p01.is_alive():                    
-                        self.p01.join()
             # Start / Stop p11 process
-            elif self.msg_to_process[3:5] == "11":
+            if self.msg_to_process[3:5] == "11":
                 if self.msg_to_process[6:9] == "900":
                     if self.p11.is_alive() is False:                    
                         self.create_logic_process()
@@ -349,7 +308,6 @@ class MainProcess(object):
 
     def send_heartbeats(self):
         """ Send periodic heartbeats to child processes so they don't time-out and shutdown """
-        self.p01_queue.put_nowait("00,01,001")
         self.p02_queue.put_nowait("00,02,001")
         self.p11_queue.put_nowait("00,11,001")
         self.p13_queue.put_nowait("00,13,001")
@@ -362,13 +320,6 @@ class MainProcess(object):
     def update_gui(self):
         """ Monitor processes as they are spawned / die and send messages to gui to
         update display """
-        if self.p01.is_alive() != self.p01_alive_mem:
-            if self.p01.is_alive() is True:
-                self.p02_queue.put_nowait("01,02,002")
-                self.p01_alive_mem = True
-            elif self.p01.is_alive() is False:
-                self.p02_queue.put_nowait("01,02,003")
-                self.p01_alive_mem = False
         if self.p11.is_alive() != self.p11_alive_mem:
             if self.p11.is_alive() is True:
                 self.p02_queue.put_nowait("11,02,002")
