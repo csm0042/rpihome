@@ -6,6 +6,7 @@
 import copy
 import logging
 from rpihome.devices.device import Device
+from rpihome.modules.message import Message
 
 
 # Authorship Info **********************************************************************************
@@ -30,10 +31,12 @@ class DeviceRPI(Device):
         of sending the same command over and over again """
         if self.state != self.state_mem:
             if self.state is True:
-                self.msg_out_queue.put_nowait("11,15,150,export DISPLAY=:0; xset s reset")
+                self.msg_out_queue.put_nowait(
+                    Message(source="11", dest="15", type="150", name="rpi", payload="export DISPLAY=:0; xset s reset").raw)
                 logging.log(logging.DEBUG, "Sending wake command to RPi Monitor")
             else:
-                self.msg_out_queue.put_nowait("11,15,150,export DISPLAY=:0; xset s activate")
+                self.msg_out_queue.put_nowait(
+                    Message(source="11", dest="15", type="150", name="rpi", payload="export DISPLAY=:0; xset s activate").raw)
                 logging.log(logging.DEBUG, "Sending sleep command to RPi Monitor")
             self.state_mem = copy.copy(self.state)
                               

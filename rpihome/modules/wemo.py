@@ -7,6 +7,8 @@ import copy
 import logging
 import pywemo
 
+from rpihome.modules.message import Message
+
 
 # Authorship Info *****************************************************************************************************
 __author__ = "Christopher Maue"
@@ -31,11 +33,15 @@ class WemoHelper(object):
         self.port = None
         self.device = None
         self.url = str()
+        self.msg_in = Message()
+        self.msg_out = Message()
+        self.msg_to_send = Message()
 
     def switch_off(self, msg_in):
         """ Searches list for existing wemo device with matching name, then sends off command to
         device if found """
-        self.device_name = str(msg_in[10:]).lower()
+        self.msg_in = Message(raw=msg_in)        
+        self.device_name = self.msg_in.name.lower()
         self.found = False
         # Search list of existing devices on network for matching device name
         for index, device in enumerate(self.device_list):
@@ -52,7 +58,8 @@ class WemoHelper(object):
     def switch_on(self, msg_in):
         """ Searches list for existing wemo device with matching name, then sends on command
         to device if found """
-        self.device_name = str(msg_in[10:]).lower()
+        self.msg_in = Message(raw=msg_in)
+        self.device_name = self.msg_in.name.lower()
         self.found = False
         # Search list of existing devices on network for matching device name
         for index, device in enumerate(self.device_list):
@@ -69,8 +76,9 @@ class WemoHelper(object):
     def query_status(self, msg_in, msg_out):
         """ Searches list for existing wemo device with matching name, then sends "get status-
         update" message to device if found """
-        self.device_name = str(msg_in[10:]).lower()
-        self.request_from = str(msg_in[0:2])
+        self.msg_in = Message(raw=msg_in)
+        self.device_name = str(self.msg_in.name).lower()
+        self.request_from = str(self.msg_in.source)
         self.found = False
         logging.log(logging.DEBUG, "Querrying status for device: %s" % str(self.device_name))
         # Search list of existing devices on network for matching device name
@@ -80,10 +88,10 @@ class WemoHelper(object):
             if (device.name.lower()).find(self.device_name) != -1:
                 self.found = True
                 self.state = device.get_state(force_update=True)
-                msg_out.put_nowait("16,%s,163,%s,%s" %
-                                   (self.request_from, str(self.state), self.device_name))
+                self.msg_to_send = Message(source="16", dest=self.request_from, type="162", name=self.device_name, payload=str(self.state))
+                msg_out.put_nowait(self.msg_to_send.raw)
                 logging.log(logging.DEBUG, "Response message [%s] sent for device: %s" %
-                                (str(self.state), self.device_name))
+                                (self.msg_to_send.raw, self.device_name))
             if self.found is False:
                 logging.log(logging.DEBUG, "Could not find device: %s on network" %
                                 str(self.device_name))
@@ -91,7 +99,9 @@ class WemoHelper(object):
     def discover_device(self, msg_in):
         """ Searches for a wemo device on the network at a particular IP address and appends it to
         the master device list if found """
-        self.device_address = msg_in[10:]
+        self.msg_in = Message(raw=msg_in)
+        self.device_name = self.msg_in.name
+        self.device_address = self.msg_in.payload
         logging.log(logging.DEBUG, "Searching for wemo device at: %s" %
                         self.device_address)
         # Probe device at specified IP address for port it is listening on

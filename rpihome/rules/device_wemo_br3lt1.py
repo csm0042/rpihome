@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" wemo_b2lt1.py: 
+""" wemo_b3lt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
@@ -21,7 +21,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_b2lt1(DeviceWemo):
+class Wemo_br3lt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue):
         super().__init__(name, ip, msg_out_queue)
 
@@ -29,7 +29,7 @@ class Wemo_b2lt1(DeviceWemo):
     def check_rules(self, **kwargs):
         """ Overhead light in kids bedroom """
         self.home = False
-        # Process input variables if present   
+        # Process input variables if present    
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -49,8 +49,8 @@ class Wemo_b2lt1(DeviceWemo):
                 if key == "timeout":
                     self.timeout = value
         # Determine if kid is home                    
-        if self.homeArray[1] is True:
-            self.home = True
+        if self.homeArray[2] is True:
+            self.home = True                     
         # Decision tree to determine if screen should be awake or not                
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
@@ -67,5 +67,4 @@ class Wemo_b2lt1(DeviceWemo):
         else:
             self.state = False
         # Return result
-        return self.state           
-  
+        return self.state     

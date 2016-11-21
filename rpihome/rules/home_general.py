@@ -10,6 +10,7 @@ import os
 import platform
 import ipaddress
 import subprocess
+from rpihome.modules.message import Message
 
 
 # Authorship Info *****************************************************************************************************
@@ -42,6 +43,7 @@ class HomeGeneral(object):
         self.dt = datetime.datetime.now()
         self.output = str()
         self.index = int()
+        self.msg_to_send = Message()
 
     @property
     def yes(self):

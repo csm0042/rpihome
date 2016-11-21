@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" wemo_b3lt1.py: 
+""" wemo_b3lt2.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
@@ -21,13 +21,13 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_b3lt1(DeviceWemo):
+class Wemo_br3lt2(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue):
         super().__init__(name, ip, msg_out_queue)
 
 
     def check_rules(self, **kwargs):
-        """ Overhead light in kids bedroom """
+        """ Nightstand light in kids bedroom """
         self.home = False
         # Process input variables if present    
         if kwargs is not None:
@@ -47,7 +47,7 @@ class Wemo_b3lt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value
+                    self.timeout = value 
         # Determine if kid is home                    
         if self.homeArray[2] is True:
             self.home = True                     
@@ -55,7 +55,9 @@ class Wemo_b3lt1(DeviceWemo):
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
             if self.home is True:
-                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
+                if self.dt.time() >= datetime.time(19,0):
+                    self.state = True
+                elif self.dt.time() <= datetime.time(6,30):
                     self.state = True
                 else:
                     self.state = False
@@ -63,8 +65,14 @@ class Wemo_b3lt1(DeviceWemo):
                 self.state = False
         # Saturday - Sunday
         elif 5 <= self.dt.weekday() <= 6:
-            self.state = False
-        else:
-            self.state = False
+            if self.home is True:
+                if self.dt.time() >= datetime.time(19,0):
+                    self.state = True
+                elif self.dt.time() <= datetime.time(6,30):
+                    self.state = True
+                else:
+                    self.state = False
+            else:
+                self.state = False
         # Return result
-        return self.state     
+        return self.state              

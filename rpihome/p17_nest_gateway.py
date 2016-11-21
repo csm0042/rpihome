@@ -12,6 +12,7 @@ import sys
 import time
 
 import nest
+from rpihome.modules.message import Message
 
 
 # Authorship Info *********************************************************************************
@@ -56,8 +57,9 @@ class NestProcess(multiprocessing.Process):
         self.username = str()
         self.password = str()
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = bool()
         self.main_loop = bool()
@@ -103,25 +105,25 @@ class NestProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.msg_in_queue.get_nowait()
+                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "17":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
+                if self.msg_in.dest == "17":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)
-                    self.msg_in = str()
+                        self.work_queue.put_nowait(self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)
                 else:
-                    self.msg_out_queue.put_nowait(self.msg_in)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)
-                self.msg_in = str()
+                    self.msg_out_queue.put_nowait(self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -129,29 +131,29 @@ class NestProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
-            if self.msg_to_process[6:9] == "020":
+        if len(self.msg_to_process.raw) > 4:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            if self.msg_to_process.type == "020":
                 self.connect()
-                self.response = "17,02,020," + self.current_conditions()
-                self.msg_out_queue.put_nowait(self.response)
-                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))
-            elif self.msg_to_process[6:9] == "021":
+                self.msg_to_send = Message(source="17", dest="02", type="020", payload=self.current_conditions())
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+            elif self.msg_to_process.type == "021":
                 self.connect()
-                self.response = "17,02,021," + self.current_forecast()
-                self.msg_out_queue.put_nowait(self.response)
-                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))                
-            elif self.msg_to_process[6:9] == "022":
+                self.msg_to_send = Message(source="17", dest="02", type="021", payload=self.current_forecast())
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))                
+            elif self.msg_to_process.type == "022":
                 self.connect()
-                self.response = "17,02,022," + self.tomorrow_forecast()
-                self.msg_out_queue.put_nowait(self.response)
-                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process, self.response))                
+                self.msg_to_send = Message(source="17", dest="02", type="022", payload=self.tomorrow_forecast())
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))                
             # Clear msg-to-process string
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 

@@ -7,6 +7,7 @@ import copy
 import datetime
 import logging
 from rpihome.devices.device import Device
+from rpihome.modules.message import Message
 
 
 
@@ -29,18 +30,19 @@ class DeviceWemo(Device):
 
     def discover_device(self, ip):
         logging.log(logging.DEBUG, "Sending command to wemo gateway to find device at address: %s" % ip)
-        self.msg_out_queue.put_nowait("11,16,169,%s" % ip)
-        self.msg_out_queue.put_nowait("11,16,001")
+        self.msg_out_queue.put_nowait(Message(source="11", dest="16", type="160", payload=ip).raw)
              
     def command(self):  
         """ This method is used to send a single command to various devices when necessary instead of sending the same 
         command over and over again """ 
         if self.state != self.state_mem:
             if self.state is True:
-                self.msg_out_queue.put_nowait("11,16,161,%s" % self.name)
+                self.msg_out_queue.put_nowait(
+                    Message(source="11", dest="16", type="161", name=self.name, payload="on").raw)
                 logging.log(logging.DEBUG, "Sending command to wemo gateway to turn ON device: %s" % self.name)
             else:
-                self.msg_out_queue.put_nowait("11,16,160,%s" % self.name)
+                self.msg_out_queue.put_nowait(
+                    Message(source="11", dest="16", type="161", name=self.name, payload="off").raw)
                 logging.log(logging.DEBUG, "Sending command to wemo gateway to turn OFF device: %s" % self.name)
             pass
             # Snapshot new device state in memory so the command is only sent once

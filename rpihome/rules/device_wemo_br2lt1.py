@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" wemo_b3lt2.py: 
+""" wemo_b2lt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
@@ -21,15 +21,15 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_b3lt2(DeviceWemo):
+class Wemo_br2lt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue):
         super().__init__(name, ip, msg_out_queue)
 
 
     def check_rules(self, **kwargs):
-        """ Nightstand light in kids bedroom """
+        """ Overhead light in kids bedroom """
         self.home = False
-        # Process input variables if present    
+        # Process input variables if present   
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -47,17 +47,15 @@ class Wemo_b3lt2(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value 
+                    self.timeout = value
         # Determine if kid is home                    
-        if self.homeArray[2] is True:
-            self.home = True                     
+        if self.homeArray[1] is True:
+            self.home = True
         # Decision tree to determine if screen should be awake or not                
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
             if self.home is True:
-                if self.dt.time() >= datetime.time(19,0):
-                    self.state = True
-                elif self.dt.time() <= datetime.time(6,30):
+                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
                     self.state = True
                 else:
                     self.state = False
@@ -65,14 +63,9 @@ class Wemo_b3lt2(DeviceWemo):
                 self.state = False
         # Saturday - Sunday
         elif 5 <= self.dt.weekday() <= 6:
-            if self.home is True:
-                if self.dt.time() >= datetime.time(19,0):
-                    self.state = True
-                elif self.dt.time() <= datetime.time(6,30):
-                    self.state = True
-                else:
-                    self.state = False
-            else:
-                self.state = False
+            self.state = False
+        else:
+            self.state = False
         # Return result
-        return self.state              
+        return self.state           
+  

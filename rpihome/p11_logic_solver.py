@@ -10,6 +10,7 @@ import multiprocessing
 import time
 
 from rpihome.modules.dst import USdst
+from rpihome.modules.message import Message
 
 from rpihome.rules import device_rpi
 from rpihome.rules import device_wemo_fylt1
@@ -18,12 +19,12 @@ from rpihome.rules import device_wemo_ewlt1
 from rpihome.rules import device_wemo_cclt1
 from rpihome.rules import device_wemo_lrlt1
 from rpihome.rules import device_wemo_drlt1
-from rpihome.rules import device_wemo_b1lt1
-from rpihome.rules import device_wemo_b1lt2
-from rpihome.rules import device_wemo_b2lt1
-from rpihome.rules import device_wemo_b2lt2
-from rpihome.rules import device_wemo_b3lt1
-from rpihome.rules import device_wemo_b3lt2
+from rpihome.rules import device_wemo_br1lt1
+from rpihome.rules import device_wemo_br1lt2
+from rpihome.rules import device_wemo_br2lt1
+from rpihome.rules import device_wemo_br2lt2
+from rpihome.rules import device_wemo_br3lt1
+from rpihome.rules import device_wemo_br3lt2
 
 
 # Authorship Info *****************************************************************************************************
@@ -66,8 +67,9 @@ class LogicProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.last_hb = datetime.datetime.now()
         self.last_forecast_update = datetime.datetime.now() + datetime.timedelta(minutes=-15)
         self.dst = USdst()
@@ -109,12 +111,18 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", self.msg_out_queue)
         self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue)
         self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue)
-        self.wemo_b1lt1 = device_wemo_b1lt1.Wemo_b1lt1("b1lt1", "192.168.86.27", self.msg_out_queue)
-        self.wemo_b1lt2 = device_wemo_b1lt2.Wemo_b1lt2("b1lt2", "192.168.86.28", self.msg_out_queue)
-        self.wemo_b2lt1 = device_wemo_b2lt1.Wemo_b2lt1("b2lt1", "192.168.86.29", self.msg_out_queue)
-        self.wemo_b2lt2 = device_wemo_b2lt2.Wemo_b2lt2("b2lt2", "192.168.86.30", self.msg_out_queue)
-        self.wemo_b3lt1 = device_wemo_b3lt1.Wemo_b3lt1("b3lt1", "192.168.86.31", self.msg_out_queue)
-        self.wemo_b3lt2 = device_wemo_b3lt2.Wemo_b3lt2("b3lt2", "192.168.86.32", self.msg_out_queue)
+        self.wemo_br1lt1 = device_wemo_br1lt1.Wemo_br1lt1(
+            "br1lt1", "192.168.86.27", self.msg_out_queue)
+        self.wemo_br1lt2 = device_wemo_br1lt2.Wemo_br1lt2(
+            "br1lt2", "192.168.86.28", self.msg_out_queue)
+        self.wemo_br2lt1 = device_wemo_br2lt1.Wemo_br2lt1(
+            "br2lt1", "192.168.86.29", self.msg_out_queue)
+        self.wemo_br2lt2 = device_wemo_br2lt2.Wemo_br2lt2(
+            "br2lt2", "192.168.86.30", self.msg_out_queue)
+        self.wemo_br3lt1 = device_wemo_br3lt1.Wemo_br3lt1(
+            "br3lt1", "192.168.86.31", self.msg_out_queue)
+        self.wemo_br3lt2 = device_wemo_br3lt2.Wemo_br3lt2(
+            "br3lt2", "192.168.86.32", self.msg_out_queue)
 
 
     def create_home_flags(self):
@@ -128,9 +136,15 @@ class LogicProcess(multiprocessing.Process):
 
     def update_forecast(self):
         """ Requests a forecast update from the nest module """
-        self.msg_out_queue.put_nowait("11,17,020")
-        self.msg_out_queue.put_nowait("11,17,021")
-        self.msg_out_queue.put_nowait("11,17,022")
+        self.msg_to_send = Message(source="11", dest="17", type="020")
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
+        self.msg_to_send = Message(source="11", dest="17", type="021")        
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
+        self.msg_to_send = Message(source="11", dest="17", type="022")        
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)       
         self.last_forecast_update = datetime.datetime.now()
 
 
@@ -141,25 +155,26 @@ class LogicProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.msg_in_queue.get_nowait()
+                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "11":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                if self.msg_in.dest == "11":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
+                        self.work_queue.put_nowait(self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
                     self.msg_in = str()
                 else:
-                    self.msg_out_queue.put_nowait(self.msg_in)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                    
-                self.msg_in = str()
+                    self.msg_out_queue.put_nowait(self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -168,39 +183,42 @@ class LogicProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
-            # Process user "away" messages
-            if self.msg_to_process[6:9] == "100":
-                if self.msg_to_process[10:] == "user1":
-                    self.homeArray[0] = False
-                    self.logger.debug("User1 is no longer home")
-                if self.msg_to_process[10:] == "user2":
-                    self.homeArray[1] = False
-                    self.logger.debug("User2 is no longer home")
-                if self.msg_to_process[10:] == "user3":
-                    self.homeArray[2] = False
-                    self.logger.debug("User3 is no longer home")
-            elif self.msg_to_process[6:9] == "101":
-                if self.msg_to_process[10:] == "user1":
-                    self.homeArray[0] = True
-                    self.logger.debug("User1 is home")
-                if self.msg_to_process[10:] == "user2":
-                    self.homeArray[1] = True
-                    self.logger.debug("User2 is home")
-                if self.msg_to_process[10:] == "user3":
-                    self.homeArray[2] = True
-                    self.logger.debug("User3 is home")
-            elif self.msg_to_process[6:9] == "168":
+        if len(self.msg_to_process.raw) > 4:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            # Process user "home/away" messages
+            if self.msg_to_process.type == "100":
+                if self.msg_to_process.name == "user1":
+                    if self.msg_to_process.payload == "0":
+                        self.homeArray[0] = False
+                        self.logger.debug("User1 is no longer home")
+                    elif self.msg_to_process.payload == "1":
+                        self.homeArray[0] = True
+                        self.logger.debug("User1 is home")
+                if self.msg_to_process.name == "user2":
+                    if self.msg_to_process.payload == "0":
+                        self.homeArray[1] = False
+                        self.logger.debug("User2 is no longer home")
+                    elif self.msg_to_process.payload == "1":
+                        self.homeArray[1] = True
+                        self.logger.debug("User2 is home")
+                if self.msg_to_process.name == "user3":
+                    if self.msg_to_process.payload == "0":
+                        self.homeArray[2] = False
+                        self.logger.debug("User3 is no longer home")
+                    elif self.msg_to_process.payload == "1":
+                        self.homeArray[2] = True
+                        self.logger.debug("User3 is home")
+            # Process device create messages                                        
+            elif self.msg_to_process.type == "168":
                 self.create_devices()
             else:
                 pass
             # Clear message once all possibilities are checked
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 
@@ -249,32 +267,32 @@ class LogicProcess(multiprocessing.Process):
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b1lt1.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br1lt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b1lt2.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br1lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b2lt1.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br2lt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b2lt2.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br2lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b3lt1.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br3lt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_b3lt2.check_rules(datetime=datetime.datetime.now(),
+        self.wemo_br3lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
@@ -290,12 +308,12 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_cclt1.command()
         self.wemo_lrlt1.command()
         self.wemo_drlt1.command()
-        self.wemo_b1lt1.command()
-        self.wemo_b1lt2.command()
-        self.wemo_b2lt1.command()
-        self.wemo_b2lt2.command()
-        self.wemo_b3lt1.command()
-        self.wemo_b3lt2.command()
+        self.wemo_br1lt1.command()
+        self.wemo_br1lt2.command()
+        self.wemo_br2lt1.command()
+        self.wemo_br2lt2.command()
+        self.wemo_br3lt1.command()
+        self.wemo_br3lt2.command()
 
 
     def run(self):

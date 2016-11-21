@@ -10,6 +10,8 @@ import platform
 import subprocess
 import time
 
+from rpihome.modules.message import Message
+
 
 # Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
@@ -51,8 +53,9 @@ class RpiProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.command = str()
         self.output = str()
         self.last_hb = datetime.datetime.now()
@@ -89,25 +92,25 @@ class RpiProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.msg_in_queue.get_nowait()
+                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "15":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                if self.msg_in.dest == "15":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
+                        self.work_queue.put_nowait(self.msg_in.raw)
                         self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
-                    self.msg_in = str()
                 else:
-                    self.msg_out_queue.put_nowait(self.msg_in)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                    
-                self.msg_in = str()
+                    self.msg_out_queue.put_nowait(self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -115,16 +118,16 @@ class RpiProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
+        if len(self.msg_to_process.raw) > 4:
             self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
-            if self.msg_to_process[6:9] == "150":
-                self.run_commands(self.msg_to_process[10:])
+            if self.msg_to_process.type == "150":
+                self.run_commands(self.msg_to_process.payload)
             # Clear msg-to-process string
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 

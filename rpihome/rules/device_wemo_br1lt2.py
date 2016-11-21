@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" wemo_b2lt2.py: 
+""" wemo_b1lt2.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
@@ -21,15 +21,15 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_b2lt2(DeviceWemo):
+class Wemo_br1lt2(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue):
         super().__init__(name, ip, msg_out_queue)
 
 
     def check_rules(self, **kwargs):
-        """ Nightstand light in kids bedroom """
+        """ Nightstand light in parent bedroom """
         self.home = False
-        # Process input variables if present    
+        # Process input variables if present  
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -47,18 +47,25 @@ class Wemo_b2lt2(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value 
-        # Determine if kid is home                    
-        if self.homeArray[1] is True:
-            self.home = True                    
+                    self.timeout = value
+        # Determine if anyone is home
+        for h in self.homeArray:
+            if h is True:
+                self.home = True
         # Decision tree to determine if screen should be awake or not                
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
-            if self.home is True:
-                if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,40):
-                    self.state = True
+            if self.homeArray[0] is True:
+                if self.homeArray[1] is True or self.homeArray[2] is True:
+                    if datetime.time(5,40) <= self.dt.time() <= datetime.time(6,40):
+                        self.state = True
+                    else:
+                        self.state = False
                 else:
-                    self.state = False
+                    if datetime.time(6,20) <= self.dt.time() <= datetime.time(7,10):
+                        self.state = True
+                    else:
+                        self.state = False
             else:
                 self.state = False
         # Saturday - Sunday
@@ -67,4 +74,4 @@ class Wemo_b2lt2(DeviceWemo):
         else:
             self.state = False
         # Return result
-        return self.state      
+        return self.state

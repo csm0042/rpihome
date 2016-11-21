@@ -8,6 +8,7 @@ import logging
 import multiprocessing
 import time
 from rpihome.modules.wemo import WemoHelper
+from rpihome.modules.message import Message
 
 
 # Authorship Info *********************************************************************************
@@ -50,8 +51,9 @@ class WemoProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements        
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = bool()
         self.main_loop = bool()
@@ -86,25 +88,25 @@ class WemoProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.msg_in_queue.get_nowait()
+                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "16":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                if self.msg_in.dest == "16":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)
-                    self.msg_in = str()
+                        self.work_queue.put_nowait(self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)
                 else:
-                    self.msg_out_queue.put_nowait(self.msg_in)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                    
-                self.msg_in = str()
+                    self.msg_out_queue.put_nowait(self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -112,26 +114,32 @@ class WemoProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
-            # Process wemo off commands
-            if self.msg_to_process[6:9] == "160":
-                self.wemo.switch_off(self.msg_to_process)
-            # Process wemo on command
-            if self.msg_to_process[6:9] == "161":
-                self.wemo.switch_on(self.msg_to_process)
-            # Process wemo state-request message
-            if self.msg_to_process[6:9] == "162":
-                self.wemo.query_status(self.msg_to_process, self.msg_out_queue)
-            # Process "find device" message
-            if self.msg_to_process[6:9] == "169":
-                self.wemo.discover_device(self.msg_to_process)
+        if len(self.msg_to_process.raw) > 4:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+
+            # Discover Device
+            if self.msg_to_process.type == "160":
+                self.wemo.discover_device(self.msg_to_process.raw)
+
+            # Set Wemo state
+            if self.msg_to_process.type == "161":
+                # Process wemo off commands
+                if self.msg_to_process.payload == "off":
+                    self.wemo.switch_off(self.msg_to_process.raw)
+                # Process wemo on command
+                if self.msg_to_process.payload == "on":
+                    self.wemo.switch_on(self.msg_to_process.raw)
+
+            # Get Wemo state
+            if self.msg_to_process.type == "162":
+                self.wemo.query_status(self.msg_to_process.raw, self.msg_out_queue)
+
             # Clear msg-to-process string
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 

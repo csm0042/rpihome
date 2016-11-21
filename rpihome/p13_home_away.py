@@ -9,6 +9,7 @@ import multiprocessing
 import platform
 import time
 
+from rpihome.modules.message import Message
 from rpihome.rules.home_user1 import HomeUser1
 from rpihome.rules.home_user2 import HomeUser2
 from rpihome.rules.home_user3 import HomeUser3
@@ -54,8 +55,9 @@ class HomeProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.user1 = HomeUser1(self.msg_out_queue)
         self.user2 = HomeUser2(self.msg_out_queue)
         self.user3 = HomeUser3(self.msg_out_queue)
@@ -93,25 +95,26 @@ class HomeProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.msg_in_queue.get_nowait()
+                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "13":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                if self.msg_in.dest == "13":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
-                    self.msg_in = str()
+                        self.work_queue.put_nowait(self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
                 else:
-                    self.msg_out_queue.put_nowait(self.msg_in)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in)                    
-                self.msg_in = str()
+                    self.msg_out_queue.put_nowait(self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
+                # Resetting message for next check of queue                
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -120,62 +123,64 @@ class HomeProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
-            # 130 = Home-Away mode set to away (override)
-            if self.msg_to_process[6:9] == "130":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 0
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 0
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 0
-            # 131 = Home-Away mode set to home (override)
-            if self.msg_to_process[6:9] == "131":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 1
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 1
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 1
-            # 132 = Home-Away mode set to auto (by schedule)
-            if self.msg_to_process[6:9] == "132":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 2
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 2
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 2
-            # 133 = Home-Away mode set to auto (arp/ping based)
-            if self.msg_to_process[6:9] == "133":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 3
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 3
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 3
-            # 134 = Home-Away mode set to auto (by ping with delay)
-            if self.msg_to_process[6:9] == "134":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 4
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 4
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 4
-            # 135 = Home-Away mode set to auto (schedule w/ping)
-            if self.msg_to_process[6:9] == "135":
-                if self.msg_to_process[10:] == "user1":
-                    self.user1.mode = 5
-                if self.msg_to_process[10:] == "user2":
-                    self.user2.mode = 5
-                if self.msg_to_process[10:] == "user3":
-                    self.user3.mode = 5
+        if len(self.msg_to_process.raw) > 4:
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            # 130 = Set Home-Away mode set to away (override)
+            if self.msg_to_process.type == "130":
+                # Mode 0 == away override
+                if self.msg_to_process.payload == "0":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 0
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 0
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 0
+                # Mode 1 == home override
+                if self.msg_to_process.payload == "1":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 1
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 1
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 1
+                # Mode 2 == auto by schedule
+                if self.msg_to_process.payload == "2":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 2
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 2
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 2   
+                # Mode 3 == auto by arp & ping
+                if self.msg_to_process.payload == "3":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 3
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 3
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 3
+                # Mode 4 == auto by ping with delay
+                if self.msg_to_process.payload == "4":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 4
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 4
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 4
+                # Mode 5 == auto by schedule with ping
+                if self.msg_to_process.payload == "5":
+                    if self.msg_to_process.name == "user1":
+                        self.user1.mode = 5
+                    if self.msg_to_process.name == "user2":
+                        self.user2.mode = 5
+                    if self.msg_to_process.name == "user3":
+                        self.user3.mode = 5
             # Clear msg-to-process string
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 

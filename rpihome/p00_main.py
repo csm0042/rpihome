@@ -20,6 +20,7 @@ if __name__ == "__main__":
     sys.path.append("..")
     
 from rpihome.modules.log_path import LogFilePath
+from rpihome.modules.message import Message
 from rpihome.modules.multiprocess_logging import listener_configurer, worker_configurer
 from rpihome.p02_gui import MainWindow
 from rpihome.p11_logic_solver import LogicProcess
@@ -48,8 +49,9 @@ class MainProcess(object):
         self.init_complete = False
         self.name = "p00_main"
         self.handlers = []
-        self.msg_in = str()
-        self.msg_to_process = str()
+        self.msg_in = Message()
+        self.msg_to_process = Message()
+        self.msg_to_send = Message()
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = True
         self.main_loop = True
@@ -202,52 +204,51 @@ class MainProcess(object):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = self.p00_queue.get_nowait()
+                self.msg_in = Message(raw=self.p00_queue.get_nowait())
             except:
                 self.in_msg_loop = False
-            if len(self.msg_in) != 0:
-                if self.msg_in[3:5] == "00":
-                    if self.msg_in[6:9] == "001":
+            if len(self.msg_in.raw) > 4:
+                if self.msg_in.dest == "00":
+                    if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                         self.logger.debug("heartbeat received")
-                    elif self.msg_in[6:9] == "999":
+                    elif self.msg_in.type == "999":
                         self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
-                        self.work_queue.put_nowait(self.msg_in)
-                    self.msg_in = str()
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p02
-                elif self.msg_in[3:5] == "02":
-                    self.p02_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
+                elif self.msg_in.dest == "02":
+                    self.p02_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p11
-                elif self.msg_in[3:5] == "11":
-                    self.p11_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
+                elif self.msg_in.dest == "11":
+                    self.p11_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p13
-                elif self.msg_in[3:5] == "13":
-                    self.p13_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
+                elif self.msg_in.dest == "13":
+                    self.p13_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p15
-                elif self.msg_in[3:5] == "15":
-                    self.p15_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
+                elif self.msg_in.dest == "15":
+                    self.p15_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p16
-                elif self.msg_in[3:5] == "16":
-                    self.p16_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
+                elif self.msg_in.dest == "16":
+                    self.p16_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
                 # Message forwarding to p17
-                elif self.msg_in[3:5] == "17":
-                    self.p17_queue.put_nowait(self.msg_in)
-                    if self.msg_in[6:9] == "900" or self.msg_in[6:9] == "999":
-                        self.work_queue.put_nowait(self.msg_in)
-                self.msg_in = str()
+                elif self.msg_in.dest == "17":
+                    self.p17_queue.put_nowait(self.msg_in.raw)
+                    if self.msg_in.type == "900" or self.msg_in.type == "999":
+                        self.work_queue.put_nowait(self.msg_in.raw)
+                self.msg_in = Message()
             else:
                 self.in_msg_loop = False
 
@@ -255,65 +256,65 @@ class MainProcess(object):
     def process_work_queue(self):
         """ Method to perform work from the work queue """
         try:
-            self.msg_to_process = self.work_queue.get_nowait()
+            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
-        if len(self.msg_to_process) != 0:
+        if len(self.msg_to_process.raw) > 4:
             # Start / Stop p11 process
-            if self.msg_to_process[3:5] == "11":
-                if self.msg_to_process[6:9] == "900":
+            if self.msg_to_process.dest == "11":
+                if self.msg_to_process.type == "900":
                     if self.p11.is_alive() is False:                    
                         self.create_logic_process()
-                elif self.msg_to_process[6:9] == "999":
+                elif self.msg_to_process.type == "999":
                     if self.p11.is_alive():                    
                         self.p11.join()
             # Start / Stop p13 process
-            elif self.msg_to_process[3:5] == "13":
-                if self.msg_to_process[6:9] == "900":
+            elif self.msg_to_process.dest == "13":
+                if self.msg_to_process.type == "900":
                     if self.p13.is_alive() is False:                    
                         self.create_home_process()
-                elif self.msg_to_process[6:9] == "999":
+                elif self.msg_to_process.type == "999":
                     if self.p13.is_alive():
                         self.p13.join()
             # Start / Stop p15 process
-            elif self.msg_to_process[3:5] == "15":
-                if self.msg_to_process[6:9] == "900":
+            elif self.msg_to_process.dest == "15":
+                if self.msg_to_process.type == "900":
                     if self.p15.is_alive() is False:                    
                         self.create_screen_process()
-                elif self.msg_to_process[6:9] == "999":
+                elif self.msg_to_process.type == "999":
                     if self.p15.is_alive():                    
                         self.p15.join()   
             # Start / Stop p16 process
-            elif self.msg_to_process[3:5] == "16":
-                if self.msg_to_process[6:9] == "900":
+            elif self.msg_to_process.dest == "16":
+                if self.msg_to_process.type == "900":
                     if self.p16.is_alive() is False:                    
                         self.create_wemo_process()
-                elif self.msg_to_process[6:9] == "999":
+                elif self.msg_to_process.type == "999":
                     if self.p16.is_alive():                    
                         self.p16.join()
             # Start / Stop p17 process
-            elif self.msg_to_process[3:5] == "17":
-                if self.msg_to_process[6:9] == "900":
+            elif self.msg_to_process.dest == "17":
+                if self.msg_to_process.type == "900":
                     if self.p17.is_alive() is False:                    
                         self.create_nest_process()
-                elif self.msg_to_process[6:9] == "999":
+                elif self.msg_to_process.type == "999":
                     if self.p17.is_alive():
                         self.p17.join()                                      
             # Clear msg-to-process string
-            self.msg_to_process = str()
+            self.msg_to_process = Message()
         else:
             pass
 
 
     def send_heartbeats(self):
         """ Send periodic heartbeats to child processes so they don't time-out and shutdown """
-        self.p02_queue.put_nowait("00,02,001")
-        self.p11_queue.put_nowait("00,11,001")
-        self.p13_queue.put_nowait("00,13,001")
-        self.p15_queue.put_nowait("00,15,001")
-        self.p16_queue.put_nowait("00,16,001")
-        self.p17_queue.put_nowait("00,17,001")
+        self.p02_queue.put_nowait(Message(source="00", dest="02", type="001").raw)
+        self.p11_queue.put_nowait(Message(source="00", dest="11", type="001").raw)
+        self.p13_queue.put_nowait(Message(source="00", dest="13", type="001").raw)
+        self.p15_queue.put_nowait(Message(source="00", dest="15", type="001").raw)
+        self.p16_queue.put_nowait(Message(source="00", dest="16", type="001").raw)
+        self.p17_queue.put_nowait(Message(source="00", dest="17", type="001").raw)
         self.last_hb = datetime.datetime.now()
 
 
@@ -322,38 +323,38 @@ class MainProcess(object):
         update display """
         if self.p11.is_alive() != self.p11_alive_mem:
             if self.p11.is_alive() is True:
-                self.p02_queue.put_nowait("11,02,002")
+                self.p02_queue.put_nowait(Message(source="11", dest="02", type="002").raw)
                 self.p11_alive_mem = True
             elif self.p11.is_alive() is False:
-                self.p02_queue.put_nowait("11,02,003")
+                self.p02_queue.put_nowait(Message(source="11", dest="02", type="003").raw)
                 self.p11_alive_mem = False
         if self.p13.is_alive() != self.p13_alive_mem:
             if self.p13.is_alive() is True:
-                self.p02_queue.put_nowait("13,02,002")
+                self.p02_queue.put_nowait(Message(source="13", dest="02", type="002").raw)
                 self.p13_alive_mem = True
             elif self.p13.is_alive() is False:
-                self.p02_queue.put_nowait("13,02,003")
+                self.p02_queue.put_nowait(Message(source="13", dest="02", type="003").raw)
                 self.p13_alive_mem = False
         if self.p15.is_alive() != self.p15_alive_mem:
             if self.p15.is_alive() is True:
-                self.p02_queue.put_nowait("15,02,002")
+                self.p02_queue.put_nowait(Message(source="15", dest="02", type="002").raw)
                 self.p15_alive_mem = True
             elif self.p15.is_alive() is False:
-                self.p02_queue.put_nowait("15,02,003")
+                self.p02_queue.put_nowait(Message(source="15", dest="02", type="003").raw)
                 self.p15_alive_mem = False
         if self.p16.is_alive() != self.p16_alive_mem:
             if self.p16.is_alive() is True:
-                self.p02_queue.put_nowait("16,02,002")
+                self.p02_queue.put_nowait(Message(source="16", dest="02", type="002").raw)
                 self.p16_alive_mem = True
             elif self.p16.is_alive() is False:
-                self.p02_queue.put_nowait("16,02,003")
+                self.p02_queue.put_nowait(Message(source="16", dest="02", type="003").raw)
                 self.p16_alive_mem = False
         if self.p17.is_alive() != self.p17_alive_mem:
             if self.p17.is_alive() is True:
-                self.p02_queue.put_nowait("17,02,002")
+                self.p02_queue.put_nowait(Message(source="17", dest="02", type="002").raw)
                 self.p17_alive_mem = True
             elif self.p17.is_alive() is False:
-                self.p02_queue.put_nowait("17,02,003")
+                self.p02_queue.put_nowait(Message(source="17", dest="02", type="003").raw)
                 self.p17_alive_mem = False
 
 

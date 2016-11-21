@@ -9,6 +9,7 @@ import logging
 import multiprocessing
 import time
 from rpihome.rules import home_general
+from rpihome.modules.message import Message
 
 
 # Authorship Info *****************************************************************************************************
@@ -147,9 +148,11 @@ class HomeUser3(home_general.HomeGeneral):
     def command(self):
         if self.yes != self.mem:
             if self.yes is True:
-                self.msg_out_queue.put_nowait("13,11,101,user3")
+                self.msg_to_send = Message(source="13", dest="11", type="100", name="user3", payload="1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 logging.log(logging.DEBUG, "Sending 'user3 home' message to logic solver")                
             else:
-                self.msg_out_queue.put_nowait("13,11,100,user3")
+                self.msg_to_send = Message(source="13", dest="11", type="100", name="user3", payload="0")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 logging.log(logging.DEBUG, "Sending 'user3 NOT home' message to logic solver")                 
             self.mem = copy.copy(self.yes)                              
