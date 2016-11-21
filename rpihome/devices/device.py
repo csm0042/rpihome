@@ -6,6 +6,7 @@
 import datetime
 import logging
 from rpihome.modules.sun import Sun
+from rpihome.modules.message import Message
 
 
 # Authorship Info *****************************************************************************************************
@@ -40,7 +41,8 @@ class Device(object):
         self.utcOffset = datetime.timedelta(hours=0)
         self.sunriseOffset = datetime.timedelta(minutes=0)
         self.sunsetOffset = datetime.timedelta(minutes=0)  
-        self.timeout = datetime.timedelta(minutes=-15) 
+        self.timeout = datetime.timedelta(minutes=-15)
+        self.msg_to_send = Message()
                 
 
     @property

@@ -8,7 +8,7 @@ class TestHomeUser3(TestCase):
     def setUp(self):
         self.testQueue = multiprocessing.Queue(-1)         
         self.user = home_user3.HomeUser3(self.testQueue)
-        self.ip = "10.5.30.112"
+        self.ip = "10.5.30.99"
         self.mac = "70:ec:e4:81:44:0f"
 
     def test_user3_mode_0(self):
