@@ -64,7 +64,7 @@ class WemoProcess(multiprocessing.Process):
         """ Method to configure local logging """
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.propagate = False
+        self.logger.propagate = True
         self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
         self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
         self.handler.setFormatter(self.formatter)
@@ -92,7 +92,8 @@ class WemoProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                self.logger.debug("Processing message [%s] from incoming message queue",
+                                  self.msg_in.raw)
                 if self.msg_in.dest == "16":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
@@ -102,13 +103,16 @@ class WemoProcess(multiprocessing.Process):
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue",
+                                          self.msg_in.raw)
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                    self.logger.debug("Redirecting message [%s] back to main", self.msg_in.raw)
                 self.msg_in = Message()
             else:
+                self.msg_in = Message()
                 self.in_msg_loop = False
+
 
     def process_work_queue(self):
         """ Method to perform work from the work queue """
@@ -119,7 +123,8 @@ class WemoProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            self.logger.debug("Processing message [%s] from internal work queue",
+                              self.msg_to_process.raw)
 
             # Discover Device
             if self.msg_to_process.type == "160":
@@ -141,14 +146,15 @@ class WemoProcess(multiprocessing.Process):
             # Clear msg-to-process string
             self.msg_to_process = Message()
         else:
-            pass
+            self.msg_to_process = Message()
+
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
         # Configure logging
         self.configure_local_logger()
         # Create wemo helper object
-        self.wemo = WemoHelper()
+        self.wemo = WemoHelper(self.logger)
         # Main process loop
         self.main_loop = True
         while self.main_loop is True:

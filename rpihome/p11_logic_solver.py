@@ -77,7 +77,7 @@ class LogicProcess(multiprocessing.Process):
         self.in_msg_loop = bool()
         self.main_loop = bool()
         self.close_pending = False
-        self.create_devices()
+        #self.create_devices()
         self.create_home_flags()
 
 
@@ -105,24 +105,24 @@ class LogicProcess(multiprocessing.Process):
     def create_devices(self):
         """ Create devices in home """
         self.rpi_screen = device_rpi.RPImain("rpi", self.msg_out_queue)
-        self.wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", self.msg_out_queue)
-        self.wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", self.msg_out_queue)
-        self.wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", self.msg_out_queue)
-        self.wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", self.msg_out_queue)
-        self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue)
-        self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue)
+        self.wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", self.msg_out_queue, self.logger)
+        self.wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", self.msg_out_queue, self.logger)
+        self.wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", self.msg_out_queue, self.logger)
+        self.wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", self.msg_out_queue, self.logger)
+        self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue, self.logger)
+        self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue, self.logger)
         self.wemo_br1lt1 = device_wemo_br1lt1.Wemo_br1lt1(
-            "br1lt1", "192.168.86.27", self.msg_out_queue)
+            "br1lt1", "192.168.86.27", self.msg_out_queue, self.logger)
         self.wemo_br1lt2 = device_wemo_br1lt2.Wemo_br1lt2(
-            "br1lt2", "192.168.86.28", self.msg_out_queue)
+            "br1lt2", "192.168.86.28", self.msg_out_queue, self.logger)
         self.wemo_br2lt1 = device_wemo_br2lt1.Wemo_br2lt1(
-            "br2lt1", "192.168.86.29", self.msg_out_queue)
+            "br2lt1", "192.168.86.29", self.msg_out_queue, self.logger)
         self.wemo_br2lt2 = device_wemo_br2lt2.Wemo_br2lt2(
-            "br2lt2", "192.168.86.30", self.msg_out_queue)
+            "br2lt2", "192.168.86.30", self.msg_out_queue, self.logger)
         self.wemo_br3lt1 = device_wemo_br3lt1.Wemo_br3lt1(
-            "br3lt1", "192.168.86.31", self.msg_out_queue)
+            "br3lt1", "192.168.86.31", self.msg_out_queue, self.logger)
         self.wemo_br3lt2 = device_wemo_br3lt2.Wemo_br3lt2(
-            "br3lt2", "192.168.86.32", self.msg_out_queue)
+            "br3lt2", "192.168.86.32", self.msg_out_queue, self.logger)
 
 
     def create_home_flags(self):
@@ -320,6 +320,8 @@ class LogicProcess(multiprocessing.Process):
         """ Actual process loop.  Runs whenever start() method is called """
         # Configure logging
         self.configure_local_logger()
+        # Create devices
+        self.create_devices()
         # Main process loop        
         self.main_loop = True
         while self.main_loop is True:

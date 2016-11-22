@@ -2,14 +2,14 @@
 """ device.py:   
 """ 
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
 import datetime
 import logging
 from rpihome.modules.sun import Sun
 from rpihome.modules.message import Message
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -22,28 +22,28 @@ __status__ = "Development"
 
 
 
-# Device state class **************************************************************************************************
+# Device state class ******************************************************************************
 class Device(object):
     def __init__(self, name, msg_out_queue):
         self.name = name
-        self.msg_out_queue = msg_out_queue        
+        self.msg_out_queue = msg_out_queue
         self.state = False
         self.state_mem = None
         self.status = 0
         self.statusChangeTS = datetime.datetime.now()
-        self.online = False              
-        self.dt = datetime.datetime.now()         
+        self.online = False
+        self.dt = datetime.datetime.now()
         self.home = False
-        self.homeArray = [] 
-        self.homeTime = [] 
-        self.homeNew = False     
+        self.homeArray = []
+        self.homeTime = []
+        self.homeNew = False
         self.s = Sun(lat=38.566, long=-90.410)
         self.utcOffset = datetime.timedelta(hours=0)
         self.sunriseOffset = datetime.timedelta(minutes=0)
-        self.sunsetOffset = datetime.timedelta(minutes=0)  
+        self.sunsetOffset = datetime.timedelta(minutes=0)
         self.timeout = datetime.timedelta(minutes=-15)
         self.msg_to_send = Message()
-                
+
 
     @property
     def name(self):
@@ -54,7 +54,7 @@ class Device(object):
         if isinstance(value, str) is True:
             self.__name = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.name (should be type: str)")
+            logging.debug("Improper type attmpted to load into self.name (should be type: str)")
 
     @property
     def state(self):
@@ -65,7 +65,7 @@ class Device(object):
         if isinstance(value, bool) is True:
             self.__state = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.state (should be type: bool)")  
+            logging.debug("Improper type attmpted to load into self.state (should be type: bool)")
 
     @property
     def state_mem(self):
@@ -76,7 +76,8 @@ class Device(object):
         if isinstance(value, bool) is True or value == None:
             self.__state_mem = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.state_mem (should be type: bool or None)")              
+            logging.debug(
+                "Improper type attmpted to load into self.state_mem (should be type: bool/None)")
 
     @property
     def status(self):
@@ -87,7 +88,7 @@ class Device(object):
         if isinstance(value, int) is True:
             self.__status = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.status (should be type: int)")  
+            logging.debug("Improper type attmpted to load into self.status (should be type: int)")
 
     @property
     def statusChangeTS(self):
@@ -98,7 +99,8 @@ class Device(object):
         if isinstance(value, datetime.datetime) is True:
             self.__statusChangeTS = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.statusChangeTS (should be type: datetime)")  
+            logging.debug(
+                "Improper type attmpted to load into self.statusChangeTS (should be: datetime)")
 
     @property
     def online(self):
@@ -109,7 +111,8 @@ class Device(object):
         if isinstance(value, bool) is True or value == None:
             self.__online = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.online (should be type: bool or None)") 
+            logging.debug(
+                "Improper type attmpted to load into self.online (should be type: bool or None)")
 
     @property
     def dt(self):
@@ -120,8 +123,7 @@ class Device(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dt = value
         else:
-            #logging.log(logging.DEBUG, "Improper type attmpted to load into self.dt")
-            print("Improper type attmpted to load into self.dt")             
+            logging.debug("Improper type attmpted to load into self.dt")
 
     @property
     def home(self):
@@ -132,7 +134,8 @@ class Device(object):
         if isinstance(value, bool) is True or value == None:
             self.__home = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.home (should be type: bool or None)") 
+            logging.debug(
+                "Improper type attmpted to load into self.home (should be type: bool or None)")
 
     @property
     def homeArray(self):
@@ -143,7 +146,8 @@ class Device(object):
         if isinstance(value, list) is True:
             self.__homeArray = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.homeArray (should be type: list)")             
+            logging.debug("Improper type attmpted to load into self.homeArray \
+                          (should be type: list)")
 
     @property
     def utcOffset(self):
@@ -154,7 +158,8 @@ class Device(object):
         if isinstance(value, datetime.timedelta) is True:
             self.__utcOffset = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.utcOffset (should be type: datetime.timedelta)")   
+            logging.debug("Improper type attmpted to load into self.utcOffset \
+                          (should be type: datetime.timedelta)")
 
     @property
     def sunriseOffset(self):
@@ -165,7 +170,8 @@ class Device(object):
         if isinstance(value, datetime.timedelta) is True:
             self.__sunriseOffset = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.sunriseOffset (should be type: datetime.timedelta)")   
+            logging.debug("Improper type attmpted to load into self.sunriseOffset \
+                          (should be type: datetime.timedelta)")
 
     @property
     def sunsetOffset(self):
@@ -176,7 +182,8 @@ class Device(object):
         if isinstance(value, datetime.timedelta) is True:
             self.__sunsetOffset = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.sunsetOffset (should be type: datetime.timedelta)") 
+            logging.debug("Improper type attmpted to load into self.sunsetOffset \
+                          (should be type: datetime.timedelta)")
 
     @property
     def timeout(self):
@@ -187,4 +194,5 @@ class Device(object):
         if isinstance(value, datetime.timedelta) is True:
             self.__timeout = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.timeout (should be type: datetime.timedelta)")                                                                                                       
+            logging.debug("Improper type attmpted to load into self.timeout \
+                          (should be type: datetime.timedelta)")

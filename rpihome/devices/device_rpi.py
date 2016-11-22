@@ -31,12 +31,14 @@ class DeviceRPI(Device):
         of sending the same command over and over again """
         if self.state != self.state_mem:
             if self.state is True:
-                self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi", payload="export DISPLAY=:0; xset s reset")
+                self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi",
+                                           payload="export DISPLAY=:0; xset s reset")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending wake command to RPi Monitor")
+                logging.debug("Sending wake command to RPi Monitor")
             else:
-                self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi", payload="export DISPLAY=:0; xset s activate")
+                self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi",
+                                           payload="export DISPLAY=:0; xset s activate")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending sleep command to RPi Monitor")
+                logging.debug("Sending sleep command to RPi Monitor")
             self.state_mem = copy.copy(self.state)
                               

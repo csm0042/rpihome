@@ -69,9 +69,10 @@ class MainWindow(multiprocessing.Process):
         self.last_hb = time.time()
         self.index = 0
         self.time_to_go = datetime.time(6,30)
+        self.last_update = datetime.datetime.now() + datetime.timedelta(seconds=30)
         self.datetime_to_go = str()
         self.time_remaining = str()
-        self.scanWemo = False
+        self.scanWemo = True
         self.current_conditions = ["??"] * 4
         self.current_forecast = ["??"] * 4
         self.tomorrow_forecast = ["??"] * 4
@@ -1204,7 +1205,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b06a(self):
         self.logger.debug("Button 050301b06a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b06b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [drlt1] to green")
@@ -1212,13 +1213,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b06b(self):
         self.logger.debug("Button 050301b06b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b06c(self):
         self.logger.debug("Button 050301b06c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b06b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [drlt1] to red")            
@@ -1228,16 +1229,16 @@ class MainWindow(multiprocessing.Process):
     def action050301b07a(self):
         self.logger.debug("Button 050301b07a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)   
         self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)   
         self.button050301b03b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [lr1lt1] to green")
@@ -1251,37 +1252,37 @@ class MainWindow(multiprocessing.Process):
     def action050301b07b(self):
         self.logger.debug("Button 050301b07b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="fylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)  
         self.msg_to_send = Message(source="02", dest="16", type="162", name="bylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="162", name="lrlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="162", name="cclt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="162", name="ewlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b07c(self):
         self.logger.debug("Button 050301b07c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b03b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [lr1lt1] to red")
@@ -1297,7 +1298,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b08a(self):
         self.logger.debug("Button 050301b08a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b08b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br1lt1] to green")       
@@ -1305,13 +1306,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b08b(self):
         self.logger.debug("Button 050301b08b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b08c(self):
         self.logger.debug("Button 050301b08c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)  
         self.button050301b08b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [br1lt1] to red")           
@@ -1321,7 +1322,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b09a(self):
         self.logger.debug("Button 050301b09a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b09b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br1lt2] to green")       
@@ -1329,13 +1330,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b09b(self):
         self.logger.debug("Button 050301b09b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt2")  
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b09c(self):
         self.logger.debug("Button 050301b09c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b09b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [br1lt2] to red")
@@ -1345,7 +1346,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b10a(self):
         self.logger.debug("Button 050301b10a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b10b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br2lt1] to green")
@@ -1353,13 +1354,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b10b(self):
         self.logger.debug("Button 050301b10b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b10c(self):
         self.logger.debug("Button 050301b10c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b10b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [br2lt1] to red")  
@@ -1369,7 +1370,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b11a(self):
         self.logger.debug("Button 050301b11a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b11b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br2lt2] to green")        
@@ -1377,13 +1378,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b11b(self):
         self.logger.debug("Button 050301b11b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301b11c(self):
         self.logger.debug("Button 050301b11c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b11b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [br2lt2] to red")
@@ -1393,7 +1394,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b12a(self):
         self.logger.debug("Button 050301b12a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b12b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br3lt1] to green")
@@ -1401,13 +1402,13 @@ class MainWindow(multiprocessing.Process):
     def action050301b12b(self):
         self.logger.debug("Button 050301b12b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b12c(self):
         self.logger.debug("Button 050301b12c was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b12b.config(image=self.button_square_red_img)
         self.logger.debug("Setting color of status indicator for device [br3lt1] to red")             
@@ -1417,7 +1418,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b13a(self):
         self.logger.debug("Button 050301b13a was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b13b.config(image=self.button_square_green_img)
         self.logger.debug("Setting color of status indicator for device [br3lt2] to green")     
@@ -1425,7 +1426,7 @@ class MainWindow(multiprocessing.Process):
     def action050301b13b(self):
         self.logger.debug("Button 050301b13b was pressed")
         self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b13c(self):
@@ -1682,34 +1683,33 @@ class MainWindow(multiprocessing.Process):
             self.msg_in = Message()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False and self.scanWemo is True and 1==2:
-            if self.index > 15:
-                self.index = 0
-            if self.index == 0:
-                self.msg_out_queue.put_nowait("02,16,162,fylt1")
-            elif self.index == 1:
-                self.msg_out_queue.put_nowait("02,16,162,bylt1")
-            elif self.index == 2:
-                self.msg_out_queue.put_nowait("02,16,162,ewlt1")
-            elif self.index == 3:
-                self.msg_out_queue.put_nowait("02,16,162,cclt1")
-            elif self.index == 4:
-                self.msg_out_queue.put_nowait("02,16,162,lrlt1")
-            elif self.index == 5:
-                self.msg_out_queue.put_nowait("02,16,162,drlt1")
-            elif self.index == 6:
-                self.msg_out_queue.put_nowait("02,16,162,br1lt1")
-            elif self.index == 7:
-                self.msg_out_queue.put_nowait("02,16,162,br1lt2")
-            elif self.index == 8:
-                self.msg_out_queue.put_nowait("02,16,162,br2lt1")
-            elif self.index == 9:
-                self.msg_out_queue.put_nowait("02,16,162,br2lt2")
-            elif self.index == 10:
-                self.msg_out_queue.put_nowait("02,16,162,br3lt1")
-            elif self.index == 11:
-                self.msg_out_queue.put_nowait("02,16,162,br3lt2")
-            self.index += 1
+        if self.close_pending is False and self.scanWemo is True:
+            if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=10):
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="fylt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="bylt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="ewlt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="cclt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="lrlt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt2")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt2")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt1")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt2")
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                self.last_update = datetime.datetime.now()
         
               
 

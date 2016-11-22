@@ -1,8 +1,8 @@
 #!/usr/bin/python3
-""" device_wemo.py:   
-""" 
+""" device_wemo.py:
+"""
 
-# Import Required Libraries (Standard, Third Party, Local) ************************************************************
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
 import copy
 import datetime
 import logging
@@ -11,7 +11,7 @@ from rpihome.modules.message import Message
 
 
 
-# Authorship Info *****************************************************************************************************
+# Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
 __copyright__ = "Copyright 2016, The RPi-Home Project"
 __credits__ = ["Christopher Maue"]
@@ -22,28 +22,40 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Device class ********************************************************************************************************
+# Device class ************************************************************************************
 class DeviceWemo(Device):
-    def __init__(self, name, ip, msg_out_queue):
+    def __init__(self, name, address, msg_out_queue, logger):
         super().__init__(name, msg_out_queue)
-        self.discover_device(ip)
+        self.logger = logger
+        self.name = name
+        self.address = address
+        self.msg_out_queue = msg_out_queue
+        self.discover_device()
 
-    def discover_device(self, ip):
-        logging.log(logging.DEBUG, "Sending command to wemo gateway to find device at address: %s" % ip)
-        self.msg_out_queue.put_nowait(Message(source="11", dest="16", type="160", payload=ip).raw)
-             
-    def command(self):  
-        """ This method is used to send a single command to various devices when necessary instead of sending the same 
-        command over and over again """ 
+    def discover_device(self):
+        self.logger.debug("Sending command to wemo gateway to find device at address: %s",
+                          self.address)
+        self.msg_to_send = Message(source="11", dest="16", type="160",
+                                   name=self.name, payload=self.address)
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+
+
+    def command(self):
+        """ This method is used to send a single command to various devices when necessary instead
+        of sending the same command over and over again """
         if self.state != self.state_mem:
             if self.state is True:
-                self.msg_to_send = Message(source="11", dest="16", type="161", name=self.name, payload="on")
+                self.msg_to_send = Message(
+                    source="11", dest="16", type="161", name=self.name, payload="on")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending command to wemo gateway to turn ON device: %s" % self.name)
+                self.logger.debug(
+                    "Sending command to wemo gateway to turn ON device: %s", self.name)
             else:
-                self.msg_to_send = Message(source="11", dest="16", type="161", name=self.name, payload="off")
+                self.msg_to_send = Message(
+                    source="11", dest="16", type="161", name=self.name, payload="off")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending command to wemo gateway to turn OFF device: %s" % self.name)
+                self.logger.debug(
+                    "Sending command to wemo gateway to turn OFF device: %s", self.name)
             pass
             # Snapshot new device state in memory so the command is only sent once
             self.state_mem = copy.copy(self.state)

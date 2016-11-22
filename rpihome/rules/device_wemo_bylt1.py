@@ -24,8 +24,9 @@ __status__ = "Development"
 
 # Device class ********************************************************************************************************
 class Wemo_bylt1(DeviceWemo):
-    def __init__(self, name, ip, msg_out_queue):
-        super().__init__(name, ip, msg_out_queue)
+    def __init__(self, name, ip, msg_out_queue, logger):
+        super().__init__(name, ip, msg_out_queue, logger)
+        self.logger = logger
 
 
     def check_rules(self, **kwargs):
