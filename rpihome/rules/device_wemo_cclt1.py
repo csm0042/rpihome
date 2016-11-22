@@ -22,9 +22,11 @@ __status__ = "Development"
 
 # Device class ********************************************************************************************************
 class Wemo_cclt1(DeviceWemo):
-    def __init__(self, name, ip, msg_out_queue, logger):
-        super().__init__(name, ip, msg_out_queue, logger)
-        self.logger = logger
+    def __init__(self, name, ip, msg_out_queue, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)        
+        # Init parent class
+        super().__init__(name, ip, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):

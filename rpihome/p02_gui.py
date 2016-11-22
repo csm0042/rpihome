@@ -14,8 +14,8 @@ import time
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
+import modules.message as message
 
-from modules.message import Message
 
 # Authorship Info *********************************************************************************
 __author__ = "Christopher Maue"
@@ -28,6 +28,18 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
+# Set up local logging *********************************************************************
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
+logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
+handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.debug("Logging handler for %s started", __name__)
+
+
 # Application GUI Class Definition ****************************************************************
 class MainWindow(multiprocessing.Process):
     """ GUI process class and methods """
@@ -38,7 +50,6 @@ class MainWindow(multiprocessing.Process):
         self.msg_out_queue = multiprocessing.Queue(-1)
         self.logfile = "logfile"
         self.enable = [True]*18
-        self.log_remote = False
         self.display_file = None
         # Update default elements based on any parameters passed in
         if kwargs is not None:
@@ -49,22 +60,18 @@ class MainWindow(multiprocessing.Process):
                     self.msg_in_queue = value
                 if key == "msgout":
                     self.msg_out_queue = value
-                if key == "logqueue":
-                    self.log_queue = value
                 if key == "logfile":
                     self.logfile = value
                 if key == "enable":
                     self.enable = value
-                if key == "logremote":
-                    self.log_remote = value
                 if key == "displayfile":
                     self.display_file = value
         # Initialize parent class
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
         self.text = str()
-        self.msg_in = Message()
-        self.msg_to_send = Message()
+        self.msg_in = message.Message()
+        self.msg_to_send = message.Message()
         self.close_pending = False
         self.last_hb = time.time()
         self.index = 0
@@ -88,43 +95,20 @@ class MainWindow(multiprocessing.Process):
         self.resourceDir = os.path.join(self.basepath, "resources/")
 
 
-    def configure_local_logger(self):
-        """ Method to configure local logging """
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG)
-        self.logger.propagate = False        
-        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
-        self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
-        self.logger.debug("Logging handler for %s process started", self.name)        
-
-
-    def kill_logger(self):
-        """ Shut down logger when process exists """
-        self.handlers = list(self.logger.handlers)
-        for i in iter(self.handlers):
-            self.logger.removeHandler(i)
-            i.flush()
-            i.close()
-
-
     def run(self):
         """ Generate window and schedule after and close handlers """
-        # Configure logging
-        self.configure_local_logger()
         # Create all parts of application window
-        self.logger.debug("Begining generation of application window")
+        logger.debug("Begining generation of application window")
         self.draw_window()
-        self.logger.debug("Finished generation of application window")
+        logger.debug("Finished generation of application window")
         # Schedule "after" process to run once main loop has started
         self.window.after(500, self.after_tasks)
-        self.logger.debug("Scheduled initial \"after\" task")
+        logger.debug("Scheduled initial \"after\" task")
         # Start handler for window exit button
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.logger.debug("Added \"on-close\" handler")
+        logger.debug("Added \"on-close\" handler")
         # Run mainloop() to activate gui and begin monitoring its inputs
-        self.logger.debug("Started gui mainloop")
+        logger.debug("Started gui mainloop")
         self.window.mainloop()             
 
 
@@ -181,7 +165,7 @@ class MainWindow(multiprocessing.Process):
         self.window.title("RPi Home")
         self.window.geometry("%sx%s+%s+%s" % (840, 810, 1, 1))
         self.window.config(background="black") 
-        self.logger.debug("Main application window created")
+        logger.debug("Main application window created")
 
 
     def define_fonts(self):
@@ -228,7 +212,7 @@ class MainWindow(multiprocessing.Process):
     def divide_main_window(self):
         self.screen1 = tk.Frame(self.window, background="black")
         self.screen1.pack(side="top", fill="both", expand=True, padx=0, pady=0)
-        self.logger.debug("Overlayed 1 primary frame over-top of application (root) window")
+        logger.debug("Overlayed 1 primary frame over-top of application (root) window")
         self.frame01 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame01.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame01.pack_propagate(False)
@@ -247,7 +231,7 @@ class MainWindow(multiprocessing.Process):
         self.frame06 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame06.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame06.pack_propagate(False)
-        self.logger.debug("Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
+        logger.debug("Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
 
 
     def divide_frame01(self):
@@ -801,7 +785,7 @@ class MainWindow(multiprocessing.Process):
 
 
     def action010101(self):
-        self.logger.debug("Button 010101 was pressed")
+        logger.debug("Button 010101 was pressed")
         pass
 
 
@@ -829,17 +813,17 @@ class MainWindow(multiprocessing.Process):
 
 
     def action030101(self):
-        self.logger.debug("Button 030101 was pressed")
+        logger.debug("Button 030101 was pressed")
         pass 
 
     def action040101(self):
-        self.logger.debug("Button 040101 was pressed")
+        logger.debug("Button 040101 was pressed")
         pass
  
 
     def action050101(self):
         self.scanWemo = False
-        self.logger.debug("Button 050101 was pressed")
+        logger.debug("Button 050101 was pressed")
         if self.frame050301a_packed is False:
             self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301a.pack_propagate(False)
@@ -858,7 +842,7 @@ class MainWindow(multiprocessing.Process):
         pass
 
     def action050102(self):
-        self.logger.debug("Button 050102 was pressed")
+        logger.debug("Button 050102 was pressed")
         self.scanWemo = True
         if self.frame050301b_packed is False:
             self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -879,7 +863,7 @@ class MainWindow(multiprocessing.Process):
 
     def action050103(self):
         self.scanWemo = False
-        self.logger.debug("Button 050103 was pressed")
+        logger.debug("Button 050103 was pressed")
         if self.frame050301c_packed is False:
             self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301c.pack_propagate(False)
@@ -899,7 +883,7 @@ class MainWindow(multiprocessing.Process):
 
     def action050104(self):
         self.scanWemo = False
-        self.logger.debug("Button 050103 was pressed")
+        logger.debug("Button 050103 was pressed")
         if self.frame050301d_packed is False:
             self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301d.pack_propagate(False)
@@ -920,654 +904,654 @@ class MainWindow(multiprocessing.Process):
 
     # START / CHECK / STOP Controls for: Log handler process
     def action050301a01a(self):
-        self.logger.debug("Button 050301a01a was pressed")
-        self.msg_to_send = Message(source="02", dest="01", type="900")
+        logger.debug("Button 050301a01a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="01", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a01b(self):
-        self.logger.debug("Button 050301a01b was pressed")
-        self.msg_to_send = Message(source="02", dest="01", type="???")
+        logger.debug("Button 050301a01b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="01", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
    
     def action050301a01c(self):
-        self.logger.debug("Button 050301a01c was pressed")
-        self.msg_to_send = Message(source="02", dest="01", type="999")
+        logger.debug("Button 050301a01c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="01", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)            
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
 
 
     # START / CHECK / STOP Controls for: Logic Solver process
     def action050301a02a(self):
-        self.logger.debug("Button 050301a02a was pressed")
-        self.msg_to_send = Message(source="02", dest="11", type="900")
+        logger.debug("Button 050301a02a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="11", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a02b(self):
-        self.logger.debug("Button 050301a02b was pressed")
-        self.msg_to_send = Message(source="02", dest="11", type="???")
+        logger.debug("Button 050301a02b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="11", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)    
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)                
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)                
 
     def action050301a02c(self):
-        self.logger.debug("Button 050301a02c was pressed")
-        self.msg_to_send = Message(source="02", dest="11", type="999")
+        logger.debug("Button 050301a02c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="11", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)            
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
 
 
     # START / CHECK / STOP Controls for: Future process
     def action050301a03a(self):
-        self.logger.debug("Button 050301a03a was pressed")
-        self.msg_to_send = Message(source="02", dest="12", type="900")
+        logger.debug("Button 050301a03a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="12", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a03b(self):
-        self.logger.debug("Button 050301a03b was pressed")
-        self.msg_to_send = Message(source="02", dest="12", type="???")
+        logger.debug("Button 050301a03b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="12", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
      
     def action050301a03c(self):
-        self.logger.debug("Button 050301a03c was pressed")
-        self.msg_to_send = Message(source="02", dest="12", type="999")
+        logger.debug("Button 050301a03c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="12", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Button 050301a03c was pressed - Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Button 050301a03c was pressed - Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Home / Away process
     def action050301a04a(self):
-        self.logger.debug("Button 050301a04a was pressed")
-        self.msg_to_send = Message(source="02", dest="13", type="900")
+        logger.debug("Button 050301a04a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="13", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a04b(self):
-        self.logger.debug("Button 050301a04b was pressed")
-        self.msg_to_send = Message(source="02", dest="13", type="???")
+        logger.debug("Button 050301a04b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="13", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301a04c(self):
-        self.logger.debug("Button 050301a04c was pressed")
-        self.msg_to_send = Message(source="02", dest="13", type="999")
+        logger.debug("Button 050301a04c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="13", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Future process
     def action050301a05a(self):
-        self.logger.debug("Button 050301a05a was pressed")
-        self.msg_to_send = Message(source="02", dest="14", type="900")
+        logger.debug("Button 050301a05a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="14", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a05b(self):
-        self.logger.debug("Button 050301a05b was pressed")
-        self.msg_to_send = Message(source="02", dest="14", type="???")
+        logger.debug("Button 050301a05b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="14", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301a05c(self):
-        self.logger.debug("Button 050301a05c was pressed")
-        self.msg_to_send = Message(source="02", dest="14", type="999")
+        logger.debug("Button 050301a05c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="14", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Rpi Screen process
     def action050301a06a(self):
-        self.logger.debug("Button 050301a06a was pressed")
-        self.msg_to_send = Message(source="02", dest="15", type="900")
+        logger.debug("Button 050301a06a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="15", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a06b(self):
-        self.logger.debug("Button 050301a06b was pressed")
-        self.msg_to_send = Message(source="02", dest="15", type="???")
+        logger.debug("Button 050301a06b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="15", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301a06c(self):
-        self.logger.debug("Button 050301a06c was pressed")
-        self.msg_to_send = Message(source="02", dest="15", type="999")
+        logger.debug("Button 050301a06c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="15", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Wemo Gateway process
     def action050301a07a(self):
-        self.logger.debug("Button 050301a07a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="900")
+        logger.debug("Button 050301a07a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="11", type="168")           
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="11", type="168")           
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a07b(self):
-        self.logger.debug("Button 050301a07b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="???")
+        logger.debug("Button 050301a07b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a07c(self):
-        self.logger.debug("Button 050301a07c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="999")
+        logger.debug("Button 050301a07c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Nest Gateway process
     def action050301a08a(self):
-        self.logger.debug("Button 050301a08a was pressed")
-        self.msg_to_send = Message(source="02", dest="17", type="900")
+        logger.debug("Button 050301a08a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="17", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a08b(self):
-        self.logger.debug("Button 050301a08b was pressed")        
-        self.msg_to_send = Message(source="02", dest="17", type="???")
+        logger.debug("Button 050301a08b was pressed")        
+        self.msg_to_send = message.Message(source="02", dest="17", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a08c(self):
-        self.logger.debug("Button 050301a08c was pressed")
-        self.msg_to_send = Message(source="02", dest="17", type="999")
+        logger.debug("Button 050301a08c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="17", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # ON / QUERY / OFF Control for device: fylt1
     def action050301b01a(self):
-        self.logger.debug("Button 050301b01a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="fylt1", payload="on")
+        logger.debug("Button 050301b01a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="fylt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b01b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [fylt1] to green")
+        logger.debug("Setting color of status indicator for device [fylt1] to green")
 
     def action050301b01b(self):
-        self.logger.debug("Button 050301b01b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="fylt1")
+        logger.debug("Button 050301b01b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b01c(self):
-        self.logger.debug("Button 050301b01c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="fylt1", payload="off")
+        logger.debug("Button 050301b01c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="fylt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b01b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [fylt1] to red")
+        logger.debug("Setting color of status indicator for device [fylt1] to red")
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b02a(self):
-        self.logger.debug("Button 050301b02a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="bylt1", payload="on")
+        logger.debug("Button 050301b02a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="bylt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b02b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [bylt1] to green")
+        logger.debug("Setting color of status indicator for device [bylt1] to green")
 
     def action050301b02b(self):
-        self.logger.debug("Button 050301b02b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="bylt1")
+        logger.debug("Button 050301b02b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b02c(self):
-        self.logger.debug("Button 050301b02c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="bylt1", payload="off")
+        logger.debug("Button 050301b02c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="bylt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b02b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [bylt1] to red")        
+        logger.debug("Setting color of status indicator for device [bylt1] to red")        
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b03a(self):
-        self.logger.debug("Button 050301b03a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
+        logger.debug("Button 050301b03a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b03b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [ewlt1] to green")
+        logger.debug("Setting color of status indicator for device [ewlt1] to green")
 
     def action050301b03b(self):
-        self.logger.debug("Button 050301b03b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="ewlt1")
+        logger.debug("Button 050301b03b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301b03c(self):
-        self.logger.debug("Button 050301b03c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
+        logger.debug("Button 050301b03c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b03b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [ewlt1] to red")   
+        logger.debug("Setting color of status indicator for device [ewlt1] to red")   
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b04a(self):
-        self.logger.debug("Button 050301b04a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="on")
+        logger.debug("Button 050301b04a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b04b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [cclt1] to green")
+        logger.debug("Setting color of status indicator for device [cclt1] to green")
 
     def action050301b04b(self):
-        self.logger.debug("Button 050301b04b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="cclt1")
+        logger.debug("Button 050301b04b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301b04c(self):
-        self.logger.debug("Button 050301b04c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="off")
+        logger.debug("Button 050301b04c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)         
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)         
         self.button050301b04b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [cclt1] to red")          
+        logger.debug("Setting color of status indicator for device [cclt1] to red")          
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b05a(self):
-        self.logger.debug("Button 050301b05a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
+        logger.debug("Button 050301b05a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b05b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [lrlt1] to green")
+        logger.debug("Setting color of status indicator for device [lrlt1] to green")
 
     def action050301b05b(self):
-        self.logger.debug("Button 050301b05b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="lrlt1")
+        logger.debug("Button 050301b05b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b05c(self):
-        self.logger.debug("Button 050301b05c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
+        logger.debug("Button 050301b05c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b05b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [lrlt1] to red")          
+        logger.debug("Setting color of status indicator for device [lrlt1] to red")          
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b06a(self):
-        self.logger.debug("Button 050301b06a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="on")
+        logger.debug("Button 050301b06a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b06b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [drlt1] to green")
+        logger.debug("Setting color of status indicator for device [drlt1] to green")
 
     def action050301b06b(self):
-        self.logger.debug("Button 050301b06b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
+        logger.debug("Button 050301b06b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b06c(self):
-        self.logger.debug("Button 050301b06c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="off")
+        logger.debug("Button 050301b06c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b06b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [drlt1] to red")            
+        logger.debug("Setting color of status indicator for device [drlt1] to red")            
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b07a(self):
-        self.logger.debug("Button 050301b07a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
+        logger.debug("Button 050301b07a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="on")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)   
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="on")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)   
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)   
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)   
         self.button050301b03b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [lr1lt1] to green")
+        logger.debug("Setting color of status indicator for device [lr1lt1] to green")
         self.button050301b04b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [dr1lt1] to green")
+        logger.debug("Setting color of status indicator for device [dr1lt1] to green")
         self.button050301b05b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [cc1lt1] to green")
+        logger.debug("Setting color of status indicator for device [cc1lt1] to green")
         self.button050301b06b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [ew1lt1] to green")  
+        logger.debug("Setting color of status indicator for device [ew1lt1] to green")  
 
     def action050301b07b(self):
-        self.logger.debug("Button 050301b07b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="fylt1")
+        logger.debug("Button 050301b07b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)  
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="bylt1")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="lrlt1")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="cclt1")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="ewlt1")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b07c(self):
-        self.logger.debug("Button 050301b07c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
+        logger.debug("Button 050301b07c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="drlt1", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="cclt1", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
         self.button050301b03b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [lr1lt1] to red")
+        logger.debug("Setting color of status indicator for device [lr1lt1] to red")
         self.button050301b04b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [dr1lt1] to red")
+        logger.debug("Setting color of status indicator for device [dr1lt1] to red")
         self.button050301b05b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [cc1lt1] to red")
+        logger.debug("Setting color of status indicator for device [cc1lt1] to red")
         self.button050301b06b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [ew1lt1] to red")
+        logger.debug("Setting color of status indicator for device [ew1lt1] to red")
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b08a(self):
-        self.logger.debug("Button 050301b08a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
+        logger.debug("Button 050301b08a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b08b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt1] to green")       
+        logger.debug("Setting color of status indicator for device [br1lt1] to green")       
 
     def action050301b08b(self):
-        self.logger.debug("Button 050301b08b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt1")
+        logger.debug("Button 050301b08b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b08c(self):
-        self.logger.debug("Button 050301b08c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
+        logger.debug("Button 050301b08c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)  
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
         self.button050301b08b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt1] to red")           
+        logger.debug("Setting color of status indicator for device [br1lt1] to red")           
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b09a(self):
-        self.logger.debug("Button 050301b09a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
+        logger.debug("Button 050301b09a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b09b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt2] to green")       
+        logger.debug("Setting color of status indicator for device [br1lt2] to green")       
 
     def action050301b09b(self):
-        self.logger.debug("Button 050301b09b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt2")  
+        logger.debug("Button 050301b09b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")  
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b09c(self):
-        self.logger.debug("Button 050301b09c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
+        logger.debug("Button 050301b09c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b09b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt2] to red")
+        logger.debug("Setting color of status indicator for device [br1lt2] to red")
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b10a(self):
-        self.logger.debug("Button 050301b10a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
+        logger.debug("Button 050301b10a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b10b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt1] to green")
+        logger.debug("Setting color of status indicator for device [br2lt1] to green")
 
     def action050301b10b(self):
-        self.logger.debug("Button 050301b10b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt1")
+        logger.debug("Button 050301b10b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b10c(self):
-        self.logger.debug("Button 050301b10c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
+        logger.debug("Button 050301b10c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b10b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt1] to red")  
+        logger.debug("Setting color of status indicator for device [br2lt1] to red")  
 
 
     # ON / QUERY / OFF Control for device: bylt1
     def action050301b11a(self):
-        self.logger.debug("Button 050301b11a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
+        logger.debug("Button 050301b11a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
         self.button050301b11b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt2] to green")        
+        logger.debug("Setting color of status indicator for device [br2lt2] to green")        
 
     def action050301b11b(self):
-        self.logger.debug("Button 050301b11b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt2")
+        logger.debug("Button 050301b11b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301b11c(self):
-        self.logger.debug("Button 050301b11c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
+        logger.debug("Button 050301b11c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b11b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt2] to red")
+        logger.debug("Setting color of status indicator for device [br2lt2] to red")
 
 
     # ON / QUERY / OFF Control for device: br3lt1
     def action050301b12a(self):
-        self.logger.debug("Button 050301b12a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
+        logger.debug("Button 050301b12a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b12b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt1] to green")
+        logger.debug("Setting color of status indicator for device [br3lt1] to green")
 
     def action050301b12b(self):
-        self.logger.debug("Button 050301b12b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt1")
+        logger.debug("Button 050301b12b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301b12c(self):
-        self.logger.debug("Button 050301b12c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
+        logger.debug("Button 050301b12c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b12b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt1] to red")             
+        logger.debug("Setting color of status indicator for device [br3lt1] to red")             
 
 
     # ON / QUERY / OFF Control for device: br3lt2
     def action050301b13a(self):
-        self.logger.debug("Button 050301b13a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
+        logger.debug("Button 050301b13a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b13b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt2] to green")     
+        logger.debug("Setting color of status indicator for device [br3lt2] to green")     
 
     def action050301b13b(self):
-        self.logger.debug("Button 050301b13b was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt2")
+        logger.debug("Button 050301b13b was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301b13c(self):
-        self.logger.debug("Button 050301b13c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
+        logger.debug("Button 050301b13c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)            
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
         self.button050301b13b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt2] to red")
+        logger.debug("Setting color of status indicator for device [br3lt2] to red")
 
 
 
     def action050301b14a(self):
-        self.logger.debug("Button 050301b14a was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
+        logger.debug("Button 050301b14a was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)  
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
         
         self.button050301b08b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt1] to green")
+        logger.debug("Setting color of status indicator for device [br1lt1] to green")
         self.button050301b09b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt2] to green")
+        logger.debug("Setting color of status indicator for device [br1lt2] to green")
         self.button050301b10b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt1] to green")
+        logger.debug("Setting color of status indicator for device [br2lt1] to green")
         self.button050301b11b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt2] to green")
+        logger.debug("Setting color of status indicator for device [br2lt2] to green")
         self.button050301b12b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt1] to green")
+        logger.debug("Setting color of status indicator for device [br3lt1] to green")
         self.button050301b13b.config(image=self.button_square_green_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt2] to green")
+        logger.debug("Setting color of status indicator for device [br3lt2] to green")
 
 
     def action050301b14b(self):
-        self.logger.debug("Button 050301b14b was pressed")
+        logger.debug("Button 050301b14b was pressed")
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt1")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt2")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt1")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt2")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt1")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         
-        self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt2")
+        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     def action050301b14c(self):
-        self.logger.debug("Button 050301b14c was pressed")
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
+        logger.debug("Button 050301b14c was pressed")
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.button050301b08b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt1] to red") 
+        logger.debug("Setting color of status indicator for device [br1lt1] to red") 
         self.button050301b09b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br1lt2] to red")
+        logger.debug("Setting color of status indicator for device [br1lt2] to red")
         self.button050301b10b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt1] to red")
+        logger.debug("Setting color of status indicator for device [br2lt1] to red")
         self.button050301b11b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br2lt2] to red")
+        logger.debug("Setting color of status indicator for device [br2lt2] to red")
         self.button050301b12b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt1] to red")
+        logger.debug("Setting color of status indicator for device [br3lt1] to red")
         self.button050301b13b.config(image=self.button_square_red_img)
-        self.logger.debug("Setting color of status indicator for device [br3lt2] to red")    
+        logger.debug("Setting color of status indicator for device [br3lt2] to red")    
 
 
     def action050301c01a(self):
-        self.logger.debug("Button 050301c01a was pressed")
+        logger.debug("Button 050301c01a was pressed")
         self.button050301c01b.config(image=self.button_square_green_img)
 
     def action050301c01b(self):
-        self.logger.debug("Button 050301c01b was pressed")
+        logger.debug("Button 050301c01b was pressed")
 
     def action050301c01c(self):
-        self.logger.debug("Button 050301c01C was pressed") 
+        logger.debug("Button 050301c01C was pressed") 
         self.button050301c01b.config(image=self.button_square_red_img)    
 
 
     def action060101(self):
-        self.logger.debug("Button 060101 was pressed")
+        logger.debug("Button 060101 was pressed")
         pass        
 
     def after_tasks(self):
-        #self.logger.debug("Running \"after\" task")
+        #logger.debug("Running \"after\" task")
         # Process incoming message queue
         try:
-            self.msg_in = Message(raw=self.msg_in_queue.get_nowait())    
-            #self.logger.debug("Checked in msg queue and found msg: %s" % self.msg_in.raw)   
+            self.msg_in = message.Message(raw=self.msg_in_queue.get_nowait())    
+            #logger.debug("Checked in msg queue and found msg: %s" % self.msg_in.raw)   
         except:
             pass
         # Process incoming message
         if len(self.msg_in.raw) > 4:
-            self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
+            logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
             if self.msg_in.dest == "02":
                 
                 if self.msg_in.type == "001":
@@ -1611,15 +1595,15 @@ class MainWindow(multiprocessing.Process):
 
                 elif self.msg_in.type == "020":
                     self.current_conditions = (self.msg_in.payload).split(sep=",")
-                    self.logger.debug("Current condition response [%s] received from nest gateway", self.msg_in.raw)
+                    logger.debug("Current condition response [%s] received from nest gateway", self.msg_in.raw)
 
                 elif self.msg_in.type == "021":
                     self.current_forecast = (self.msg_in.payload).split(sep=",")
-                    self.logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in.raw)                    
+                    logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in.raw)                    
 
                 elif self.msg_in.type == "022":
                     self.tomorrow_forecast = (self.msg_in.payload).split(sep=",")      
-                    self.logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in.raw)                                                 
+                    logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in.raw)                                                 
                 
                 elif self.msg_in.type == "163":
                     if self.msg_in.payload == "0":
@@ -1674,40 +1658,40 @@ class MainWindow(multiprocessing.Process):
                             self.button050301b13b.config(image=self.button_square_green_img)                                                                            
                                        
                 elif self.msg_in.type == "999":
-                    self.logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
+                    logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
                     self.close_pending = True
             else:
                 self.msg_out_queue.put_nowait(self.msg_in.raw)
-                self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                
+                logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                
             pass  
-            self.msg_in = Message()
+            self.msg_in = message.Message()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False and self.scanWemo is True:
+        if self.close_pending is False and self.scanWemo is True and self.frame050301b_packed is True:
             if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=10):
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="fylt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="bylt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="ewlt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="cclt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="lrlt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="drlt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br1lt2")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br2lt2")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt1")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = Message(source="02", dest="16", type="162", name="br3lt2")
+                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 self.last_update = datetime.datetime.now()
         
@@ -1725,7 +1709,7 @@ class MainWindow(multiprocessing.Process):
                 self.update_alarm_window()
             # Re-schedule after task to run again in another 1000ms
             self.window.after(500, self.after_tasks)
-            #self.logger.debug("Re-scheduled next after event")
+            #logger.debug("Re-scheduled next after event")
         pass
 
 
@@ -1734,58 +1718,58 @@ class MainWindow(multiprocessing.Process):
             self.close_pending = True
             # Kill p167(nest gateway)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="17", type="999").raw)
-                self.logger.debug("Kill code sent to p17_nest_gateway process")
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="17", type="999").raw)
+                logger.debug("Kill code sent to p17_nest_gateway process")
             except:
-                self.logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
+                logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
             # Kill p16 (wemo gateway)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="16", type="999").raw)
-                self.logger.debug("Kill code sent to p16_wemo_gateway process") 
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="16", type="999").raw)
+                logger.debug("Kill code sent to p16_wemo_gateway process") 
             except:
-                self.logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
+                logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
             # Kill p15 (rpi screen)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="15", type="999").raw)
-                self.logger.debug("Kill code sent to p15_rpi_screen process")  
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="15", type="999").raw)
+                logger.debug("Kill code sent to p15_rpi_screen process")  
             except:
-                self.logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
+                logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
             # Kill p14 (motion detector)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="14", type="999").raw)
-                self.logger.debug("Kill code sent to p14_motion process") 
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="14", type="999").raw)
+                logger.debug("Kill code sent to p14_motion process") 
             except:
-                self.logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
+                logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
             # Kill p13 (home / away)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="13", type="999").raw)
-                self.logger.debug("Kill code sent to p13_home_away process")   
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="13", type="999").raw)
+                logger.debug("Kill code sent to p13_home_away process")   
             except:
-                self.logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
+                logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
             # Kill p12 (db interface)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="12", type="999").raw)
-                self.logger.debug("Kill code sent to p12_db_interface process") 
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="12", type="999").raw)
+                logger.debug("Kill code sent to p12_db_interface process") 
             except:
-                self.logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
+                logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
             # Kill p11 (logic solver)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="11", type="999").raw)
-                self.logger.debug("Kill code sent to p11_logic_solver process")
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="11", type="999").raw)
+                logger.debug("Kill code sent to p11_logic_solver process")
             except:
-                self.logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
+                logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
             # Kill p02 (gui)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="02", type="999").raw)
-                self.logger.debug("Kill code sent to p02_gui process")  
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="02", type="999").raw)
+                logger.debug("Kill code sent to p02_gui process")  
             except:
-                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                                                          
+                logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                                                          
             # Kill p00 (main)
             try:
-                self.msg_out_queue.put_nowait(Message(source="02", dest="00", type="999").raw)   
-                self.logger.debug("Kill code sent to p00_main process")
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="00", type="999").raw)   
+                logger.debug("Kill code sent to p00_main process")
             except:
-                self.logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
+                logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window

@@ -23,7 +23,9 @@ __status__ = "Development"
 # Device class *************************************************************************************
 class DeviceRPI(Device):
     """ Test class and methods for the DeviceRPI class """
-    def __init__(self, name, msg_out_queue):
+    def __init__(self, name, msg_out_queue, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)        
         super().__init__(name, msg_out_queue)
 
     def command(self):

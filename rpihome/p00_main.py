@@ -16,18 +16,28 @@ import os
 import sys
 import time
 
-if __name__ == "__main__":
-    sys.path.append("..")
-    
-from rpihome.modules.log_path import LogFilePath
-from rpihome.modules.message import Message
-from rpihome.modules.multiprocess_logging import listener_configurer, worker_configurer
-from rpihome.p02_gui import MainWindow
-from rpihome.p11_logic_solver import LogicProcess
-from rpihome.p13_home_away import HomeProcess
-from rpihome.p15_rpi_screen import RpiProcess
-from rpihome.p16_wemo_gateway import WemoProcess
-from rpihome.p17_nest_gateway import NestProcess
+if __name__ == "__main__": sys.path.append("..")
+from modules.log_path import LogFilePath
+from modules.message import Message
+from modules.multiprocess_logging import listener_configurer, worker_configurer
+from p02_gui import MainWindow
+from p11_logic_solver import LogicProcess
+from p13_home_away import HomeProcess
+from p15_rpi_screen import RpiProcess
+from p16_wemo_gateway import WemoProcess
+from p17_nest_gateway import NestProcess
+
+
+# Set up local logging *********************************************************************
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
+logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
+handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.debug("Logging handler for %s started", __name__)
 
 
 # Authorship Info *********************************************************************************
@@ -64,7 +74,6 @@ class MainProcess(object):
         self.nest_username = str()
         self.nest_password = str()
         # Spawn individual processes
-        self.configure_local_logger()
         self.create_gui_process()
         self.create_logic_process()
         self.create_home_process()
@@ -75,34 +84,6 @@ class MainProcess(object):
         self.init_complete = True
 
 
-    def configure_local_logger(self):
-        """ Method to configure local logging """
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG)
-        self.logger.propagate = False
-        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile,
-                                                                 when="h",
-                                                                 interval=1,
-                                                                 backupCount=24,
-                                                                 encoding=None,
-                                                                 delay=False,
-                                                                 utc=False,
-                                                                 atTime=None)
-        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
-        self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
-        self.logger.debug("Logging handler for %s process started", self.name)        
-
-
-    def kill_local_logger(self):
-        """ Shut down logger when process exists """
-        self.handlers = list(self.logger.handlers)
-        for i in iter(self.handlers):
-            self.logger.removeHandler(i)
-            i.flush()
-            i.close()
-
-
     def create_gui_process(self):
         """ Spawns a process specific to the user interface """
         self.p02_alive_mem = None
@@ -110,14 +91,10 @@ class MainProcess(object):
         self.p02 = MainWindow(name="p02_gui",
                               msgin=self.p02_queue,
                               msgout=self.p00_queue,
-                              logfile=(LogFilePath().return_path_and_name_combined(
-                                  name="p02",
-                                  path=self.process_path)),
                               displayfile=(LogFilePath().return_path_and_name_combined(
                                   name="p11",
                                   path=self.process_path)),
-                              enable=self.enable,
-                              logremote=False)
+                              enable=self.enable)
         self.p02.start()
         self.p02_modtime = os.path.getmtime(os.path.join(self.process_path, "p02_gui.py"))
 
@@ -128,11 +105,7 @@ class MainProcess(object):
         self.p11_queue = multiprocessing.Queue(-1)
         self.p11 = LogicProcess(name="p11_logic_solver",
                                 msgin=self.p11_queue,
-                                msgout=self.p00_queue,
-                                logfile=(LogFilePath().return_path_and_name_combined(
-                                    name="p11",
-                                    path=self.process_path)),
-                                    logremote=False)
+                                msgout=self.p00_queue)
         self.p11.start()
         self.p11_modtime = os.path.getmtime(os.path.join(self.process_path, "p11_logic_solver.py"))
 
@@ -143,11 +116,7 @@ class MainProcess(object):
         self.p13_queue = multiprocessing.Queue(-1)
         self.p13 = HomeProcess(name="p13_home_away",
                                 msgin=self.p13_queue,
-                                msgout=self.p00_queue,
-                                logfile=(LogFilePath().return_path_and_name_combined(
-                                    name="p13",
-                                    path=self.process_path)),
-                                    logremote=False)
+                                msgout=self.p00_queue)
         self.p13.start()        
         self.p13_modtime = os.path.getmtime(os.path.join(self.process_path, "p13_home_away.py"))
 
@@ -158,11 +127,7 @@ class MainProcess(object):
         self.p15_queue = multiprocessing.Queue(-1)
         self.p15 = RpiProcess(name="p15_rpi_screen",
                                 msgin=self.p15_queue,
-                                msgout=self.p00_queue,
-                                logfile=(LogFilePath().return_path_and_name_combined(
-                                    name="p15",
-                                    path=self.process_path)),
-                                    logremote=False)
+                                msgout=self.p00_queue)
         self.p15.start()         
         self.p15_modtime = os.path.getmtime(os.path.join(self.process_path, "p15_rpi_screen.py"))
 
@@ -173,11 +138,7 @@ class MainProcess(object):
         self.p16_queue = multiprocessing.Queue(-1)
         self.p16 = WemoProcess(name="p16_wemo_gateway",
                                 msgin=self.p16_queue,
-                                msgout=self.p00_queue,
-                                logfile=(LogFilePath().return_path_and_name_combined(
-                                    name="p16",
-                                    path=self.process_path)),
-                                    logremote=False)
+                                msgout=self.p00_queue)
         self.p16.start()          
         self.p16_modtime = os.path.getmtime(os.path.join(self.process_path, "p16_wemo_gateway.py"))
 
@@ -188,11 +149,7 @@ class MainProcess(object):
         self.p17_queue = multiprocessing.Queue(-1)
         self.p17 = NestProcess(name="p17_nest_gateway",
                                 msgin=self.p17_queue,
-                                msgout=self.p00_queue,
-                                logfile=(LogFilePath().return_path_and_name_combined(
-                                    name="p17",
-                                    path=self.process_path)),
-                                    logremote=False)
+                                msgout=self.p00_queue)
         self.p17.start()
         self.p17_modtime = os.path.getmtime(os.path.join(self.process_path, "p17_nest_gateway.py"))
 
@@ -211,56 +168,56 @@ class MainProcess(object):
                 if self.msg_in.dest == "00":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                        self.logger.debug("heartbeat received")
+                        logger.debug("heartbeat received")
                     elif self.msg_in.type == "999":
-                        self.logger.debug("Kill code received - Shutting down")
+                        logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p02
                 elif self.msg_in.dest == "02":
                     self.p02_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p02 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p02 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p11
                 elif self.msg_in.dest == "11":
                     self.p11_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p11 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p11 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p13
                 elif self.msg_in.dest == "13":
                     self.p13_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p13 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p13 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p15
                 elif self.msg_in.dest == "15":
                     self.p15_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p15 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p15 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p16
                 elif self.msg_in.dest == "16":
                     self.p16_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p16 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p16 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p17
                 elif self.msg_in.dest == "17":
                     self.p17_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Transfered message [%s] to p17 queue", self.msg_in.raw)
+                    logger.debug("Transfered message [%s] to p17 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 self.msg_in = Message()
             else:
                 self.in_msg_loop = False
@@ -396,7 +353,7 @@ class MainProcess(object):
             time.sleep(0.011)
 
         # Shut down logger before exiting process
-        self.kill_local_logger()
+        pass
 
 
 

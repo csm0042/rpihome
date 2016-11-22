@@ -5,6 +5,8 @@
 # Import Required Libraries (Standard, Third Party, Local) ****************************************
 import copy
 import logging
+import os
+import sys
 import pywemo
 from rpihome.modules.message import Message
 
@@ -22,8 +24,9 @@ __status__ = "Development"
 
 # Wemo Device Helper Class ************************************************************************
 class WemoHelper(object):
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)
         self.device_list = []
         self.found = False
         self.state = int()
@@ -46,7 +49,7 @@ class WemoHelper(object):
             if device.name.find(self.msg_in.name) != -1:
                 self.found = True
                 device.off()
-                self.logger.debug("OFF command sent to device: %s" % self.msg_in.name)
+                self.logger.debug("OFF command sent to device: %s", self.msg_in.name)
         # If match is not found, log error and continue
         if self.found is False:
             self.logger.debug("Could not find device: %s on the network", self.msg_in.name)
@@ -107,24 +110,25 @@ class WemoHelper(object):
             self.port = None
         # If port is found, probe device for type and other attributes
         if self.port is not None:
+            self.logger.debug("Found wemo device at: %s on port: %s", self.msg_in.payload, str(self.port))
             self.url = 'http://%s:%i/setup.xml' % (self.msg_in.payload, self.port)
             try:
                 self.device = None
                 self.device = pywemo.discovery.device_from_description(self.url, None)
             except:
-                self.logger.debug("Error discovering attributes for device at address: %s, port: %s",
-                                  self.msg_in.payload, self.port)
+                self.logger.debug("Error discovering attributes for device at address: %s, port: %s", self.msg_in.payload, self.port)
+        else:
+            self.logger.debug("No wemo device detected at: %s", self.msg_in.payload)
         # If device is found and probe was successful, check existing device list to
         # determine if device is already present in list
         if self.device is not None:
+            self.logger.debug("Discovery successful for wemo device: %s at: %s, port: %s", self.device.name, self.msg_in.payload, str(self.port))
             self.found = False
             for index, device in enumerate(self.device_list):
                 if self.msg_in.name == device.name:
                     self.found = True
-                    self.logger.debug("Device: %s already exists in device list at address: %s and \
-                                      port: %s", self.msg_in.name, self.msg_in.payload, self.port)
+                    self.logger.debug("Device: %s already exists in device list at address: %s and port: %s", self.msg_in.name, self.msg_in.payload, self.port)
             # If not found in list, add it
             if self.found is False:
-                self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.msg_in.name,
-                                  self.msg_in.payload, self.port)
+                self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.msg_in.name, self.msg_in.payload, self.port)
                 self.device_list.append(copy.copy(self.device))

@@ -24,7 +24,9 @@ __status__ = "Development"
 
 # Device state class ******************************************************************************
 class Device(object):
-    def __init__(self, name, msg_out_queue):
+    def __init__(self, name, msg_out_queue, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)        
         self.name = name
         self.msg_out_queue = msg_out_queue
         self.state = False

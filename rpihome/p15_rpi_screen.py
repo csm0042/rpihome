@@ -7,10 +7,10 @@ import datetime
 import logging
 import multiprocessing
 import platform
+import os, sys
 import subprocess
 import time
-
-from rpihome.modules.message import Message
+import modules.message as message
 
 
 # Authorship Info *********************************************************************************
@@ -24,6 +24,18 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
+# Set up local logging *********************************************************************
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
+logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
+handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
+formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.debug("Logging handler for %s started", __name__)
+
+
 # Process Class ***********************************************************************************
 class RpiProcess(multiprocessing.Process):
     """ Rpi screen sleep/wake process class and methods """
@@ -31,9 +43,7 @@ class RpiProcess(multiprocessing.Process):
         # Set default input parameter values
         self.name = "undefined"
         self.msg_in_queue = multiprocessing.Queue(-1)
-        self.msg_out_queue = multiprocessing.Queue(-1)
-        self.logfile = "logfile"
-        self.log_remote = False    
+        self.msg_out_queue = multiprocessing.Queue(-1) 
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -43,46 +53,19 @@ class RpiProcess(multiprocessing.Process):
                     self.msg_in_queue = value
                 if key == "msgout":
                     self.msg_out_queue = value
-                if key == "logqueue":
-                    self.log_queue = value
-                if key == "logfile":
-                    self.logfile = value
-                if key == "logremote":
-                    self.log_remote = value
         # Initialize parent class    
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
         self.work_queue = multiprocessing.Queue(-1)
-        self.msg_in = Message()
-        self.msg_to_process = Message()
-        self.msg_to_send = Message()
+        self.msg_in = message.Message()
+        self.msg_to_process = message.Message()
+        self.msg_to_send = message.Message()
         self.command = str()
         self.output = str()
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = bool()
         self.main_loop = bool()
         self.close_pending = False
-
-
-    def configure_local_logger(self):
-        """ Method to configure local logging """
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG)
-        self.logger.propagate = False        
-        self.handler = logging.handlers.TimedRotatingFileHandler(self.logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-        self.formatter = logging.Formatter('%(processName)-16s |  %(asctime)-24s |  %(message)s')
-        self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
-        self.logger.debug("Logging handler for %s process started", self.name)
-
-
-    def kill_logger(self):
-        """ Shut down logger when process exists """
-        self.handlers = list(self.logger.handlers)
-        for i in iter(self.handlers):
-            self.logger.removeHandler(i)
-            i.flush()
-            i.close()
 
 
     def process_in_msg_queue(self):
@@ -92,25 +75,25 @@ class RpiProcess(multiprocessing.Process):
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
-                self.msg_in = Message(raw=self.msg_in_queue.get_nowait())
+                self.msg_in = message.Message(raw=self.msg_in_queue.get_nowait())
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
                 if self.msg_in.dest == "15":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        self.logger.debug("Kill code received - Shutting down")
+                        logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
+                        logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
-                self.msg_in = Message()
+                    logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                self.msg_in = message.Message()
             else:
                 self.in_msg_loop = False
 
@@ -118,16 +101,16 @@ class RpiProcess(multiprocessing.Process):
         """ Method to perform work from the work queue """
         # Get next message from internal queue or timeout trying to do so
         try:
-            self.msg_to_process = Message(raw=self.work_queue.get_nowait())
+            self.msg_to_process = message.Message(raw=self.work_queue.get_nowait())
         except:
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
+            logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
             if self.msg_to_process.type == "150":
                 self.run_commands(self.msg_to_process.payload)
             # Clear msg-to-process string
-            self.msg_to_process = Message()
+            self.msg_to_process = message.Message()
         else:
             pass
 
@@ -139,20 +122,18 @@ class RpiProcess(multiprocessing.Process):
             try:
                 self.output = subprocess.Popen(
                     self.command, shell=True, stdout=subprocess.PIPE).communicate()
-                self.logger.debug(
+                logger.debug(
                     "Sending command [%s] to terminal", str(self.command))
             except:
-                self.logger.debug("Command [%s] failed", str(self.command))
+                logger.debug("Command [%s] failed", str(self.command))
         else:
-            self.logger.debug(
+            logger.debug(
                 "Error sending command [%s] to terminal.  Not on linux machine",
                 str(self.command))
 
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
-        # Configure logging
-        self.configure_local_logger()
         # Main process loop        
         self.main_loop = True
         while self.main_loop is True:
@@ -173,4 +154,4 @@ class RpiProcess(multiprocessing.Process):
             time.sleep(0.021)
 
         # Shut down logger before exiting process
-        self.kill_logger()
+        pass
