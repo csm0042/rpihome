@@ -18,6 +18,7 @@ import devices.device_wemo_bylt1 as device_wemo_bylt1
 import devices.device_wemo_ewlt1 as device_wemo_ewlt1
 import devices.device_wemo_cclt1 as device_wemo_cclt1
 import devices.device_wemo_lrlt1 as device_wemo_lrlt1
+import devices.device_wemo_lrlt2 as device_wemo_lrlt2
 import devices.device_wemo_drlt1 as device_wemo_drlt1
 import devices.device_wemo_br1lt1 as device_wemo_br1lt1
 import devices.device_wemo_br1lt2 as device_wemo_br1lt2
