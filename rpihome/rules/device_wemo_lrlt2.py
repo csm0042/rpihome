@@ -1,14 +1,12 @@
 #!/usr/bin/python3
-""" wemo_lrlt1.py: 
+""" wemo_lrlt2.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
 import datetime
 import logging
 import multiprocessing
-import time
-from device_wemo import DeviceWemo
+from rpihome.devices.device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,18 +21,18 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_lrlt1(DeviceWemo):
+class Wemo_lrlt2(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
-        self.logger = logger or logging.getLogger(__name__)
-        # Init parent class        
+        self.logger = logger or logging.getLogger(__name__)        
+        # Init parent class
         super().__init__(name, ip, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):
-        """ This method contains the rule-set that controls external security lights """
+        """This method contains the rule-set that controls internal security lights """
         self.home = False
-        # Process input variables if present   
+        # Process input variables if present           
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -52,39 +50,28 @@ class Wemo_lrlt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                         
-        # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
+                    self.timeout = value                    
         # Determine if anyone is home
         for h in self.homeArray:
             if h is True:
                 self.home = True        
+        # Calculate sunrise / sunset times
+        self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset))                        
         # Decision tree to determine if screen should be awake or not
-        # If before sunrise + 30 minutes
-        if 0 <= self.dt.weekday() <= 4:
-            if self.homeArray[0] is True:
-                if self.homeArray[1] is True or self.homeArray[2] is True:
-                    if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,30):
-                        if self.state is False:
-                            logging.debug("Turning on lrlt1")
-                        self.state = True
-                    else:
-                        if self.state is True:
-                            logging.debug("Turning off lrlt1")
-                        self.state = False
-                else:
-                    if datetime.time(6,30) <= self.dt.time() <= datetime.time(7,0):
-                        if self.state is False:
-                            logging.debug("Turning on lrlt1")
-                        self.state = True
-                    else:
-                        if self.state is True:
-                            logging.debug("Turning off lrlt1")
-                        self.state = False
+        if self.home is True:
+            # If after 5am but before sunrise + the offset minutes
+            if self.dt.time() >= datetime.time(5,0) and self.dt.time() <= datetime.time(22,0):
+                if self.state is False:
+                    logging.debug("Turning on lrlt2")
+                self.state = True
             else:
                 if self.state is True:
-                    logging.debug("Turning off lrlt1")
+                    logging.debug("Turning off lrlt2")
                 self.state = False
+        else:
+            if self.state is True:
+                logging.debug("Turning off lrlt2")
+            self.state = False
         # Return result
-        return self.state
+        return self.state          
