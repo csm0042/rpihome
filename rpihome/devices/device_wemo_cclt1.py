@@ -1,14 +1,12 @@
 #!/usr/bin/python3
-""" wemo_fylt1.py: 
+""" wemo_cclt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
 import datetime
 import logging
 import multiprocessing
-import time
-from rpihome.devices.device_wemo import DeviceWemo
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,18 +21,18 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_fylt1(DeviceWemo):
+class Wemo_cclt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or logging.getLogger(__name__)        
         # Init parent class
         super().__init__(name, ip, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):
-        """ This method contains the rule-set that controls external security lights """
+        """This method contains the rule-set that controls internal security lights """
         self.home = False
-        # Process input variables if present   
+        # Process input variables if present           
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -52,16 +50,25 @@ class Wemo_fylt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                         
+                    self.timeout = value                    
+        # Determine if anyone is home
+        for h in self.homeArray:
+            if h is True:
+                self.home = True        
         # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(self.dt.date(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(self.dt.date(), self.s.sunset(self.dt, self.utcOffset)) 
+        self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset))                        
         # Decision tree to determine if screen should be awake or not
-        if self.dt <= self.sunrise + self.sunriseOffset:
-            self.state = True
-        elif self.dt >= self.sunset + self.sunsetOffset:
-            self.state = True
+        if self.home is True:
+            # If after 5am but before sunrise + the offset minutes
+            if self.dt <= self.sunrise + self.sunriseOffset:
+                self.state = True
+            # If after sunset + the offset minutes but before 10pm  
+            elif self.dt >= self.sunset + self.sunsetOffset:              
+                self.state = True
+            else:
+                self.state = False
         else:
             self.state = False
         # Return result
-        return self.state
+        return self.state          

@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-import devices.device_rpi as device_rpi
+from device_rpi import device_rpi as device_rpi
 
 
 # Authorship Info *****************************************************************************************************

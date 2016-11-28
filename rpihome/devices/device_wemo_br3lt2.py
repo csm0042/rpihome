@@ -1,12 +1,12 @@
 #!/usr/bin/python3
-""" wemo_b2lt2.py: 
+""" wemo_b3lt2.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import datetime
 import logging
 import multiprocessing
-from rpihome.devices.device_wemo import DeviceWemo
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -21,7 +21,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_br2lt2(DeviceWemo):
+class Wemo_br3lt2(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)        
@@ -52,13 +52,15 @@ class Wemo_br2lt2(DeviceWemo):
                 if key == "timeout":
                     self.timeout = value 
         # Determine if kid is home                    
-        if self.homeArray[1] is True:
-            self.home = True                    
+        if self.homeArray[2] is True:
+            self.home = True                     
         # Decision tree to determine if screen should be awake or not                
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
             if self.home is True:
-                if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,40):
+                if self.dt.time() >= datetime.time(19,0):
+                    self.state = True
+                elif self.dt.time() <= datetime.time(6,30):
                     self.state = True
                 else:
                     self.state = False
@@ -66,8 +68,14 @@ class Wemo_br2lt2(DeviceWemo):
                 self.state = False
         # Saturday - Sunday
         elif 5 <= self.dt.weekday() <= 6:
-            self.state = False
-        else:
-            self.state = False
+            if self.home is True:
+                if self.dt.time() >= datetime.time(19,0):
+                    self.state = True
+                elif self.dt.time() <= datetime.time(6,30):
+                    self.state = True
+                else:
+                    self.state = False
+            else:
+                self.state = False
         # Return result
-        return self.state      
+        return self.state              

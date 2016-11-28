@@ -1,12 +1,14 @@
 #!/usr/bin/python3
-""" wemo_b2lt1.py: 
+""" wemo_lrlt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
+import copy
 import datetime
 import logging
 import multiprocessing
-from rpihome.devices.device_wemo import DeviceWemo
+import time
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -21,16 +23,16 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_br2lt1(DeviceWemo):
+class Wemo_lrlt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)
-        # Init parent class
+        # Init parent class        
         super().__init__(name, ip, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):
-        """ Overhead light in kids bedroom """
+        """ This method contains the rule-set that controls external security lights """
         self.home = False
         # Process input variables if present   
         if kwargs is not None:
@@ -50,25 +52,29 @@ class Wemo_br2lt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value
-        # Determine if kid is home                    
-        if self.homeArray[1] is True:
-            self.home = True
-        # Decision tree to determine if screen should be awake or not                
-        # Monday - Friday
+                    self.timeout = value                                                         
+        # Calculate sunrise / sunset times
+        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
+        # Determine if anyone is home
+        for h in self.homeArray:
+            if h is True:
+                self.home = True        
+        # Decision tree to determine if screen should be awake or not
+        # If before sunrise + 30 minutes
         if 0 <= self.dt.weekday() <= 4:
-            if self.home is True:
-                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
-                    self.state = True
+            if self.homeArray[0] is True:
+                if self.homeArray[1] is True or self.homeArray[2] is True:
+                    if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,30):
+                        self.state = True
+                    else:
+                        self.state = False
                 else:
-                    self.state = False
+                    if datetime.time(6,30) <= self.dt.time() <= datetime.time(7,0):
+                        self.state = True
+                    else:
+                        self.state = False
             else:
                 self.state = False
-        # Saturday - Sunday
-        elif 5 <= self.dt.weekday() <= 6:
-            self.state = False
-        else:
-            self.state = False
         # Return result
-        return self.state           
-  
+        return self.state

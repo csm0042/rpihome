@@ -1,14 +1,12 @@
 #!/usr/bin/python3
-""" wemo_ewlt1.py: 
+""" wemo_b3lt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
 import datetime
 import logging
 import multiprocessing
-import time
-from rpihome.devices.device_wemo import DeviceWemo
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,7 +21,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_ewlt1(DeviceWemo):
+class Wemo_br3lt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)        
@@ -32,9 +30,9 @@ class Wemo_ewlt1(DeviceWemo):
 
 
     def check_rules(self, **kwargs):
-        """ This method contains the rule-set that controls external security lights """
+        """ Overhead light in kids bedroom """
         self.home = False
-        # Process input variables if present  
+        # Process input variables if present    
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -52,35 +50,24 @@ class Wemo_ewlt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                          
-        # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset)) 
-        # Determine if anyone is home
-        for h in self.homeArray:
-            if h is True:
-                self.home = True
-        # Determine if someone has recently come home
-        self.homeNew = False
-        for i, j in enumerate(self.homeArray):
-            if j is True:
-                if self.dt < self.homeTime[i] + datetime.timedelta(minutes=10):
-                    self.homeNew = True                
-        # Decision tree to determine if screen should be awake or not
-        if self.home is True:
-            # If someone recently entered the house
-            if self.homeNew is True:
-                # If after 5am but before sunrise + the offset minutes
-                if self.dt <= self.sunrise + self.sunriseOffset:
-                    self.state = True
-                # If after sunset + the offset minutes but before 10pm  
-                elif self.dt >= self.sunset + self.sunsetOffset:              
+                    self.timeout = value
+        # Determine if kid is home                    
+        if self.homeArray[2] is True:
+            self.home = True                     
+        # Decision tree to determine if screen should be awake or not                
+        # Monday - Friday
+        if 0 <= self.dt.weekday() <= 4:
+            if self.home is True:
+                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
                     self.state = True
                 else:
                     self.state = False
             else:
                 self.state = False
+        # Saturday - Sunday
+        elif 5 <= self.dt.weekday() <= 6:
+            self.state = False
         else:
             self.state = False
         # Return result
-        return self.state                 
+        return self.state     

@@ -5,7 +5,7 @@
 # Import Required Libraries (Standard, Third Party, Local) *****************************************
 import copy
 import logging
-from rpihome.devices.device import Device
+from device import Device
 from rpihome.modules.message import Message
 
 

@@ -1,12 +1,12 @@
 #!/usr/bin/python3
-""" wemo_b3lt1.py: 
+""" wemo_b2lt2.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import datetime
 import logging
 import multiprocessing
-from rpihome.devices.device_wemo import DeviceWemo
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -21,7 +21,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_br3lt1(DeviceWemo):
+class Wemo_br2lt2(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)        
@@ -30,7 +30,7 @@ class Wemo_br3lt1(DeviceWemo):
 
 
     def check_rules(self, **kwargs):
-        """ Overhead light in kids bedroom """
+        """ Nightstand light in kids bedroom """
         self.home = False
         # Process input variables if present    
         if kwargs is not None:
@@ -50,15 +50,15 @@ class Wemo_br3lt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value
+                    self.timeout = value 
         # Determine if kid is home                    
-        if self.homeArray[2] is True:
-            self.home = True                     
+        if self.homeArray[1] is True:
+            self.home = True                    
         # Decision tree to determine if screen should be awake or not                
         # Monday - Friday
         if 0 <= self.dt.weekday() <= 4:
             if self.home is True:
-                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
+                if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,40):
                     self.state = True
                 else:
                     self.state = False
@@ -70,4 +70,4 @@ class Wemo_br3lt1(DeviceWemo):
         else:
             self.state = False
         # Return result
-        return self.state     
+        return self.state      

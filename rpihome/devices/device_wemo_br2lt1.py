@@ -1,14 +1,12 @@
 #!/usr/bin/python3
-""" wemo_bylt1.py: 
+""" wemo_b2lt1.py: 
 """ 
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
-import copy
 import datetime
 import logging
 import multiprocessing
-import time
-from rpihome.devices.device_wemo import DeviceWemo
+from device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************
@@ -23,18 +21,18 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class Wemo_bylt1(DeviceWemo):
+class Wemo_br2lt1(DeviceWemo):
     def __init__(self, name, ip, msg_out_queue, logger=None):
         # Configure logger
-        self.logger = logger or logging.getLogger(__name__)        
+        self.logger = logger or logging.getLogger(__name__)
         # Init parent class
         super().__init__(name, ip, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):
-        """ This method contains the rule-set that controls external security lights """
+        """ Overhead light in kids bedroom """
         self.home = False
-        # Process input variables if present  
+        # Process input variables if present   
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
@@ -52,16 +50,25 @@ class Wemo_bylt1(DeviceWemo):
                 if key == "sunsetOffset":
                     self.sunsetOffset = value   
                 if key == "timeout":
-                    self.timeout = value                                                          
-        # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
-        # Decision tree to automatically time-out light after 15 minutes in the "on" state
-        if self.status == 1:
-            if datetime.datetime.now() >= self.statusChangeTS + self.timeout:
-                self.state = 0
-                self.state_mem = None
-                self.status = None
-                self.statusChangeTS = None
+                    self.timeout = value
+        # Determine if kid is home                    
+        if self.homeArray[1] is True:
+            self.home = True
+        # Decision tree to determine if screen should be awake or not                
+        # Monday - Friday
+        if 0 <= self.dt.weekday() <= 4:
+            if self.home is True:
+                if datetime.time(6,0) <= self.dt.time() <= datetime.time(6,30):
+                    self.state = True
+                else:
+                    self.state = False
+            else:
+                self.state = False
+        # Saturday - Sunday
+        elif 5 <= self.dt.weekday() <= 6:
+            self.state = False
+        else:
+            self.state = False
         # Return result
-        return self.state
+        return self.state           
+  

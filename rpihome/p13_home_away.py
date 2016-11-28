@@ -10,9 +10,9 @@ import platform
 import os, sys
 import time
 import modules.message as message
-import rules.home_user1 as home_user1
-import rules.home_user2 as home_user2
-import rules.home_user3 as home_user3
+import home.home_user1 as home_user1
+import home.home_user2 as home_user2
+import home.home_user3 as home_user3
 
 
 # Authorship Info *********************************************************************************

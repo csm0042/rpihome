@@ -11,19 +11,19 @@ import os, sys
 import time
 import modules.dst as dst
 import modules.message as message
-import rules.device_rpi as device_rpi
-import rules.device_wemo_fylt1 as device_wemo_fylt1
-import rules.device_wemo_bylt1 as device_wemo_bylt1
-import rules.device_wemo_ewlt1 as device_wemo_ewlt1
-import rules.device_wemo_cclt1 as device_wemo_cclt1
-import rules.device_wemo_lrlt1 as device_wemo_lrlt1
-import rules.device_wemo_drlt1 as device_wemo_drlt1
-import rules.device_wemo_br1lt1 as device_wemo_br1lt1
-import rules.device_wemo_br1lt2 as device_wemo_br1lt2
-import rules.device_wemo_br2lt1 as device_wemo_br2lt1
-import rules.device_wemo_br2lt2 as device_wemo_br2lt2
-import rules.device_wemo_br3lt1 as device_wemo_br3lt1
-import rules.device_wemo_br3lt2 as device_wemo_br3lt2
+import devices.device_rpi as device_rpi
+import devices.device_wemo_fylt1 as device_wemo_fylt1
+import devices.device_wemo_bylt1 as device_wemo_bylt1
+import devices.device_wemo_ewlt1 as device_wemo_ewlt1
+import devices.device_wemo_cclt1 as device_wemo_cclt1
+import devices.device_wemo_lrlt1 as device_wemo_lrlt1
+import devices.device_wemo_drlt1 as device_wemo_drlt1
+import devices.device_wemo_br1lt1 as device_wemo_br1lt1
+import devices.device_wemo_br1lt2 as device_wemo_br1lt2
+import devices.device_wemo_br2lt1 as device_wemo_br2lt1
+import devices.device_wemo_br2lt2 as device_wemo_br2lt2
+import devices.device_wemo_br3lt1 as device_wemo_br3lt1
+import devices.device_wemo_br3lt2 as device_wemo_br3lt2
 
 
 # Authorship Info *********************************************************************************
