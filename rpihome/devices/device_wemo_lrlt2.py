@@ -6,7 +6,7 @@
 import datetime
 import logging
 import multiprocessing
-from rpihome.devices.device_wemo import DeviceWemo
+from .device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************

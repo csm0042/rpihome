@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-from device_wemo import DeviceWemo
+from .device_wemo import DeviceWemo
 
 
 # Authorship Info *****************************************************************************************************

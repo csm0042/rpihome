@@ -8,7 +8,7 @@ import datetime
 import logging
 import multiprocessing
 import time
-from rpihome.rules import home_general
+from .home_general import HomeGeneral
 from rpihome.modules.message import Message
 
 
@@ -24,7 +24,7 @@ __status__ = "Development"
 
 
 # Device class ********************************************************************************************************
-class HomeUser3(home_general.HomeGeneral):
+class HomeUser3(HomeGeneral):
     def __init__(self, msg_out_queue):
         super().__init__()
         self.msg_out_queue = msg_out_queue

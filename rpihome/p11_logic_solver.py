@@ -12,7 +12,7 @@ import time
 import modules.dst as dst
 import modules.message as message
 
-import devices.device_rpi as device_rpi
+import devices.device_rpi_lr1 as device_rpi_lr1
 import devices.device_wemo_fylt1 as device_wemo_fylt1
 import devices.device_wemo_bylt1 as device_wemo_bylt1
 import devices.device_wemo_ewlt1 as device_wemo_ewlt1
@@ -89,7 +89,7 @@ class LogicProcess(multiprocessing.Process):
 
     def create_devices(self):
         """ Create devices in home """
-        self.rpi_screen = device_rpi.RPImain("rpi", self.msg_out_queue)
+        self.rpi_screen = device_rpi_lr1.RPImain("rpi", self.msg_out_queue)
         self.wemo_fylt1 = device_wemo_fylt1.Wemo_fylt1("fylt1", "192.168.86.21", self.msg_out_queue, logger)
         self.wemo_bylt1 = device_wemo_bylt1.Wemo_bylt1("bylt1", "192.168.86.22", self.msg_out_queue, logger)
         self.wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", self.msg_out_queue, logger)

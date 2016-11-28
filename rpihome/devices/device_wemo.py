@@ -6,7 +6,7 @@
 import copy
 import datetime
 import logging
-from device import Device
+from .device import Device
 from rpihome.modules.message import Message
 
 
