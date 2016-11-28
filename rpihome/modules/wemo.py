@@ -132,3 +132,8 @@ class WemoHelper(object):
             if self.found is False:
                 self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.msg_in.name, self.msg_in.payload, self.port)
                 self.device_list.append(copy.copy(self.device))
+                return self.device
+            else:
+                return None
+        else:
+            return None

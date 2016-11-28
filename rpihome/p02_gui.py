@@ -15,6 +15,7 @@ import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
 import modules.message as message
+from gui_objects.on_off_ind_button import OnIndOffButtonFrame
 
 
 # Authorship Info *********************************************************************************
@@ -485,8 +486,10 @@ class MainWindow(multiprocessing.Process):
         """ FRAME 05 SCREEN SELECTOR BUTTONS """
         self.button050101 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050101, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="SERVICES", height=3, width=10)
         self.button050101.pack(side="top", fill="x", expand=False, padx=0, pady=1)
-        self.button050102 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050102, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="LIGHTING", height=3, width=10)
+        self.button050102 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050102, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="INTERIOR\nLIGHTING", height=3, width=10)
         self.button050102.pack(side="top", fill="x", expand=False, padx=0, pady=1)
+        self.button050102b = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050102, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="EXTERIOR\nLIGHTING", height=3, width=10)
+        self.button050102b.pack(side="top", fill="x", expand=False, padx=0, pady=1)        
         self.button050103 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050103, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="HOME/AWAY", height=3, width=10)
         self.button050103.pack(side="top", fill="x", expand=False, padx=0, pady=1) 
         self.button050104 = tk.Button(self.frame0501, background="#2350b5", borderwidth=0, command=self.action050104, compound="center", font=self.helv08bold, foreground="black", highlightthickness=0, justify="right", relief="flat", text="ENVIRO", height=3, width=10)
@@ -571,112 +574,228 @@ class MainWindow(multiprocessing.Process):
         """ LIGHTING CONTROL SCREEN """
         # overlay frame on 0503 for content changing purposes
         self.frame050301b = tk.Frame(self.frame0503, background="black", borderwidth=0, relief="flat", height=300, width=600)
-        self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)   
+        self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
         self.frame050301b_packed = True
         self.frame050301b.pack_propagate(False)
+
         # Add text and buttons to frame0404a  
         self.label050301b01 = tk.Label(self.frame050301b, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="1ST FLOOR")
         self.label050301b02 = tk.Label(self.frame050301b, anchor="ne", background="black", borderwidth=0, font=self.helv10bold, foreground="yellow", height=1, highlightthickness=0, justify="center", relief="flat", text="2ND FLOOR")
-        self.label050301b01.grid(row=0, column=0, columnspan=3, padx=4, pady=2, sticky="n")
-        self.label050301b02.grid(row=0, column=3, columnspan=3, padx=4, pady=2, sticky="n")
+        self.label050301b01.grid(row=0, column=0, padx=4, pady=2, sticky="n")
+        self.label050301b02.grid(row=0, column=1, padx=4, pady=2, sticky="n")
 
-        self.button050301b01a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b01a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b01b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b01b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="FRONT\nPATIO", height=44, width=108)  
-        self.button050301b01c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b01c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b01a.grid(row=1, column=0, padx=2, pady=2)
-        self.button050301b01b.grid(row=1, column=1, padx=2, pady=2)
-        self.button050301b01c.grid(row=1, column=2, padx=2, pady=2)                
-        
-        self.button050301b02a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b02a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b02b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b02b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BACK\nPATIO", height=44, width=108)        
-        self.button050301b02c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b02c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b02a.grid(row=2, column=0, padx=2, pady=2)
-        self.button050301b02b.grid(row=2, column=1, padx=2, pady=2)
-        self.button050301b02c.grid(row=2, column=2, padx=2, pady=2)
+        """
+        # Front patio on-off control panel
+        self.control_fylt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="fylt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="FRONT\nPATIO",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_fylt1.frame.grid(row=1, column=0, padx=2, pady=2)
 
-        self.button050301b03a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b03a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b03b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b03b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="ENTRY\nWAY", height=44, width=108)
-        self.button050301b03c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b03c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b03a.grid(row=3, column=0, padx=2, pady=2)
-        self.button050301b03b.grid(row=3, column=1, padx=2, pady=2)
-        self.button050301b03c.grid(row=3, column=2, padx=2, pady=2)
+        # Back patio on-off control panel
+        self.control_bylt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="bylt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BACK\nPATIO",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_bylt1.frame.grid(row=2, column=0, padx=2, pady=2)       
+        """
 
-        self.button050301b04a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b04a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b04b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b04b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="COAT\nCORNER", height=44, width=108)        
-        self.button050301b04c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b04c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b04a.grid(row=4, column=0, padx=2, pady=2)
-        self.button050301b04b.grid(row=4, column=1, padx=2, pady=2)
-        self.button050301b04c.grid(row=4, column=2, padx=2, pady=2)
+        # Entryway on-off control panel
+        self.control_ewlt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="ewlt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="ENTRY\nWAY",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_ewlt1.frame.grid(row=1, column=0, padx=2, pady=2)            
 
-        self.button050301b05a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b05a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b05b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b05b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="LIVING\nROOM", height=44, width=108)        
-        self.button050301b05c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b05c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b05a.grid(row=5, column=0, padx=2, pady=2)
-        self.button050301b05b.grid(row=5, column=1, padx=2, pady=2)
-        self.button050301b05c.grid(row=5, column=2, padx=2, pady=2)
+        # coat corner on-off control panel
+        self.control_cclt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="cclt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="COAT\nCORNER",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_cclt1.frame.grid(row=2, column=0, padx=2, pady=2)
 
-        self.button050301b06a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b06a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b06b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b06b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="DINING\nROOM", height=44, width=108)        
-        self.button050301b06c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b06c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b06a.grid(row=6, column=0, padx=2, pady=2)
-        self.button050301b06b.grid(row=6, column=1, padx=2, pady=2)
-        self.button050301b06c.grid(row=6, column=2, padx=2, pady=2)        
+        # living room lamp on-off control panel
+        self.control_lrlt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="lrlt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="LIVING\nROOM",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_lrlt1.frame.grid(row=3, column=0, padx=2, pady=2)             
 
-        self.button050301b07a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b07a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b07b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b07b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="ALL 1ST\nFLOOR", height=44, width=108)
-        self.button050301b07c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b07c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b07a.grid(row=7, column=0, padx=2, pady=2)
-        self.button050301b07b.grid(row=7, column=1, padx=2, pady=2)
-        self.button050301b07c.grid(row=7, column=2, padx=2, pady=2)        
+        # living room lamp on-off control panel
+        self.control_lrlt2 = OnIndOffButtonFrame(self.frame050301b,
+            name="lrlt2",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="CHRISTMAS\nTREE",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_lrlt2.frame.grid(row=4, column=0, padx=2, pady=2)      
 
-        self.button050301b08a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b08b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#1\nOVERHEAD", height=44, width=108)        
-        self.button050301b08c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b08c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b08a.grid(row=1, column=3, padx=2, pady=2)
-        self.button050301b08b.grid(row=1, column=4, padx=2, pady=2)
-        self.button050301b08c.grid(row=1, column=5, padx=2, pady=2)
+        # Dining room overhead light on-off control panel
+        self.control_drlt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="drlt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="DINING\nROOM",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_drlt1.frame.grid(row=5, column=0, padx=2, pady=2) 
+        """
+        # All first floor on-off control panel
+        self.control_floor_1 = OnIndOffButtonFrame(self.frame050301b,
+            name="all1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="ALL 1ST\nFLOOR",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_floor_1.frame.grid(row=7, column=0, padx=2, pady=2)
+        """
+        # Bedroom 1 overhead light on-off control panel
+        self.control_br1lt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="br1lt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#1\nOVERHEAD",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br1lt1.frame.grid(row=1, column=1, padx=2, pady=2)
 
-        self.button050301b09a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b09a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b09b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b09b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#1\nLAMP", height=44, width=108)        
-        self.button050301b09c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b09c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)
-        self.button050301b09a.grid(row=2, column=3, padx=2, pady=2)
-        self.button050301b09b.grid(row=2, column=4, padx=2, pady=2)
-        self.button050301b09c.grid(row=2, column=5, padx=2, pady=2)        
-        
-        self.button050301b10a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b10b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#2\nOVERHEAD", height=44, width=108)        
-        self.button050301b10c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b10c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)   
-        self.button050301b10a.grid(row=3, column=3, padx=2, pady=2)
-        self.button050301b10b.grid(row=3, column=4, padx=2, pady=2)
-        self.button050301b10c.grid(row=3, column=5, padx=2, pady=2)        
-        
-        self.button050301b11a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b11a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b11b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b11b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#2\nLAMP", height=44, width=108)        
-        self.button050301b11c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b11c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108) 
-        self.button050301b11a.grid(row=4, column=3, padx=2, pady=2)
-        self.button050301b11b.grid(row=4, column=4, padx=2, pady=2)
-        self.button050301b11c.grid(row=4, column=5, padx=2, pady=2)        
-        
-        self.button050301b12a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b12b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#3\nOVERHEAD", height=44, width=108)
-        self.button050301b12c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b12c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108)  
-        self.button050301b12a.grid(row=5, column=3, padx=2, pady=2)
-        self.button050301b12b.grid(row=5, column=4, padx=2, pady=2)
-        self.button050301b12c.grid(row=5, column=5, padx=2, pady=2)        
-        
-        self.button050301b13a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b13a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b13b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b13b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="BEDROOM#3\nLAMP", height=44, width=108)        
-        self.button050301b13c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b13c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108) 
-        self.button050301b13a.grid(row=6, column=3, padx=2, pady=2)
-        self.button050301b13b.grid(row=6, column=4, padx=2, pady=2)
-        self.button050301b13c.grid(row=6, column=5, padx=2, pady=2)          
-        
-        self.button050301b14a = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b14a, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_left_img, justify="right", relief="flat", text="ON", height=44, width=108)
-        self.button050301b14b = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b14b, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_square_red_img, justify="center", relief="flat", text="ALL 2ND\nFLOOR", height=44, width=108)        
-        self.button050301b14c = tk.Button(self.frame050301b, anchor="se", background="black", borderwidth=0, command=self.action050301b14c, compound="center", font=self.helv10bold, foreground="black", highlightthickness=0, image=self.button_151_195_225_round_right_img, justify="right", relief="flat", text="OFF", height=44, width=108) 
-        self.button050301b14a.grid(row=7, column=3, padx=2, pady=2)
-        self.button050301b14b.grid(row=7, column=4, padx=2, pady=2)
-        self.button050301b14c.grid(row=7, column=5, padx=2, pady=2)
+        # Bedroom 1 desk lamp on-off control panel
+        self.control_br1lt2 = OnIndOffButtonFrame(self.frame050301b,
+            name="br1lt2",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#1\nLAMP",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br1lt2.frame.grid(row=2, column=1, padx=2, pady=2)
+
+        # Bedroom 2 overhead light on-off control panel
+        self.control_br2lt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="br2lt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#2\nOVERHEAD",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br2lt1.frame.grid(row=3, column=1, padx=2, pady=2)
+
+        # Bedroom 2 desk lamp on-off control panel
+        self.control_br2lt2 = OnIndOffButtonFrame(self.frame050301b,
+            name="br2lt2",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#2\nLAMP",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br2lt2.frame.grid(row=4, column=1, padx=2, pady=2)
+
+        # Bedroom 3 overhead light on-off control panel
+        self.control_br3lt1 = OnIndOffButtonFrame(self.frame050301b,
+            name="br3lt1",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#3\nOVERHEAD",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br3lt1.frame.grid(row=5, column=1, padx=2, pady=2)
+
+        # Bedroom 3 desk lamp on-off control panel
+        self.control_br3lt2 = OnIndOffButtonFrame(self.frame050301b,
+            name="br3lt2",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="BEDROOM#3\nLAMP",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_br3lt2.frame.grid(row=6, column=1, padx=2, pady=2)             
+        """
+        # All second floor on-off control panel
+        self.control_floor_2 = OnIndOffButtonFrame(self.frame050301b,
+            name="all2",
+            resource_dir=self.resourceDir,
+            on_button_text="ON",
+            on_button_img=self.button_151_195_225_round_left_img,
+            ind_button_text="ALL 2ND\nFLOOR",
+            ind_on_button_img=self.button_square_green_img,
+            ind_off_button_img=self.button_square_red_img,
+            off_button_text="OFF",
+            off_button_img=self.button_151_195_225_round_right_img,
+            msg_out_queue=self.msg_out_queue)
+        self.control_floor_2.frame.grid(row=7, column=0, padx=2, pady=2)        
+        """
 
     def frame0503c_content(self):
         """ HOME/AWAY CONTROL SCREEN """
@@ -1062,467 +1181,7 @@ class MainWindow(multiprocessing.Process):
         logger.debug("Button 050301a08c was pressed")
         self.msg_to_send = message.Message(source="02", dest="17", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-
-    # ON / QUERY / OFF Control for device: fylt1
-    def action050301b01a(self):
-        logger.debug("Button 050301b01a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="fylt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b01b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [fylt1] to green")
-
-    def action050301b01b(self):
-        logger.debug("Button 050301b01b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b01c(self):
-        logger.debug("Button 050301b01c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="fylt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b01b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [fylt1] to red")
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b02a(self):
-        logger.debug("Button 050301b02a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="bylt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b02b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [bylt1] to green")
-
-    def action050301b02b(self):
-        logger.debug("Button 050301b02b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b02c(self):
-        logger.debug("Button 050301b02c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="bylt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
         logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.button050301b02b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [bylt1] to red")        
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b03a(self):
-        logger.debug("Button 050301b03a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b03b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [ewlt1] to green")
-
-    def action050301b03b(self):
-        logger.debug("Button 050301b03b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-
-    def action050301b03c(self):
-        logger.debug("Button 050301b03c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b03b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [ewlt1] to red")   
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b04a(self):
-        logger.debug("Button 050301b04a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b04b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [cclt1] to green")
-
-    def action050301b04b(self):
-        logger.debug("Button 050301b04b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-
-    def action050301b04c(self):
-        logger.debug("Button 050301b04c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)         
-        self.button050301b04b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [cclt1] to red")          
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b05a(self):
-        logger.debug("Button 050301b05a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b05b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [lrlt1] to green")
-
-    def action050301b05b(self):
-        logger.debug("Button 050301b05b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b05c(self):
-        logger.debug("Button 050301b05c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b05b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [lrlt1] to red")          
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b06a(self):
-        logger.debug("Button 050301b06a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.button050301b06b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [drlt1] to green")
-
-    def action050301b06b(self):
-        logger.debug("Button 050301b06b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-
-    def action050301b06c(self):
-        logger.debug("Button 050301b06c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.button050301b06b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [drlt1] to red")            
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b07a(self):
-        logger.debug("Button 050301b07a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)   
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)   
-        self.button050301b03b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [lr1lt1] to green")
-        self.button050301b04b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [dr1lt1] to green")
-        self.button050301b05b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [cc1lt1] to green")
-        self.button050301b06b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [ew1lt1] to green")  
-
-    def action050301b07b(self):
-        logger.debug("Button 050301b07b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-
-    def action050301b07c(self):
-        logger.debug("Button 050301b07c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="lrlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="drlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="cclt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="ewlt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-        self.button050301b03b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [lr1lt1] to red")
-        self.button050301b04b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [dr1lt1] to red")
-        self.button050301b05b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [cc1lt1] to red")
-        self.button050301b06b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [ew1lt1] to red")
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b08a(self):
-        logger.debug("Button 050301b08a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b08b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br1lt1] to green")       
-
-    def action050301b08b(self):
-        logger.debug("Button 050301b08b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b08c(self):
-        logger.debug("Button 050301b08c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
-        self.button050301b08b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br1lt1] to red")           
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b09a(self):
-        logger.debug("Button 050301b09a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b09b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br1lt2] to green")       
-
-    def action050301b09b(self):
-        logger.debug("Button 050301b09b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")  
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b09c(self):
-        logger.debug("Button 050301b09c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b09b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br1lt2] to red")
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b10a(self):
-        logger.debug("Button 050301b10a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b10b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br2lt1] to green")
-
-    def action050301b10b(self):
-        logger.debug("Button 050301b10b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b10c(self):
-        logger.debug("Button 050301b10c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b10b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br2lt1] to red")  
-
-
-    # ON / QUERY / OFF Control for device: bylt1
-    def action050301b11a(self):
-        logger.debug("Button 050301b11a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-        self.button050301b11b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br2lt2] to green")        
-
-    def action050301b11b(self):
-        logger.debug("Button 050301b11b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
-
-    def action050301b11c(self):
-        logger.debug("Button 050301b11c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b11b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br2lt2] to red")
-
-
-    # ON / QUERY / OFF Control for device: br3lt1
-    def action050301b12a(self):
-        logger.debug("Button 050301b12a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b12b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br3lt1] to green")
-
-    def action050301b12b(self):
-        logger.debug("Button 050301b12b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-    def action050301b12c(self):
-        logger.debug("Button 050301b12c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b12b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br3lt1] to red")             
-
-
-    # ON / QUERY / OFF Control for device: br3lt2
-    def action050301b13a(self):
-        logger.debug("Button 050301b13a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b13b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br3lt2] to green")     
-
-    def action050301b13b(self):
-        logger.debug("Button 050301b13b was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
-
-    def action050301b13c(self):
-        logger.debug("Button 050301b13c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
-        self.button050301b13b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br3lt2] to red")
-
-
-
-    def action050301b14a(self):
-        logger.debug("Button 050301b14a was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="on")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)  
-        
-        self.button050301b08b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br1lt1] to green")
-        self.button050301b09b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br1lt2] to green")
-        self.button050301b10b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br2lt1] to green")
-        self.button050301b11b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br2lt2] to green")
-        self.button050301b12b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br3lt1] to green")
-        self.button050301b13b.config(image=self.button_square_green_img)
-        logger.debug("Setting color of status indicator for device [br3lt2] to green")
-
-
-    def action050301b14b(self):
-        logger.debug("Button 050301b14b was pressed")
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        
-        self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-
-
-    def action050301b14c(self):
-        logger.debug("Button 050301b14c was pressed")
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br1lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br2lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt1", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.msg_to_send = message.Message(source="02", dest="16", type="161", name="br3lt2", payload="off")
-        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
-        self.button050301b08b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br1lt1] to red") 
-        self.button050301b09b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br1lt2] to red")
-        self.button050301b10b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br2lt1] to red")
-        self.button050301b11b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br2lt2] to red")
-        self.button050301b12b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br3lt1] to red")
-        self.button050301b13b.config(image=self.button_square_red_img)
-        logger.debug("Setting color of status indicator for device [br3lt2] to red")    
 
 
     def action050301c01a(self):

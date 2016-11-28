@@ -114,7 +114,11 @@ class WemoProcess(multiprocessing.Process):
             # Discover Device
             if self.msg_to_process.type == "160":
                 logger.debug("Message type 160 - attempting to discover device: %s", self.msg_to_process.payload)
-                self.wemo.discover_device(self.msg_to_process.raw)
+                self.device = self.wemo.discover_device(self.msg_to_process.raw)
+                if self.device is not None:
+                    self.msg_to_send = Message(source="16", dest="11", type="163", name=self.device.name, payload="found")
+                    self.msg_out_queue.put_notwait(self.msg_to_send.raw)
+                    logger.debug("Sending discovery successful message: [%s]", self.msg_to_send.raw)
 
             # Set Wemo state
             if self.msg_to_process.type == "161":

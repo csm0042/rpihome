@@ -171,7 +171,7 @@ class HomeProcess(multiprocessing.Process):
     def run_automation(self):
         """ Run automation rule determines if user is home or away """
         self.user1.by_mode(
-            mode=5, datetime=datetime.datetime.now(), ip="192.168.86.40")
+            mode=2, datetime=datetime.datetime.now(), ip="192.168.86.40")
         self.user2.by_mode(
             mode=2, datetime=datetime.datetime.now(), ip="192.168.86.42")
         self.user3.by_mode(
