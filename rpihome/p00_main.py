@@ -92,7 +92,7 @@ class MainProcess(object):
                               msgin=self.p02_queue,
                               msgout=self.p00_queue,
                               displayfile=(LogFilePath().return_path_and_name_combined(
-                                  name="p11",
+                                  name="p11_logic_solver",
                                   path=self.process_path)),
                               enable=self.enable)
         self.p02.start()

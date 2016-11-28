@@ -17,6 +17,7 @@ import rules.device_wemo_bylt1 as device_wemo_bylt1
 import rules.device_wemo_ewlt1 as device_wemo_ewlt1
 import rules.device_wemo_cclt1 as device_wemo_cclt1
 import rules.device_wemo_lrlt1 as device_wemo_lrlt1
+import rules.device_wemo_lrlt2 as device_wemo_lrlt2
 import rules.device_wemo_drlt1 as device_wemo_drlt1
 import rules.device_wemo_br1lt1 as device_wemo_br1lt1
 import rules.device_wemo_br1lt2 as device_wemo_br1lt2
@@ -92,6 +93,7 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_ewlt1 = device_wemo_ewlt1.Wemo_ewlt1("ewlt1", "192.168.86.23", self.msg_out_queue, logger)
         self.wemo_cclt1 = device_wemo_cclt1.Wemo_cclt1("cclt1", "192.168.86.24", self.msg_out_queue, logger)
         self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue, logger)
+        self.wemo_lrlt2 = device_wemo_lrlt2.Wemo_lrlt2("lrlt2", "192.168.86.33", self.msg_out_queue, logger)
         self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue, logger)
         self.wemo_br1lt1 = device_wemo_br1lt1.Wemo_br1lt1(
             "br1lt1", "192.168.86.27", self.msg_out_queue, logger)
@@ -244,6 +246,11 @@ class LogicProcess(multiprocessing.Process):
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
+        self.wemo_lrlt2.check_rules(datetime=datetime.datetime.now(),
+                                    homeArray=self.homeArray,
+                                    utcOffset=self.utc_offset,
+                                    sunriseOffset=datetime.timedelta(minutes=0),
+                                    sunsetOffset=datetime.timedelta(minutes=0))                                    
         self.wemo_drlt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
@@ -289,6 +296,7 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_ewlt1.command()
         self.wemo_cclt1.command()
         self.wemo_lrlt1.command()
+        self.wemo_lrlt2.command()
         self.wemo_drlt1.command()
         self.wemo_br1lt1.command()
         self.wemo_br1lt2.command()

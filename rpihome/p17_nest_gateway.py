@@ -122,20 +122,26 @@ class NestProcess(multiprocessing.Process):
         if len(self.msg_to_process.raw) > 4:
             logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
             if self.msg_to_process.type == "020":
-                self.connect()
-                self.msg_to_send = message.Message(source="17", dest="02", type="020", payload=self.current_conditions())
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                if self.connect() is True:
+                    self.msg_to_send = message.Message(source="17", dest="02", type="020", payload=self.current_conditions())
+                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                else:
+                    logger.debug("Connection to NEST failed")                    
             elif self.msg_to_process.type == "021":
-                self.connect()
-                self.msg_to_send = message.Message(source="17", dest="02", type="021", payload=self.current_forecast())
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))                
+                if self.connect() is True:
+                    self.msg_to_send = message.Message(source="17", dest="02", type="021", payload=self.current_forecast())
+                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                else:
+                    logger.debug("Connection to NEST failed")                                   
             elif self.msg_to_process.type == "022":
-                self.connect()
-                self.msg_to_send = message.Message(source="17", dest="02", type="022", payload=self.tomorrow_forecast())
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))                
+                if self.connect() is True:
+                    self.msg_to_send = message.Message(source="17", dest="02", type="022", payload=self.tomorrow_forecast())
+                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                else:
+                    logger.debug("Connection to NEST failed")              
             # Clear msg-to-process string
             self.msg_to_process = message.Message()
         else:
@@ -163,9 +169,11 @@ class NestProcess(multiprocessing.Process):
         try:
             self.nest = nest.Nest(self.username, self.password)
             logger.debug("Connection successful")
+            return True
         except:
             self.nest = None
             logger.debug("Could not connect to NEST account")
+            return False
 
 
     def current_conditions(self):
