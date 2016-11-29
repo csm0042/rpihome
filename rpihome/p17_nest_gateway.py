@@ -11,6 +11,7 @@ import os
 import sys
 import time
 import nest
+from modules.logger import MyLogger
 import modules.message as message
 
 
@@ -25,28 +26,15 @@ __email__ = "csmaue@gmail.com"
 __status__ = "Development"
 
 
-# Set up local logging *********************************************************************
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
-handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.debug("Logging handler for %s started", __name__)
-
-
 # Process Class ***********************************************************************************
 class NestProcess(multiprocessing.Process):
     """ Nest gateway process class and methods """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):        
         # Set default input parameter values
         self.name = "undefined"
         self.msg_in_queue = multiprocessing.Queue(-1)
         self.msg_out_queue = multiprocessing.Queue(-1)
-        self.logfile = "logfile"
-        self.log_remote = False    
+        self.logfile = "logfile"    
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -81,6 +69,21 @@ class NestProcess(multiprocessing.Process):
         self.forecast_temp_high = str()
         self.forecast_humid = str()
 
+    """
+    def __getstate__(self):
+        statedict = self.__dict__.copy()
+        if 'logger' in statedict:
+            del statedict['logger']
+        if 'log' in statedict:
+            del statedict['log']
+        return statedict
+
+    def __setstate__(self, statedict):
+        self.__dict__.update(statedict)
+        self.log = MyLogger(__name__)
+        self.logger = self.log.logger
+    """
+
 
     def process_in_msg_queue(self):
         """ Method to cycle through incoming message queue, filtering out heartbeats and
@@ -93,20 +96,20 @@ class NestProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
                 if self.msg_in.dest == "17":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        logger.debug("Kill code received - Shutting down")
+                        self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
                 self.msg_in = message.Message()
             else:
                 self.in_msg_loop = False
@@ -120,42 +123,42 @@ class NestProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
             
             if self.msg_to_process.type == "020":
-                logger.debug("Message type 020 [%s] received requesting current conditions")
+                self.logger.debug("Message type 020 [%s] received requesting current conditions")
                 self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="020A")
                 if self.connect() is True:
-                    logger.debug("Connection to NEST device successful")
+                    self.logger.debug("Connection to NEST device successful")
                     self.msg_to_send.payload=self.current_conditions()
                 else:
-                    logger.debug("Error attempting to connect to NEST device")
+                    self.logger.debug("Error attempting to connect to NEST device")
                     self.msg_to_send.payload=""
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Returning 020 ACK response [%s]" % self.msg_to_send.raw)
+                self.logger.debug("Returning 020 ACK response [%s]" % self.msg_to_send.raw)
                    
             elif self.msg_to_process.type == "021":
-                logger.debug("Message type 021 [%s] received requesting current conditions")
+                self.logger.debug("Message type 021 [%s] received requesting current conditions")
                 self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="021A")                
                 if self.connect() is True:
-                    logger.debug("Connection to NEST device successful")
+                    self.logger.debug("Connection to NEST device successful")
                     self.msg_to_send.payload=self.current_forecast()
                 else:
-                    logger.debug("Error attempting to connect to NEST device")
+                    self.logger.debug("Error attempting to connect to NEST device")
                     self.msg_to_send.payload=""
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Returning 021 ACK response [%s]" % self.msg_to_send.raw)                                   
+                self.logger.debug("Returning 021 ACK response [%s]" % self.msg_to_send.raw)                                   
             elif self.msg_to_process.type == "022":
-                logger.debug("Message type 022 [%s] received requesting current conditions")
+                self.logger.debug("Message type 022 [%s] received requesting current conditions")
                 self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="022A")                
                 if self.connect() is True:
-                    logger.debug("Connection to NEST device successful")
+                    self.logger.debug("Connection to NEST device successful")
                     self.msg_to_send.payload=self.tomorrow_forecast()
                 else:
-                    logger.debug("Error attempting to connect to NEST device")
+                    self.logger.debug("Error attempting to connect to NEST device")
                     self.msg_to_send.payload=""
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logger.debug("Returning 022 ACK response [%s]" % self.msg_to_send.raw)
+                self.logger.debug("Returning 022 ACK response [%s]" % self.msg_to_send.raw)
 
             # Clear msg-to-process string
             self.msg_to_process = message.Message()
@@ -167,11 +170,11 @@ class NestProcess(multiprocessing.Process):
         # Get credentials for login
         self.credentials_file = os.path.join(os.path.dirname(sys.argv[0]), "credentials/nest.txt")
         if os.path.isfile(self.credentials_file):
-            logger.debug("Credential file found, reading attributes from file")
+            self.logger.debug("Credential file found, reading attributes from file")
             self.username = linecache.getline(self.credentials_file, 1)
             self.password = linecache.getline(self.credentials_file, 2)
         else:
-            logger.debug("Credential file NOT found, continuing with default values")
+            self.logger.debug("Credential file NOT found, continuing with default values")
             self.username = "username"
             self.password = "password"
         # clean up extracted data
@@ -180,20 +183,20 @@ class NestProcess(multiprocessing.Process):
         self.password = str(self.password).lstrip()
         self.password = str(self.password).rstrip()
         # Login to Nest account
-        logger.debug("Attempting to connect to NEST account")
+        self.logger.debug("Attempting to connect to NEST account")
         try:
             self.nest = nest.Nest(self.username, self.password)
-            logger.debug("Connection successful")
+            self.logger.debug("Connection successful")
             return True
         except:
             self.nest = None
-            logger.debug("Could not connect to NEST account")
+            self.logger.debug("Could not connect to NEST account")
             return False
 
 
     def current_conditions(self):
         if self.nest is not None:
-            logger.debug("Attempting to parse data on current conditons from NEST data")
+            self.logger.debug("Attempting to parse data on current conditons from NEST data")
             try:
                 self.structure = self.nest.structures[0]
                 self.current_temp = str(int((self.structure.weather.current.temperature * 1.8) + 32))
@@ -201,19 +204,19 @@ class NestProcess(multiprocessing.Process):
                 self.current_wind_dir = self.structure.weather.current.wind.direction
                 self.current_humid = str(int(self.structure.weather.current.humidity))
                 self.result = ("%s,%s,%s,%s" % (self.current_condition, self.current_temp, self.current_wind_dir, self.current_humid))
-                logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)
                 return self.result
             except:
-                logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??"
         else:
-            logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
             return "??,??,??,??" 
 
 
     def current_forecast(self):
         if self.nest is not None:
-            logger.debug("Attempting to parse data on today's forecast from NEST data")
+            self.logger.debug("Attempting to parse data on today's forecast from NEST data")
             try:
                 self.structure = self.nest.structures[0]
                 self.forecast = self.structure.weather.daily[0]
@@ -222,19 +225,19 @@ class NestProcess(multiprocessing.Process):
                 self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
                 self.forecast_humid = str(int(self.forecast.humidity))
                 self.result = ("%s,%s,%s,%s" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
-                logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                
                 return self.result
             except:
-                logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??"
         else:
-            logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
             return "??,??,??,??"             
 
 
     def tomorrow_forecast(self):
         if self.nest is not None:
-            logger.debug("Attempting to parse data on tomorrow's forecast from NEST data")     
+            self.logger.debug("Attempting to parse data on tomorrow's forecast from NEST data")     
             try:
                 self.structure = self.nest.structures[0]
                 self.forecast = self.structure.weather.daily[1]
@@ -243,18 +246,21 @@ class NestProcess(multiprocessing.Process):
                 self.forecast_temp_high = str(int((self.forecast.temperature[1] * 1.8) + 32))
                 self.forecast_humid = str(int(self.forecast.humidity))
                 self.result = ("%s,%s,%s,%s" % (self.forecast_condition, self.forecast_temp_low, self.forecast_temp_high, self.forecast_humid))
-                logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                       
+                self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                       
                 return self.result
             except:
-                logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??" 
         else:
-            logger.debug("Failure reading tomorrow's forecast data from NEST device")
-            return "??,??,??,??"             
-        
+            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            return "??,??,??,??"           
+
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        # Configure logging
+        self.log = MyLogger(__name__)
+        self.logger = self.log.logger
         # Get credentials for login
         self.connect()
         # Main process loop
@@ -277,3 +283,4 @@ class NestProcess(multiprocessing.Process):
 
         # Shut down logger before exiting process
         pass
+        

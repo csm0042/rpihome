@@ -25,8 +25,10 @@ __status__ = "Development"
 
 # Device class ********************************************************************************************************
 class HomeUser2(HomeGeneral):
-    def __init__(self, msg_out_queue):
-        super().__init__()
+    def __init__(self, msg_out_queue, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)        
+        super().__init__(self.logger)
         self.msg_out_queue = msg_out_queue
 
 
@@ -140,7 +142,7 @@ class HomeUser2(HomeGeneral):
             self.by_ping_with_delay(datetime=self.dt, ip=self.ip)
             self.by_schedule(datetime=self.dt)           
         else:
-            logging.log(logging.DEBUG, "Cannot make home/away decision based on invalid mode") 
+            self.logger.debug("Cannot make home/away decision based on invalid mode") 
         # Return result
         return self.yes             
 
@@ -150,9 +152,9 @@ class HomeUser2(HomeGeneral):
             if self.yes is True:
                 self.msg_to_send = Message(source="13", dest="11", type="100", name="user2", payload="1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending 'user2 home' message to logic solver")                
+                self.logger.debug("Sending 'user2 home' message to logic solver")                
             else:
                 self.msg_to_send = Message(source="13", dest="11", type="100", name="user2", payload="0")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.log(logging.DEBUG, "Sending 'user2 NOT home' message to logic solver")                 
+                self.logger.debug("Sending 'user2 NOT home' message to logic solver")                 
             self.mem = copy.copy(self.yes)                           

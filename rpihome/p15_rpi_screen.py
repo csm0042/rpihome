@@ -10,6 +10,7 @@ import platform
 import os, sys
 import subprocess
 import time
+from modules.logger import MyLogger
 import modules.message as message
 
 
@@ -22,18 +23,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
 __status__ = "Development"
-
-
-# Set up local logging *********************************************************************
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
-handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.debug("Logging handler for %s started", __name__)
 
 
 # Process Class ***********************************************************************************
@@ -79,20 +68,20 @@ class RpiProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
                 if self.msg_in.dest == "15":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        logger.debug("Kill code received - Shutting down")
+                        self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
                 self.msg_in = message.Message()
             else:
                 self.in_msg_loop = False
@@ -106,7 +95,7 @@ class RpiProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process)
             if self.msg_to_process.type == "150":
                 self.run_commands(self.msg_to_process.payload)
             # Clear msg-to-process string
@@ -122,18 +111,20 @@ class RpiProcess(multiprocessing.Process):
             try:
                 self.output = subprocess.Popen(
                     self.command, shell=True, stdout=subprocess.PIPE).communicate()
-                logger.debug(
+                self.logger.debug(
                     "Sending command [%s] to terminal", str(self.command))
             except:
-                logger.debug("Command [%s] failed", str(self.command))
+                self.logger.debug("Command [%s] failed", str(self.command))
         else:
-            logger.debug(
+            self.logger.debug(
                 "Error sending command [%s] to terminal.  Not on linux machine",
                 str(self.command))
 
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        self.log = MyLogger("p15_rpi_screen")
+        self.logger = self.log.logger
         # Main process loop        
         self.main_loop = True
         while self.main_loop is True:

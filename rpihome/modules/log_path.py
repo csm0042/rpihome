@@ -3,6 +3,7 @@
 """
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
+import logging
 import os
 import sys
 
@@ -20,7 +21,10 @@ __status__ = "Development"
 
 # Create log file path / folder support function ***********************************************************************
 class LogFilePath(object):
-    def __init__(self):
+    def __init__(self, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)      
+        # Init tags         
         self.name = "undefined"
         self.current_path = str()
         self.one_up_path = str()

@@ -10,6 +10,7 @@ import multiprocessing
 import os, sys
 import time
 import modules.dst as dst
+from modules.logger import MyLogger
 import modules.message as message
 
 import devices.device_rpi_lr1 as device_rpi_lr1
@@ -38,18 +39,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
 __status__ = "Development"
-
-
-# Set up local logging ****************************************************************************
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
-handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.debug("Logging handler for %s started", __name__)
 
 
 # Process Class ***********************************************************************************
@@ -118,13 +107,13 @@ class LogicProcess(multiprocessing.Process):
         """ Requests a forecast update from the nest module """
         self.msg_to_send = message.Message(source="11", dest="17", type="020")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
         self.msg_to_send = message.Message(source="11", dest="17", type="021")        
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)
         self.msg_to_send = message.Message(source="11", dest="17", type="022")        
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)       
+        self.logger.debug("Requesting current weather status update from NEST [%s]", self.msg_to_send.raw)       
         self.last_forecast_update = datetime.datetime.now()
 
 
@@ -139,21 +128,21 @@ class LogicProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
                 if self.msg_in.dest == "11":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        logger.debug("Kill code received - Shutting down")
+                        self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
                     self.msg_in = str()
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
                 self.msg_in = message.Message()
             else:
                 self.in_msg_loop = False
@@ -168,69 +157,69 @@ class LogicProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
 
             # Process current condition request ack
             if self.msg_to_process.type == "020A":
-                logger.debug("ACK received for 020 message: [%s]", self.msg_to_process.raw)
+                self.logger.debug("ACK received for 020 message: [%s]", self.msg_to_process.raw)
                 if self.msg_to_process.payload != "":
                     self.msg_to_send = message.Message(source="11", dest="02", type="020A", payload=self.msg_to_process.payload)
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
+                    self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
                 else:
-                    logger.debug("Message 020 ACK from NEST service contained no info to display")
+                    self.logger.debug("Message 020 ACK from NEST service contained no info to display")
 
             # Process current forecast request ack
             elif self.msg_to_process.type == "021A":
-                logger.debug("ACK received for 021 message: [%s]", self.msg_to_process.raw)
+                self.logger.debug("ACK received for 021 message: [%s]", self.msg_to_process.raw)
                 if self.msg_to_process.payload != "":
                     self.msg_to_send = message.Message(source="11", dest="02", type="021A", payload=self.msg_to_process.payload)
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
+                    self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
                 else:
-                    logger.debug("Message 021 ACK from NEST service contained no info to display")                    
+                    self.logger.debug("Message 021 ACK from NEST service contained no info to display")                    
 
             # Process tomorrow forecast request ack
             elif self.msg_to_process.type == "022A":
-                logger.debug("ACK received for 022 message: [%s]", self.msg_to_process.raw)
+                self.logger.debug("ACK received for 022 message: [%s]", self.msg_to_process.raw)
                 if self.msg_to_process.payload != "":                
                     self.msg_to_send = message.Message(source="11", dest="02", type="022A", payload=self.msg_to_process.payload)
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)                
+                    self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)                
                 else:
-                    logger.debug("Message 022 ACK from NEST service contained no info to display")                    
+                    self.logger.debug("Message 022 ACK from NEST service contained no info to display")                    
             # Process user "home/away" messages                              
             elif self.msg_to_process.type == "100":
                 if self.msg_to_process.name == "user1":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[0] = False
-                        logger.debug("User1 is no longer home")
+                        self.logger.debug("User1 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[0] = True
-                        logger.debug("User1 is home")
+                        self.logger.debug("User1 is home")
                 if self.msg_to_process.name == "user2":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[1] = False
-                        logger.debug("User2 is no longer home")
+                        self.logger.debug("User2 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[1] = True
-                        logger.debug("User2 is home")
+                        self.logger.debug("User2 is home")
                 if self.msg_to_process.name == "user3":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[2] = False
-                        logger.debug("User3 is no longer home")
+                        self.logger.debug("User3 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[2] = True
-                        logger.debug("User3 is home")
+                        self.logger.debug("User3 is home")
             # Process device discovery successful messages
             elif self.msg_to_process.type == "160A":
-                logger.debug("ACK received for 160 message: [%s]", self.msg_to_process.raw)
+                self.logger.debug("ACK received for 160 message: [%s]", self.msg_to_process.raw)
                 if self.msg_to_process.payload == "found":
                     self.msg_to_send = message.Message(source="11", dest="02", type="160A", name=self.msg_to_process.name)
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Sending message [%s] to gui app to add control widget for device: [%s]", self.msg_to_send.raw, self.msg_to_process.name)
+                    self.logger.debug("Sending message [%s] to gui app to add control widget for device: [%s]", self.msg_to_send.raw, self.msg_to_process.name)
                 else:
-                    logger.debug("ACK reports device was not found.  No further action being taken")
+                    self.logger.debug("ACK reports device was not found.  No further action being taken")
             # Process device create messages                                        
             elif self.msg_to_process.type == "168":
                 self.create_devices()
@@ -343,6 +332,8 @@ class LogicProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        self.log = MyLogger("p11_logic_solver")
+        self.logger = self.log.logger
         # Create devices
         self.create_devices()
         # Main process loop        
@@ -361,7 +352,7 @@ class LogicProcess(multiprocessing.Process):
                     self.update_forecast()
 
             # Close process
-            if (self.close_pending is True or
+            if ((self.close_pending is True and self.msg_in_queue.empty() and self.work_queue.empty()) or
                     datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
                 self.main_loop = False
 

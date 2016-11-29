@@ -27,7 +27,7 @@ class DeviceWemo(Device):
     def __init__(self, name, address, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)        
-        super().__init__(name, msg_out_queue)
+        super().__init__(name, msg_out_queue, self.logger)
         self.name = name
         self.address = address
         self.msg_out_queue = msg_out_queue

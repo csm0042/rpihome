@@ -67,24 +67,24 @@ class Wemo_lrlt1(DeviceWemo):
                 if self.homeArray[1] is True or self.homeArray[2] is True:
                     if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,30):
                         if self.state is False:
-                            logging.debug("Turning on lrlt1")
+                            self.logger.debug("Turning on lrlt1")
                         self.state = True
                     else:
                         if self.state is True:
-                            logging.debug("Turning off lrlt1")
+                            self.logger.debug("Turning off lrlt1")
                         self.state = False
                 else:
                     if datetime.time(6,30) <= self.dt.time() <= datetime.time(7,0):
                         if self.state is False:
-                            logging.debug("Turning on lrlt1")
+                            self.logger.debug("Turning on lrlt1")
                         self.state = True
                     else:
                         if self.state is True:
-                            logging.debug("Turning off lrlt1")
+                            self.logger.debug("Turning off lrlt1")
                         self.state = False
             else:
                 if self.state is True:
-                    logging.debug("Turning off lrlt1")
+                    self.logger.debug("Turning off lrlt1")
                 self.state = False
         # Return result
         return self.state

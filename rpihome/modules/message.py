@@ -4,6 +4,7 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
 import copy
+import logging
 
 
 # Authorship Info *********************************************************************************
@@ -19,7 +20,10 @@ __status__ = "Development"
 
 # Message Helper Class *****************************************************************************
 class Message(object):
-    def __init__(self, **kwargs):
+    def __init__(self, logger=None, **kwargs):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)      
+        # Init tags        
         self.source = str()
         self.dest = str()
         self.type = str()

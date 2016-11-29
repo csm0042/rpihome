@@ -3,6 +3,7 @@
 """
 
 # Import Required Libraries (Standard, Third Party, Local) ************************************************************
+import logging
 from math import cos,sin,acos,asin,tan  
 from math import degrees as deg, radians as rad  
 from datetime import date, datetime, time, timezone, timedelta 
@@ -22,7 +23,11 @@ class Sun:
     s = sun(lat=38.566267, long=-90.409886)
     print('sunrise at ',s.sunrise(when=datetime.datetime.now()) 
     """  
-    def __init__(self,lat=38.566, long=-90.409): # default St. Louis, MO  
+    def __init__(self,lat=38.566, long=-90.409, logger=None): 
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)      
+        # Init tags        
+        # default St. Louis, MO  
         self.lat=lat  
         self.long=long  
     

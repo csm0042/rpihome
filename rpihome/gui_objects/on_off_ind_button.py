@@ -5,7 +5,10 @@ from rpihome.modules.message import Message
 
 
 class OnIndOffButtonFrame(object):
-    def __init__(self, parent_frame, **kwargs):
+    def __init__(self, parent_frame, logger=None, **kwargs):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)
+        # Init tags
         self.parent_frame = parent_frame
         self.msg_to_send = Message()
         # Update default elements based on any parameters passed in

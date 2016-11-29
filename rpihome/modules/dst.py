@@ -2,7 +2,10 @@ import datetime
 import logging
 
 class USdst(object):
-    def __init__(self):
+    def __init__(self, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)      
+        # Init tags        
         self.dt = datetime.datetime.now()
         self.marchStartsOn = datetime.date(2016,3,1)
         self.marchFirstSun = int()
@@ -21,7 +24,7 @@ class USdst(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dt = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.dt (should be type: datetime.datetime)") 
+            self.logger.debug("Improper type attmpted to load into self.dt (should be type: datetime.datetime)") 
 
     @property
     def marchStartsOn(self):
@@ -32,7 +35,7 @@ class USdst(object):
         if isinstance(value, datetime.date) is True:
             self.__marchStartsOn = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.marchStartsOn (should be type: datetime.date)") 
+            self.logger.debug("Improper type attmpted to load into self.marchStartsOn (should be type: datetime.date)") 
 
     @property
     def marchFirstSun(self):
@@ -43,7 +46,7 @@ class USdst(object):
         if isinstance(value, int) is True:
             self.__marchFirstSun = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.marchFirstSun (should be type: int)")
+            self.logger.debug("Improper type attmpted to load into self.marchFirstSun (should be type: int)")
 
     @property
     def marchSecondSun(self):
@@ -54,7 +57,7 @@ class USdst(object):
         if isinstance(value, int) is True:
             self.__marchSecondSun = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.marchSecondSun (should be type: int)")                        
+            self.logger.debug("Improper type attmpted to load into self.marchSecondSun (should be type: int)")                        
 
     @property
     def novStartsOn(self):
@@ -65,7 +68,7 @@ class USdst(object):
         if isinstance(value, datetime.date) is True:
             self.__novStartsOn = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.novStartsOn (should be type: datetime.date)") 
+            self.logger.debug("Improper type attmpted to load into self.novStartsOn (should be type: datetime.date)") 
 
     @property
     def novFirstSun(self):
@@ -76,7 +79,7 @@ class USdst(object):
         if isinstance(value, int) is True:
             self.__novFirstSun = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.novFirstSun (should be type: int)")     
+            self.logger.debug("Improper type attmpted to load into self.novFirstSun (should be type: int)")     
 
     @property
     def dstStarts(self):
@@ -87,7 +90,7 @@ class USdst(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dstStarts = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.dstStarts (should be type: datetime.datetime)")                   
+            self.logger.debug("Improper type attmpted to load into self.dstStarts (should be type: datetime.datetime)")                   
 
     @property
     def dstEnds(self):
@@ -98,7 +101,7 @@ class USdst(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dstEnds = value
         else:
-            logging.log(logging.DEBUG, "Improper type attmpted to load into self.dstEnds (should be type: datetime.datetime)")                                    
+            self.logger.debug("Improper type attmpted to load into self.dstEnds (should be type: datetime.datetime)")                                    
 
 
     def is_active(self, **kwargs):

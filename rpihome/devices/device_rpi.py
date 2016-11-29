@@ -26,7 +26,7 @@ class DeviceRPI(Device):
     def __init__(self, name, msg_out_queue, logger=None):
         # Configure logger
         self.logger = logger or logging.getLogger(__name__)        
-        super().__init__(name, msg_out_queue)
+        super().__init__(name, msg_out_queue, self.logger)
 
     def command(self):
         """ This method is used to send a single command to various devices when necessary instead
@@ -36,11 +36,11 @@ class DeviceRPI(Device):
                 self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi",
                                            payload="export DISPLAY=:0; xset s reset")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.debug("Sending wake command to RPi Monitor")
+                self.logger.debug("Sending wake command to RPi Monitor")
             else:
                 self.msg_to_send = Message(source="11", dest="15", type="150", name="rpi",
                                            payload="export DISPLAY=:0; xset s activate")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                logging.debug("Sending sleep command to RPi Monitor")
+                self.logger.debug("Sending sleep command to RPi Monitor")
             self.state_mem = copy.copy(self.state)
                               

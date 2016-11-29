@@ -14,6 +14,7 @@ import time
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
+from modules.logger import MyLogger
 import modules.message as message
 from gui_objects.on_off_ind_button import OnIndOffButtonFrame
 
@@ -27,18 +28,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
 __status__ = "Development"
-
-
-# Set up local logging *********************************************************************
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
-handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.debug("Logging handler for %s started", __name__)
 
 
 # Application GUI Class Definition ****************************************************************
@@ -98,19 +87,23 @@ class MainWindow(multiprocessing.Process):
 
     def run(self):
         """ Generate window and schedule after and close handlers """
+        self.log = MyLogger("p02_gui")
+        self.logger = self.log.logger
         # Create all parts of application window
-        logger.debug("Begining generation of application window")
+        self.logger.debug("Begining generation of application window")
         self.draw_window()
-        logger.debug("Finished generation of application window")
+        self.logger.debug("Finished generation of application window")
         # Schedule "after" process to run once main loop has started
         self.window.after(500, self.after_tasks)
-        logger.debug("Scheduled initial \"after\" task")
+        self.logger.debug("Scheduled initial \"after\" task")
         # Start handler for window exit button
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
-        logger.debug("Added \"on-close\" handler")
+        self.logger.debug("Added \"on-close\" handler")
         # Run mainloop() to activate gui and begin monitoring its inputs
-        logger.debug("Started gui mainloop")
-        self.window.mainloop()             
+        self.logger.debug("Started gui mainloop")
+        self.window.mainloop()  
+        # Close logger once window closes
+        pass         
 
 
     def draw_window(self):
@@ -166,7 +159,7 @@ class MainWindow(multiprocessing.Process):
         self.window.title("RPi Home")
         self.window.geometry("%sx%s+%s+%s" % (840, 810, 1, 1))
         self.window.config(background="black") 
-        logger.debug("Main application window created")
+        self.logger.debug("Main application window created")
 
 
     def define_fonts(self):
@@ -213,7 +206,7 @@ class MainWindow(multiprocessing.Process):
     def divide_main_window(self):
         self.screen1 = tk.Frame(self.window, background="black")
         self.screen1.pack(side="top", fill="both", expand=True, padx=0, pady=0)
-        logger.debug("Overlayed 1 primary frame over-top of application (root) window")
+        self.logger.debug("Overlayed 1 primary frame over-top of application (root) window")
         self.frame01 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame01.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame01.pack_propagate(False)
@@ -232,7 +225,7 @@ class MainWindow(multiprocessing.Process):
         self.frame06 = tk.Frame(self.screen1, background="black", height=50, width=800)
         self.frame06.pack(side="top", fill="x", expand=False, padx=0, pady=0)
         self.frame06.pack_propagate(False)
-        logger.debug("Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
+        self.logger.debug("Overlayed 6 sub-frames, packed top to bottom over-top of primary frame")   
 
 
     def divide_frame01(self):
@@ -904,7 +897,7 @@ class MainWindow(multiprocessing.Process):
 
 
     def action010101(self):
-        logger.debug("Button 010101 was pressed")
+        self.logger.debug("Button 010101 was pressed")
         pass
 
 
@@ -932,17 +925,17 @@ class MainWindow(multiprocessing.Process):
 
 
     def action030101(self):
-        logger.debug("Button 030101 was pressed")
+        self.logger.debug("Button 030101 was pressed")
         pass 
 
     def action040101(self):
-        logger.debug("Button 040101 was pressed")
+        self.logger.debug("Button 040101 was pressed")
         pass
  
 
     def action050101(self):
         self.scanWemo = False
-        logger.debug("Button 050101 was pressed")
+        self.logger.debug("Button 050101 was pressed")
         if self.frame050301a_packed is False:
             self.frame050301a.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301a.pack_propagate(False)
@@ -961,7 +954,7 @@ class MainWindow(multiprocessing.Process):
         pass
 
     def action050102(self):
-        logger.debug("Button 050102 was pressed")
+        self.logger.debug("Button 050102 was pressed")
         self.scanWemo = True
         if self.frame050301b_packed is False:
             self.frame050301b.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
@@ -982,7 +975,7 @@ class MainWindow(multiprocessing.Process):
 
     def action050103(self):
         self.scanWemo = False
-        logger.debug("Button 050103 was pressed")
+        self.logger.debug("Button 050103 was pressed")
         if self.frame050301c_packed is False:
             self.frame050301c.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301c.pack_propagate(False)
@@ -1002,7 +995,7 @@ class MainWindow(multiprocessing.Process):
 
     def action050104(self):
         self.scanWemo = False
-        logger.debug("Button 050103 was pressed")
+        self.logger.debug("Button 050103 was pressed")
         if self.frame050301d_packed is False:
             self.frame050301d.pack(anchor="nw", side="left", fill="none", expand=False, padx=0, pady=0)
             self.frame050301d.pack_propagate(False)
@@ -1023,194 +1016,194 @@ class MainWindow(multiprocessing.Process):
 
     # START / CHECK / STOP Controls for: Log handler process
     def action050301a01a(self):
-        logger.debug("Button 050301a01a was pressed")
+        self.logger.debug("Button 050301a01a was pressed")
         self.msg_to_send = message.Message(source="02", dest="01", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a01b(self):
-        logger.debug("Button 050301a01b was pressed")
+        self.logger.debug("Button 050301a01b was pressed")
         self.msg_to_send = message.Message(source="02", dest="01", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
    
     def action050301a01c(self):
-        logger.debug("Button 050301a01c was pressed")
+        self.logger.debug("Button 050301a01c was pressed")
         self.msg_to_send = message.Message(source="02", dest="01", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)            
 
 
     # START / CHECK / STOP Controls for: Logic Solver process
     def action050301a02a(self):
-        logger.debug("Button 050301a02a was pressed")
+        self.logger.debug("Button 050301a02a was pressed")
         self.msg_to_send = message.Message(source="02", dest="11", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a02b(self):
-        logger.debug("Button 050301a02b was pressed")
+        self.logger.debug("Button 050301a02b was pressed")
         self.msg_to_send = message.Message(source="02", dest="11", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)    
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)                
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)                
 
     def action050301a02c(self):
-        logger.debug("Button 050301a02c was pressed")
+        self.logger.debug("Button 050301a02c was pressed")
         self.msg_to_send = message.Message(source="02", dest="11", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)            
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)            
 
 
     # START / CHECK / STOP Controls for: Future process
     def action050301a03a(self):
-        logger.debug("Button 050301a03a was pressed")
+        self.logger.debug("Button 050301a03a was pressed")
         self.msg_to_send = message.Message(source="02", dest="12", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a03b(self):
-        logger.debug("Button 050301a03b was pressed")
+        self.logger.debug("Button 050301a03b was pressed")
         self.msg_to_send = message.Message(source="02", dest="12", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
      
     def action050301a03c(self):
-        logger.debug("Button 050301a03c was pressed")
+        self.logger.debug("Button 050301a03c was pressed")
         self.msg_to_send = message.Message(source="02", dest="12", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Button 050301a03c was pressed - Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Button 050301a03c was pressed - Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Home / Away process
     def action050301a04a(self):
-        logger.debug("Button 050301a04a was pressed")
+        self.logger.debug("Button 050301a04a was pressed")
         self.msg_to_send = message.Message(source="02", dest="13", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a04b(self):
-        logger.debug("Button 050301a04b was pressed")
+        self.logger.debug("Button 050301a04b was pressed")
         self.msg_to_send = message.Message(source="02", dest="13", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301a04c(self):
-        logger.debug("Button 050301a04c was pressed")
+        self.logger.debug("Button 050301a04c was pressed")
         self.msg_to_send = message.Message(source="02", dest="13", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Future process
     def action050301a05a(self):
-        logger.debug("Button 050301a05a was pressed")
+        self.logger.debug("Button 050301a05a was pressed")
         self.msg_to_send = message.Message(source="02", dest="14", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a05b(self):
-        logger.debug("Button 050301a05b was pressed")
+        self.logger.debug("Button 050301a05b was pressed")
         self.msg_to_send = message.Message(source="02", dest="14", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
     def action050301a05c(self):
-        logger.debug("Button 050301a05c was pressed")
+        self.logger.debug("Button 050301a05c was pressed")
         self.msg_to_send = message.Message(source="02", dest="14", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Rpi Screen process
     def action050301a06a(self):
-        logger.debug("Button 050301a06a was pressed")
+        self.logger.debug("Button 050301a06a was pressed")
         self.msg_to_send = message.Message(source="02", dest="15", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a06b(self):
-        logger.debug("Button 050301a06b was pressed")
+        self.logger.debug("Button 050301a06b was pressed")
         self.msg_to_send = message.Message(source="02", dest="15", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)        
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)        
 
     def action050301a06c(self):
-        logger.debug("Button 050301a06c was pressed")
+        self.logger.debug("Button 050301a06c was pressed")
         self.msg_to_send = message.Message(source="02", dest="15", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Wemo Gateway process
     def action050301a07a(self):
-        logger.debug("Button 050301a07a was pressed")
+        self.logger.debug("Button 050301a07a was pressed")
         self.msg_to_send = message.Message(source="02", dest="16", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
         self.msg_to_send = message.Message(source="02", dest="11", type="168")           
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a07b(self):
-        logger.debug("Button 050301a07b was pressed")
+        self.logger.debug("Button 050301a07b was pressed")
         self.msg_to_send = message.Message(source="02", dest="16", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a07c(self):
-        logger.debug("Button 050301a07c was pressed")
+        self.logger.debug("Button 050301a07c was pressed")
         self.msg_to_send = message.Message(source="02", dest="16", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
 
     # START / CHECK / STOP Controls for: Nest Gateway process
     def action050301a08a(self):
-        logger.debug("Button 050301a08a was pressed")
+        self.logger.debug("Button 050301a08a was pressed")
         self.msg_to_send = message.Message(source="02", dest="17", type="900")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw) 
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a08b(self):
-        logger.debug("Button 050301a08b was pressed")        
+        self.logger.debug("Button 050301a08b was pressed")        
         self.msg_to_send = message.Message(source="02", dest="17", type="???")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw)
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw)
 
     def action050301a08c(self):
-        logger.debug("Button 050301a08c was pressed")
+        self.logger.debug("Button 050301a08c was pressed")
         self.msg_to_send = message.Message(source="02", dest="17", type="999")
         self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-        logger.debug("Sending message [%s]", self.msg_to_send.raw) 
+        self.logger.debug("Sending message [%s]", self.msg_to_send.raw) 
 
 
     def action050301c01a(self):
-        logger.debug("Button 050301c01a was pressed")
+        self.logger.debug("Button 050301c01a was pressed")
         self.button050301c01b.config(image=self.button_square_green_img)
 
     def action050301c01b(self):
-        logger.debug("Button 050301c01b was pressed")
+        self.logger.debug("Button 050301c01b was pressed")
 
     def action050301c01c(self):
-        logger.debug("Button 050301c01C was pressed") 
+        self.logger.debug("Button 050301c01C was pressed") 
         self.button050301c01b.config(image=self.button_square_red_img)    
 
 
     def action060101(self):
-        logger.debug("Button 060101 was pressed")
+        self.logger.debug("Button 060101 was pressed")
         pass        
 
     def after_tasks(self):
-        #logger.debug("Running \"after\" task")
+        #self.logger.debug("Running \"after\" task")
         # Process incoming message queue
         try:
             self.msg_in = message.Message(raw=self.msg_in_queue.get_nowait())    
-            #logger.debug("Checked in msg queue and found msg: %s" % self.msg_in.raw)   
+            #self.logger.debug("Checked in msg queue and found msg: %s" % self.msg_in.raw)   
         except:
             pass
         # Process incoming message
         if len(self.msg_in.raw) > 4:
-            logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
+            self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)
             if self.msg_in.dest == "02":
                 
                 if self.msg_in.type == "001":
@@ -1254,15 +1247,15 @@ class MainWindow(multiprocessing.Process):
 
                 elif self.msg_in.type == "020A":
                     self.current_conditions = (self.msg_in.payload).split(sep=",")
-                    logger.debug("Current condition response [%s] received from nest gateway", self.msg_in.raw)
+                    self.logger.debug("Current condition response [%s] received from nest gateway", self.msg_in.raw)
 
                 elif self.msg_in.type == "021A":
                     self.current_forecast = (self.msg_in.payload).split(sep=",")
-                    logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in.raw)                    
+                    self.logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in.raw)                    
 
                 elif self.msg_in.type == "022A":
                     self.tomorrow_forecast = (self.msg_in.payload).split(sep=",")      
-                    logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in.raw)                                                 
+                    self.logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in.raw)                                                 
                 
                 elif self.msg_in.type == "162A":
                     if self.msg_in.payload == "0":
@@ -1321,11 +1314,11 @@ class MainWindow(multiprocessing.Process):
                             self.control_br3lt2.set_indicator_green()                                                                       
                                        
                 elif self.msg_in.type == "999":
-                    logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
+                    self.logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
                     self.close_pending = True
             else:
                 self.msg_out_queue.put_nowait(self.msg_in.raw)
-                logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                
+                self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                
             pass  
             self.msg_in = message.Message()
 
@@ -1372,7 +1365,7 @@ class MainWindow(multiprocessing.Process):
                 self.update_alarm_window()
             # Re-schedule after task to run again in another 1000ms
             self.window.after(500, self.after_tasks)
-            #logger.debug("Re-scheduled next after event")
+            #self.logger.debug("Re-scheduled next after event")
         pass
 
 
@@ -1382,57 +1375,57 @@ class MainWindow(multiprocessing.Process):
             # Kill p167(nest gateway)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="17", type="999").raw)
-                logger.debug("Kill code sent to p17_nest_gateway process")
+                self.logger.debug("Kill code sent to p17_nest_gateway process")
             except:
-                logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
+                self.logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
             # Kill p16 (wemo gateway)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="16", type="999").raw)
-                logger.debug("Kill code sent to p16_wemo_gateway process") 
+                self.logger.debug("Kill code sent to p16_wemo_gateway process") 
             except:
-                logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
+                self.logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
             # Kill p15 (rpi screen)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="15", type="999").raw)
-                logger.debug("Kill code sent to p15_rpi_screen process")  
+                self.logger.debug("Kill code sent to p15_rpi_screen process")  
             except:
-                logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
             # Kill p14 (motion detector)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="14", type="999").raw)
-                logger.debug("Kill code sent to p14_motion process") 
+                self.logger.debug("Kill code sent to p14_motion process") 
             except:
-                logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
             # Kill p13 (home / away)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="13", type="999").raw)
-                logger.debug("Kill code sent to p13_home_away process")   
+                self.logger.debug("Kill code sent to p13_home_away process")   
             except:
-                logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
             # Kill p12 (db interface)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="12", type="999").raw)
-                logger.debug("Kill code sent to p12_db_interface process") 
+                self.logger.debug("Kill code sent to p12_db_interface process") 
             except:
-                logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
+                self.logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
             # Kill p11 (logic solver)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="11", type="999").raw)
-                logger.debug("Kill code sent to p11_logic_solver process")
+                self.logger.debug("Kill code sent to p11_logic_solver process")
             except:
-                logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
             # Kill p02 (gui)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="02", type="999").raw)
-                logger.debug("Kill code sent to p02_gui process")  
+                self.logger.debug("Kill code sent to p02_gui process")  
             except:
-                logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                                                          
+                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                                                          
             # Kill p00 (main)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="00", type="999").raw)   
-                logger.debug("Kill code sent to p00_main process")
+                self.logger.debug("Kill code sent to p00_main process")
             except:
-                logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
+                self.logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window

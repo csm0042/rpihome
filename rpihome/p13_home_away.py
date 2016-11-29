@@ -9,6 +9,7 @@ import multiprocessing
 import platform
 import os, sys
 import time
+from modules.logger import MyLogger
 import modules.message as message
 import home.home_user1 as home_user1
 import home.home_user2 as home_user2
@@ -24,18 +25,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Christopher Maue"
 __email__ = "csmaue@gmail.com"
 __status__ = "Development"
-
-
-# Set up local logging ****************************************************************************
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-logfile = os.path.join(os.path.dirname(sys.argv[0]), ("logs/" + __name__ + ".log"))
-handler = logging.handlers.TimedRotatingFileHandler(logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
-formatter = logging.Formatter('%(processName)-16s,  %(asctime)-24s,  %(levelname)-8s, %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.debug("Logging handler for %s started", __name__)
 
 
 # Process Class ***********************************************************************************
@@ -82,20 +71,20 @@ class HomeProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
-                logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
+                self.logger.debug("Processing message [%s] from incoming message queue" % self.msg_in.raw)                
                 if self.msg_in.dest == "13":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        logger.debug("Kill code received - Shutting down")
+                        self.logger.debug("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
-                    logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
+                    self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)
                 # Resetting message for next check of queue                
                 self.msg_in = message.Message()
             else:
@@ -111,7 +100,7 @@ class HomeProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
-            logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            self.logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
             # 130 = Set Home-Away mode set to away (override)
             if self.msg_to_process.type == "130":
                 # Mode 0 == away override
@@ -187,6 +176,8 @@ class HomeProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        self.log = MyLogger("p13_home_away")
+        self.logger = self.log.logger
         # Main process loop        
         self.main_loop = True
         while self.main_loop is True:

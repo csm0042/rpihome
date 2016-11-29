@@ -24,8 +24,10 @@ __status__ = "Development"
 
 # Device class ********************************************************************************************************
 class RPImain(DeviceRPI):
-    def __init__(self, name, msg_out_queue):
-        super().__init__(name, msg_out_queue)
+    def __init__(self, name, msg_out_queue, logger=None):
+        # Configure logger
+        self.logger = logger or logging.getLogger(__name__)        
+        super().__init__(name, msg_out_queue, self.logger)
 
 
     def check_rules(self, **kwargs):
