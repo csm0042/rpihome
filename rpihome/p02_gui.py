@@ -1252,19 +1252,19 @@ class MainWindow(multiprocessing.Process):
                     elif self.msg_in.source == "17":
                         self.button050301a08b.config(image=self.button_square_red_img)
 
-                elif self.msg_in.type == "020":
+                elif self.msg_in.type == "020A":
                     self.current_conditions = (self.msg_in.payload).split(sep=",")
                     logger.debug("Current condition response [%s] received from nest gateway", self.msg_in.raw)
 
-                elif self.msg_in.type == "021":
+                elif self.msg_in.type == "021A":
                     self.current_forecast = (self.msg_in.payload).split(sep=",")
                     logger.debug("Today's forecast response [%s] received from nest gateway", self.msg_in.raw)                    
 
-                elif self.msg_in.type == "022":
+                elif self.msg_in.type == "022A":
                     self.tomorrow_forecast = (self.msg_in.payload).split(sep=",")      
                     logger.debug("Tomorrow's forecast response [%s] received from nest gateway", self.msg_in.raw)                                                 
                 
-                elif self.msg_in.type == "163":
+                elif self.msg_in.type == "162A":
                     if self.msg_in.payload == "0":
                         if self.msg_in.name == "fylt1":
                             self.control_fylt1.set_indicator_red()

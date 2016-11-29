@@ -9,7 +9,7 @@ import multiprocessing
 import os
 import sys
 import time
-import modules.wemo as wemo
+import pywemo
 import modules.message as message
 
 
@@ -63,6 +63,8 @@ class WemoProcess(multiprocessing.Process):
         self.last_hb = datetime.datetime.now()
         self.in_msg_loop = bool()
         self.main_loop = bool()
+        self.device = None
+        self.device_list = []
         self.close_pending = False    
 
 
@@ -114,27 +116,39 @@ class WemoProcess(multiprocessing.Process):
             # Discover Device
             if self.msg_to_process.type == "160":
                 logger.debug("Message type 160 - attempting to discover device: %s", self.msg_to_process.payload)
-                self.device = self.wemo.discover_device(self.msg_to_process.raw)
+                self.device = self.discover_device(self.msg_to_process.name, self.msg_to_process.payload)
+                self.msg_to_send = message.Message(source="16", dest=self.msg_to_process.source, type="160A", name=self.msg_to_process.name)
                 if self.device is not None:
-                    self.msg_to_send = message.Message(source="16", dest="11", type="164", name=self.device.name, payload="found")
-                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Sending discovery successful message: [%s]", self.msg_to_send.raw)
+                    self.msg_to_send.payload = "found"
+                else:
+                    self.msg_to_send.payload = "not found"
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                logger.debug("Sending discovery successful message: [%s]", self.msg_to_send.raw)
 
             # Set Wemo state
             if self.msg_to_process.type == "161":
                 # Process wemo off commands
                 if self.msg_to_process.payload == "off":
                     logger.debug("Sending \"off\" command to device: %s", self.msg_to_process.name)
-                    self.wemo.switch_off(self.msg_to_process.raw)
+                    self.switch_off(self.msg_to_process.name)
                 # Process wemo on command
                 if self.msg_to_process.payload == "on":
                     logger.debug("Sending \"on\" command to device: %s", self.msg_to_process.name)
-                    self.wemo.switch_on(self.msg_to_process.raw)
+                    self.switch_on(self.msg_to_process.name)
 
             # Get Wemo state
             if self.msg_to_process.type == "162":
                 logger.debug("Sending \"request state\" command to device: %s", self.msg_to_process.name)
-                self.wemo.query_status(self.msg_to_process.raw, self.msg_out_queue)
+                self.status = self.query_status(self.msg_to_process.name)
+                self.msg_to_send = message.Message(source="16", dest=self.msg_to_process.source, type="162A", name=self.msg_to_process.name)
+                if self.status is not None:
+                    logger.debug("Get status query successfully returned value of: %s", str(self.status))
+                    self.msg_to_send.payload = str(self.status)
+                else:
+                    logger.debug("Device [%s] did not respond to Get status query", self.msg_to_process.name)
+                    self.msg_to_send.payload = ""
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                logger.debug("Sending get-status successful message: [%s]", self.msg_to_send.raw)
 
             # Clear msg-to-process string
             self.msg_to_process = message.Message()
@@ -142,12 +156,112 @@ class WemoProcess(multiprocessing.Process):
             self.msg_to_process = message.Message()
 
 
+    def discover_device(self, name, address):
+        """ Searches for a wemo device on the network at a particular IP address and appends it to
+        the master device list if found """
+        logger.debug("Searching for wemo device at: %s", address)
+        self.port = None
+        self.device = None
+        # Probe device at specified IP address for port it is listening on
+        try:
+            self.port = pywemo.ouimeaux_device.probe_wemo(address)
+        except:
+            logger.debug("Error discovering port of wemo device at address: %s", address)
+            self.port = None
+        # If port is found, probe device for type and other attributes
+        if self.port is not None:
+            print("port: " + str(self.port))
+            logger.debug("Found wemo device at: %s on port: %s", address, str(self.port))
+            self.url = 'http://%s:%i/setup.xml' % (address, self.port)
+            try:
+                self.device = pywemo.discovery.device_from_description(self.url, None)
+            except:
+                logger.debug("Error discovering attributes for device at address: %s, port: %s", address, str(self.port))
+                self.device = None
+        else:
+            logger.debug("No wemo device detected at: %s", address)
+        # If device is found and probe was successful, check existing device list to
+        # determine if device is already present in list
+        if self.device is not None:
+            print("Device: " + str(self.device))
+            if self.device.name.find(name) != -1:
+                logger.debug("Discovery successful for wemo device: %s at: %s, port: %s", name, address, str(self.port))
+                self.found = False
+                for index, device in enumerate(self.device_list):
+                    if self.device.name == device.name:
+                        self.found = True
+                        logger.debug("Device: %s already exists in device list at address: %s and port: %s", self.device.name, address, self.port)
+                # If not found in list, add it
+                if self.found is False:
+                    logger.debug("Found wemo device name: %s at: %s, port: %s", self.device.name, address, self.port)
+                    self.device_list.append(copy.copy(self.device))
+                    logger.debug("New device [%s] detected.  Adding to list of known devices", self.device.name)
+                    return self.device
+                else:
+                    return None
+            else:
+                logger.debug("Device name mis-match between found device and configuration")
+        else:
+            logger.debug("Device was not found")
+            return None
+
+
+    def switch_on(self, name):
+        """ Searches list for existing wemo device with matching name, then sends on command
+        to device if found """
+        self.found = False
+        # Search list of existing devices on network for matching device name
+        for index, device in enumerate(self.device_list):
+            # If match is found, send ON command to device
+            if device.name.find(name) != -1:
+                self.found = True
+                device.on()
+                logger.debug("ON command sent to device: %s", name)
+                return True
+        # If match is not found, log error and continue
+        if self.found is False:
+            logger.debug("Could not find device: %s on the network", name)
+            return False           
+
+
+    def switch_off(self, name):
+        """ Searches list for existing wemo device with matching name, then sends off command to
+        device if found """
+        self.found = False
+        # Search list of existing devices on network for matching device name
+        for index, device in enumerate(self.device_list):
+            # If match is found, send OFF command to device
+            if device.name.find(name) != -1:
+                self.found = True
+                device.off()
+                logger.debug("OFF command sent to device: %s", name)
+                return True
+        # If match is not found, log error and continue
+        if self.found is False:
+            logger.debug("Could not find device: %s on the network", name)
+            return False
+
+
+    def query_status(self, name):
+        """ Searches list for existing wemo device with matching name, then sends "get status-
+        update" message to device if found """
+        self.found = False
+        logger.debug("Querrying status for device: %s", name)
+        # Search list of existing devices on network for matching device name
+        for index, device in enumerate(self.device_list):
+            # If match is found, get status update from device, then send response message to
+            # originating process
+            if device.name.find(name) != -1:
+                self.found = True
+                self.state = device.get_state(force_update=True)
+                return self.state
+            if self.found is False:
+                self.logger.debug("Could not find device: %s", self.msg_in.name)
+                return None               
+
+
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
-        # Create wemo helper object
-        self.wemo = wemo.WemoHelper(logger=logger)
-        # Pause briefly
-        time.sleep(4)
         # Main process loop
         self.main_loop = True
         while self.main_loop is True:

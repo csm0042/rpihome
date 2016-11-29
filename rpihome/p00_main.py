@@ -342,7 +342,7 @@ class MainProcess(object):
                 if datetime.datetime.now() > (self.last_hb + datetime.timedelta(seconds=5)):
                     self.send_heartbeats()
                 # Update gui based on process status
-                self.update_gui()
+                self.update_gui()   
 
             # Close process
             if self.close_pending is True or (

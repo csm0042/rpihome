@@ -121,27 +121,42 @@ class NestProcess(multiprocessing.Process):
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
             logger.debug("Processing message [%s] from internal work queue" % self.msg_to_process.raw)
+            
             if self.msg_to_process.type == "020":
+                logger.debug("Message type 020 [%s] received requesting current conditions")
+                self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="020A")
                 if self.connect() is True:
-                    self.msg_to_send = message.Message(source="17", dest="02", type="020", payload=self.current_conditions())
-                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                    logger.debug("Connection to NEST device successful")
+                    self.msg_to_send.payload=self.current_conditions()
                 else:
-                    logger.debug("Connection to NEST failed")                    
+                    logger.debug("Error attempting to connect to NEST device")
+                    self.msg_to_send.payload=""
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                logger.debug("Returning 020 ACK response [%s]" % self.msg_to_send.raw)
+                   
             elif self.msg_to_process.type == "021":
+                logger.debug("Message type 021 [%s] received requesting current conditions")
+                self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="021A")                
                 if self.connect() is True:
-                    self.msg_to_send = message.Message(source="17", dest="02", type="021", payload=self.current_forecast())
-                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                    logger.debug("Connection to NEST device successful")
+                    self.msg_to_send.payload=self.current_forecast()
                 else:
-                    logger.debug("Connection to NEST failed")                                   
+                    logger.debug("Error attempting to connect to NEST device")
+                    self.msg_to_send.payload=""
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                logger.debug("Returning 021 ACK response [%s]" % self.msg_to_send.raw)                                   
             elif self.msg_to_process.type == "022":
+                logger.debug("Message type 022 [%s] received requesting current conditions")
+                self.msg_to_send = message.Message(source="17", dest=self.msg_to_process.source, type="022A")                
                 if self.connect() is True:
-                    self.msg_to_send = message.Message(source="17", dest="02", type="022", payload=self.tomorrow_forecast())
-                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                    logger.debug("Message [%s] received.  Sending response [%s]" % (self.msg_to_process.raw, self.msg_to_send.raw))
+                    logger.debug("Connection to NEST device successful")
+                    self.msg_to_send.payload=self.tomorrow_forecast()
                 else:
-                    logger.debug("Connection to NEST failed")              
+                    logger.debug("Error attempting to connect to NEST device")
+                    self.msg_to_send.payload=""
+                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                logger.debug("Returning 022 ACK response [%s]" % self.msg_to_send.raw)
+
             # Clear msg-to-process string
             self.msg_to_process = message.Message()
         else:
