@@ -89,7 +89,7 @@ class OnIndOffButtonFrame(object):
         self.on_button.config(height=44, width=108)
         self.on_button.config(font=font.Font(family="Helvetica", size=10, weight="bold"))
         self.on_button.config(image=self.on_button_img)
-        self.on_button.pack(side="left", padx=2, pady=2)
+        self.on_button.pack(side="left", padx=0, pady=0)
 
     def create_ind_button(self):
         self.ind_button = tk.Button(self.frame)
@@ -106,7 +106,7 @@ class OnIndOffButtonFrame(object):
         self.ind_button.config(height=44, width=108)
         self.ind_button.config(font=font.Font(family="Helvetica", size=10, weight="bold"))
         self.ind_button.config(image=self.ind_off_button_img)
-        self.ind_button.pack(side="left", padx=2, pady=2)
+        self.ind_button.pack(side="left", padx=0, pady=0)
 
     def create_off_button(self):
         self.off_button = tk.Button(self.frame)
@@ -123,7 +123,7 @@ class OnIndOffButtonFrame(object):
         self.off_button.config(height=44, width=108)
         self.off_button.config(font=font.Font(family="Helvetica", size=10, weight="bold"))
         self.off_button.config(image=self.off_button_img)
-        self.off_button.pack(side="left", padx=2, pady=2)     
+        self.off_button.pack(side="left", padx=0, pady=0)     
 
 
     def on_action(self):

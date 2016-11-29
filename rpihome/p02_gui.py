@@ -1267,54 +1267,58 @@ class MainWindow(multiprocessing.Process):
                 elif self.msg_in.type == "163":
                     if self.msg_in.payload == "0":
                         if self.msg_in.name == "fylt1":
-                            self.button050301b01b.config(image=self.button_square_red_img)
+                            self.control_fylt1.set_indicator_red()
                         elif self.msg_in.name == "bylt1":
-                            self.button050301b02b.config(image=self.button_square_red_img)
+                            self.control_bylt1.set_indicator_red()
                         elif self.msg_in.name == "ewlt1":
-                            self.button050301b03b.config(image=self.button_square_red_img)
+                            self.control_ewlt1.set_indicator_red()
                         elif self.msg_in.name == "cclt1":
-                            self.button050301b04b.config(image=self.button_square_red_img)
+                            self.control_cclt1.set_indicator_red()
                         elif self.msg_in.name == "lrlt1":
-                            self.button050301b05b.config(image=self.button_square_red_img)
+                            self.control_lrlt1.set_indicator_red()
+                        elif self.msg_in.name == "lrlt2":
+                            self.control_lrlt2.set_indicator_red()                            
                         elif self.msg_in.name == "drlt1":
-                            self.button050301b06b.config(image=self.button_square_red_img)                        
+                            self.control_drlt1.set_indicator_red()
                         elif self.msg_in.name == "br1lt1":
-                            self.button050301b08b.config(image=self.button_square_red_img)
+                            self.control_br1lt1.set_indicator_red()
                         elif self.msg_in.name == "br1lt2":
-                            self.button050301b09b.config(image=self.button_square_red_img)
+                            self.control_br1lt2.set_indicator_red()
                         elif self.msg_in.name == "br2lt1":
-                            self.button050301b10b.config(image=self.button_square_red_img)
+                            self.control_br2lt1.set_indicator_red()
                         elif self.msg_in.name == "br2lt2":
-                            self.button050301b11b.config(image=self.button_square_red_img) 
+                            self.control_br2lt2.set_indicator_red()
                         elif self.msg_in.name == "br3lt1":
-                            self.button050301b12b.config(image=self.button_square_red_img)
+                            self.control_br3lt1.set_indicator_red()
                         elif self.msg_in.name == "br3lt2":
-                            self.button050301b13b.config(image=self.button_square_red_img) 
+                            self.control_br3lt2.set_indicator_red() 
                     elif self.msg_in.payload == "1":
                         if self.msg_in.name == "fylt1":
-                            self.button050301b01b.config(image=self.button_square_green_img)
+                            self.control_fylt1.set_indicator_green()
                         elif self.msg_in.name == "bylt1":
-                            self.button050301b02b.config(image=self.button_square_green_img)
+                            self.control_bylt1.set_indicator_green()
                         elif self.msg_in.name == "ewlt1":
-                            self.button050301b03b.config(image=self.button_square_green_img)
+                            self.control_ewlt1.set_indicator_green()
                         elif self.msg_in.name == "cclt1":
-                            self.button050301b04b.config(image=self.button_square_green_img)
+                            self.control_cclt1.set_indicator_green()
                         elif self.msg_in.name == "lrlt1":
-                            self.button050301b05b.config(image=self.button_square_green_img)
+                            self.control_lrlt1.set_indicator_green()
+                        elif self.msg_in.name == "lrlt2":
+                            self.control_lrlt2.set_indicator_green()                            
                         elif self.msg_in.name == "drlt1":
-                            self.button050301b06b.config(image=self.button_square_green_img)
+                            self.control_drlt1.set_indicator_green()
                         elif self.msg_in.name == "br1lt1":
-                            self.button050301b08b.config(image=self.button_square_green_img)
+                            self.control_br1lt1.set_indicator_green()
                         elif self.msg_in.name == "br1lt2":
-                            self.button050301b09b.config(image=self.button_square_green_img)
+                            self.control_br1lt2.set_indicator_green()
                         elif self.msg_in.name == "br2lt1":
-                            self.button050301b10b.config(image=self.button_square_green_img)
+                            self.control_br2lt1.set_indicator_green()
                         elif self.msg_in.name == "br2lt2":
-                            self.button050301b11b.config(image=self.button_square_green_img) 
+                            self.control_br2lt2.set_indicator_green()
                         elif self.msg_in.name == "br3lt1":
-                            self.button050301b12b.config(image=self.button_square_green_img)
+                            self.control_br3lt1.set_indicator_green()
                         elif self.msg_in.name == "br3lt2":
-                            self.button050301b13b.config(image=self.button_square_green_img)                                                                            
+                            self.control_br3lt2.set_indicator_green()                                                                       
                                        
                 elif self.msg_in.type == "999":
                     logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
@@ -1326,8 +1330,8 @@ class MainWindow(multiprocessing.Process):
             self.msg_in = message.Message()
 
         # Send periodic querries to field devices to get current status
-        if self.close_pending is False and self.scanWemo is True and self.frame050301b_packed is True:
-            if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=10):
+        if self.close_pending is False and self.scanWemo is True and self.frame050301b_packed is True and self.msg_in_queue.empty():
+            if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=15):
                 self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")

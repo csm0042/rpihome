@@ -199,8 +199,8 @@ class LogicProcess(multiprocessing.Process):
                         self.homeArray[2] = True
                         logger.debug("User3 is home")
             # Process device discovery successful messages
-            elif self.msg_to_process.type == "163":
-                self.msg_to_send = Message(source="11", dest="02", type="163", name=self.msg_to_process.name)
+            elif self.msg_to_process.type == "164":
+                self.msg_to_send = Message(source="11", dest="02", type="164", name=self.msg_to_process.name)
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 logger.debug("Sending message [%s] to gui app to add control widget for device: [%s]", self.msg_to_send.raw, self.msg_to_process.name)
             # Process device create messages                                        
