@@ -29,7 +29,10 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class NestProcess(multiprocessing.Process):
     """ Nest gateway process class and methods """
-    def __init__(self, **kwargs):        
+    def __init__(self, **kwargs):
+        # Configure logging
+        #self.log = MyLogger(__name__)
+        #self.logger = self.log.logger
         # Set default input parameter values
         self.name = "undefined"
         self.msg_in_queue = multiprocessing.Queue(-1)
@@ -69,20 +72,25 @@ class NestProcess(multiprocessing.Process):
         self.forecast_temp_high = str()
         self.forecast_humid = str()
 
-    """
     def __getstate__(self):
-        statedict = self.__dict__.copy()
-        if 'logger' in statedict:
-            del statedict['logger']
-        if 'log' in statedict:
-            del statedict['log']
-        return statedict
+        state = self.__dict__.copy()
+        print("\n\n")
+        print(state)
+        if 'logger' in state:
+            del state['logger']
+        if 'log' in state:
+            del state['log']
+        if "authkey" in state:
+            del state["authkey"]
+        print("\n\n")
+        print(state)
+        print("\n\n")
+        return state
 
-    def __setstate__(self, statedict):
-        self.__dict__.update(statedict)
+    def __setstate__(self, state):
+        self.__dict__.update(state)
         self.log = MyLogger(__name__)
         self.logger = self.log.logger
-    """
 
 
     def process_in_msg_queue(self):
