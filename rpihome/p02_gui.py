@@ -584,7 +584,7 @@ class MainWindow(multiprocessing.Process):
         self.label050301b01.grid(row=0, column=0, padx=4, pady=2, sticky="n")
         self.label050301b02.grid(row=0, column=1, padx=4, pady=2, sticky="n")
 
-        """
+        
         # Front patio on-off control panel
         self.control_fylt1 = OnIndOffButtonFrame(self.frame050301b,
             name="fylt1",
@@ -597,7 +597,7 @@ class MainWindow(multiprocessing.Process):
             off_button_text="OFF",
             off_button_img=self.button_151_195_225_round_right_img,
             msg_out_queue=self.msg_out_queue)
-        self.control_fylt1.frame.grid(row=1, column=0, padx=2, pady=2)
+        self.control_fylt1.frame.grid(row=8, column=0, padx=2, pady=2)
 
         # Back patio on-off control panel
         self.control_bylt1 = OnIndOffButtonFrame(self.frame050301b,
@@ -611,8 +611,8 @@ class MainWindow(multiprocessing.Process):
             off_button_text="OFF",
             off_button_img=self.button_151_195_225_round_right_img,
             msg_out_queue=self.msg_out_queue)
-        self.control_bylt1.frame.grid(row=2, column=0, padx=2, pady=2)       
-        """
+        self.control_bylt1.frame.grid(row=8, column=1, padx=2, pady=2)       
+        
 
         # Entryway on-off control panel
         self.control_ewlt1 = OnIndOffButtonFrame(self.frame050301b,
