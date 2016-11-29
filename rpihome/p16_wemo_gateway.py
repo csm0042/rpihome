@@ -117,7 +117,7 @@ class WemoProcess(multiprocessing.Process):
                 self.device = self.wemo.discover_device(self.msg_to_process.raw)
                 if self.device is not None:
                     self.msg_to_send = message.Message(source="16", dest="11", type="164", name=self.device.name, payload="found")
-                    self.msg_out_queue.put_notwait(self.msg_to_send.raw)
+                    self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                     logger.debug("Sending discovery successful message: [%s]", self.msg_to_send.raw)
 
             # Set Wemo state
