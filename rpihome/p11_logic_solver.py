@@ -10,7 +10,7 @@ import multiprocessing
 import os, sys
 import time
 import modules.dst as dst
-from modules.logger import MyLogger
+from modules.logger_mp import worker_configurer
 import modules.message as message
 
 import devices.device_rpi_lr1 as device_rpi_lr1
@@ -44,20 +44,19 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class LogicProcess(multiprocessing.Process):
     """ WEMO gateway process class and methods """
-    def __init__(self, **kwargs):
+    def __init__(self, in_queue, out_queue, log_queue, **kwargs):
+        self.msg_in_queue = in_queue
+        self.msg_out_queue = out_queue
+        # Initialize logging
+        self.logger = worker_configurer(__name__, log_queue)
+        #self.logger = logging.getLogger(__name__)
         # Set default input parameter values
         self.name = "undefined"
-        self.msg_in_queue = multiprocessing.Queue(-1)
-        self.msg_out_queue = multiprocessing.Queue(-1)   
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "name":
-                    self.name = value
-                if key == "msgin":
-                    self.msg_in_queue = value
-                if key == "msgout":
-                    self.msg_out_queue = value
+                    self.name = value             
         # Initialize parent class    
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
@@ -332,8 +331,7 @@ class LogicProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
-        self.log = MyLogger("p11_logic_solver")
-        self.logger = self.log.logger
+        self.logger.info("Main loop started")
         # Create devices
         self.create_devices()
         # Main process loop        

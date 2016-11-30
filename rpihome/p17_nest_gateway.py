@@ -11,7 +11,7 @@ import os
 import sys
 import time
 import nest
-from modules.logger import MyLogger
+from modules.logger_mp import worker_configurer
 import modules.message as message
 
 
@@ -29,24 +29,20 @@ __status__ = "Development"
 # Process Class ***********************************************************************************
 class NestProcess(multiprocessing.Process):
     """ Nest gateway process class and methods """
-    def __init__(self, **kwargs):
-        # Configure logging
-        #self.log = MyLogger(__name__)
-        #self.logger = self.log.logger
-        # Set default input parameter values
+    def __init__(self, in_queue, out_queue, log_queue, **kwargs):
+        self.msg_in_queue = in_queue
+        self.msg_out_queue = out_queue        
+        # Initialize logging
+        self.logger = worker_configurer(__name__, log_queue)
+        #self.logger = logging.getLogger(__name__)
+        # Set default input parameter values        
         self.name = "undefined"
-        self.msg_in_queue = multiprocessing.Queue(-1)
-        self.msg_out_queue = multiprocessing.Queue(-1)
         self.logfile = "logfile"    
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "name":
                     self.name = value
-                if key == "msgin":
-                    self.msg_in_queue = value
-                if key == "msgout":
-                    self.msg_out_queue = value
         # Initialize parent class 
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements        
@@ -71,26 +67,6 @@ class NestProcess(multiprocessing.Process):
         self.forecast_temp_low = str()
         self.forecast_temp_high = str()
         self.forecast_humid = str()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        print("\n\n")
-        print(state)
-        if 'logger' in state:
-            del state['logger']
-        if 'log' in state:
-            del state['log']
-        if "authkey" in state:
-            del state["authkey"]
-        print("\n\n")
-        print(state)
-        print("\n\n")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.log = MyLogger(__name__)
-        self.logger = self.log.logger
 
 
     def process_in_msg_queue(self):
@@ -266,9 +242,7 @@ class NestProcess(multiprocessing.Process):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
-        # Configure logging
-        self.log = MyLogger(__name__)
-        self.logger = self.log.logger
+        self.logger.info("Main loop started")
         # Get credentials for login
         self.connect()
         # Main process loop

@@ -14,7 +14,7 @@ import time
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
-from modules.logger import MyLogger
+from modules.logger_mp import worker_configurer
 import modules.message as message
 from gui_objects.on_off_ind_button import OnIndOffButtonFrame
 
@@ -33,25 +33,21 @@ __status__ = "Development"
 # Application GUI Class Definition ****************************************************************
 class MainWindow(multiprocessing.Process):
     """ GUI process class and methods """
-    def __init__(self, **kwargs):
+    def __init__(self, in_queue, out_queue, log_queue, **kwargs):
+        self.msg_in_queue = in_queue
+        self.msg_out_queue = out_queue        
+        # Initialize logging
+        self.logger = worker_configurer(__name__, log_queue)
+        #self.logger = logging.getLogger(__name__)
         # Set default input parameter values
         self.name = "undefined"
-        self.msg_in_queue = multiprocessing.Queue(-1)
-        self.msg_out_queue = multiprocessing.Queue(-1)
-        self.logfile = "logfile"
         self.enable = [True]*18
         self.display_file = None
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "name":
-                    self.name = value
-                if key == "msgin":
-                    self.msg_in_queue = value
-                if key == "msgout":
-                    self.msg_out_queue = value
-                if key == "logfile":
-                    self.logfile = value
+                    self.name = value                    
                 if key == "enable":
                     self.enable = value
                 if key == "displayfile":
@@ -87,8 +83,6 @@ class MainWindow(multiprocessing.Process):
 
     def run(self):
         """ Generate window and schedule after and close handlers """
-        self.log = MyLogger("p02_gui")
-        self.logger = self.log.logger
         # Create all parts of application window
         self.logger.debug("Begining generation of application window")
         self.draw_window()
@@ -100,7 +94,7 @@ class MainWindow(multiprocessing.Process):
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.logger.debug("Added \"on-close\" handler")
         # Run mainloop() to activate gui and begin monitoring its inputs
-        self.logger.debug("Started gui mainloop")
+        self.logger.info("Started gui mainloop")
         self.window.mainloop()  
         # Close logger once window closes
         pass         
@@ -676,21 +670,7 @@ class MainWindow(multiprocessing.Process):
             off_button_img=self.button_151_195_225_round_right_img,
             msg_out_queue=self.msg_out_queue)
         self.control_drlt1.frame.grid(row=5, column=0, padx=2, pady=2) 
-        """
-        # All first floor on-off control panel
-        self.control_floor_1 = OnIndOffButtonFrame(self.frame050301b,
-            name="all1",
-            resource_dir=self.resourceDir,
-            on_button_text="ON",
-            on_button_img=self.button_151_195_225_round_left_img,
-            ind_button_text="ALL 1ST\nFLOOR",
-            ind_on_button_img=self.button_square_green_img,
-            ind_off_button_img=self.button_square_red_img,
-            off_button_text="OFF",
-            off_button_img=self.button_151_195_225_round_right_img,
-            msg_out_queue=self.msg_out_queue)
-        self.control_floor_1.frame.grid(row=7, column=0, padx=2, pady=2)
-        """
+
         # Bedroom 1 overhead light on-off control panel
         self.control_br1lt1 = OnIndOffButtonFrame(self.frame050301b,
             name="br1lt1",
@@ -774,21 +754,7 @@ class MainWindow(multiprocessing.Process):
             off_button_img=self.button_151_195_225_round_right_img,
             msg_out_queue=self.msg_out_queue)
         self.control_br3lt2.frame.grid(row=6, column=1, padx=2, pady=2)             
-        """
-        # All second floor on-off control panel
-        self.control_floor_2 = OnIndOffButtonFrame(self.frame050301b,
-            name="all2",
-            resource_dir=self.resourceDir,
-            on_button_text="ON",
-            on_button_img=self.button_151_195_225_round_left_img,
-            ind_button_text="ALL 2ND\nFLOOR",
-            ind_on_button_img=self.button_square_green_img,
-            ind_off_button_img=self.button_square_red_img,
-            off_button_text="OFF",
-            off_button_img=self.button_151_195_225_round_right_img,
-            msg_out_queue=self.msg_out_queue)
-        self.control_floor_2.frame.grid(row=7, column=0, padx=2, pady=2)        
-        """
+
 
     def frame0503c_content(self):
         """ HOME/AWAY CONTROL SCREEN """
@@ -1419,7 +1385,13 @@ class MainWindow(multiprocessing.Process):
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="02", type="999").raw)
                 self.logger.debug("Kill code sent to p02_gui process")  
             except:
-                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")                                                          
+                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")
+            # Kill p01 (log handler)
+            try:
+                self.msg_out_queue.put_nowait(message.Message(source="02", dest="01", type="999").raw)
+                self.logger.debug("Kill code sent to p01_log_handler process")  
+            except:
+                self.logger.debug("Could not send kill-code to p01_log_handler process.  Queue already closed")
             # Kill p00 (main)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="00", type="999").raw)   
