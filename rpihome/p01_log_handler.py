@@ -38,7 +38,7 @@ def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile
                     logger.debug("")
                 # If message is a kill-code, set the close_pending flag so the process can close out gracefully 
                 elif msg_in.type == "999":
-                    logger.info("Kill code received - Shutting down %s", msg_in)
+                    logger.info("Kill code received - Shutting down")
                     shutdown_time = datetime.datetime.now()
                     close_pending = True
             else:
