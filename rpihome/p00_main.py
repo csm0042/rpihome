@@ -80,6 +80,7 @@ class MainProcess(object):
     def create_log_process(self):
         self.p01_alive_mem = None
         self.p01_queue = multiprocessing.Queue(-1)
+        print(self.process_path)
         self.debug_logfile = (self.process_path + "/logs/debug.log")
         self.info_logfile = (self.process_path + "/logs/info.log")
         self.p01 = multiprocessing.Process(target=listener_process, args=(self.p01_queue, self.p00_queue, self.log_queue, self.debug_logfile, self.info_logfile))
