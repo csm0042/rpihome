@@ -59,7 +59,7 @@ class MainProcess(object):
         self.work_queue = multiprocessing.Queue(-1)
         self.log_queue = multiprocessing.Queue(-1)
         self.close_pending = False
-        self.process_path = os.path.dirname(sys.argv[0])
+        self.process_path = os.path.dirname(os.path.abspath(__file__))
         self.enable = [True, True, True, False, False, False, False, False, False, False, False, True, False, True, False, True, True, True]
         self.nest_username = str()
         self.nest_password = str()
