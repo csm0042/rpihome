@@ -132,7 +132,7 @@ class LogicProcess(multiprocessing.Process):
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        self.logger.debug("Kill code received - Shutting down")
+                        self.logger.info("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
@@ -349,9 +349,10 @@ class LogicProcess(multiprocessing.Process):
                 if datetime.datetime.now() > self.last_forecast_update + datetime.timedelta(minutes=15):
                     self.update_forecast()
 
-            # Close process
-            if ((self.close_pending is True and self.msg_in_queue.empty() and self.work_queue.empty()) or
-                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+            # Close process           
+            if self.close_pending is True:
+                self.main_loop = False
+            elif datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30):
                 self.main_loop = False
 
             # Pause before next process run

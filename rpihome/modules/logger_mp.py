@@ -29,10 +29,9 @@ def listener_configurer(name, debug_logfile, info_logfile):
 
 
 def worker_configurer(name, queue):
-    h = logging.handlers.QueueHandler(queue)  # Just the one handler needed
-    logger = logging.getLogger(name)
+    handler = logging.handlers.QueueHandler(queue)
+    logger = logging.getLogger()
     logger.handlers = []
-    logger.addHandler(h)
-    # send all messages, for demo; no other level or filter logic applied.
+    logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-    return logger    
+    return logger

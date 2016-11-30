@@ -42,7 +42,8 @@ class MainWindow(multiprocessing.Process):
         # Set default input parameter values
         self.name = "undefined"
         self.enable = [True]*18
-        self.display_file = None
+        self.debug_logfile = None
+        self.info_logfile = None
         # Update default elements based on any parameters passed in
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -50,8 +51,10 @@ class MainWindow(multiprocessing.Process):
                     self.name = value                    
                 if key == "enable":
                     self.enable = value
-                if key == "displayfile":
-                    self.display_file = value
+                if key == "debug_logfile":
+                    self.debug_logfile = value
+                if key == "info_logfile":
+                    self.info_logfile = value
         # Initialize parent class
         multiprocessing.Process.__init__(self, name=self.name)
         # Create remaining class elements
@@ -70,8 +73,8 @@ class MainWindow(multiprocessing.Process):
         self.current_forecast = ["??"] * 4
         self.tomorrow_forecast = ["??"] * 4
         # Initialize pointer for alarm display window
-        if os.path.isfile(self.display_file):
-            self.line = sum(1 for line in open(self.display_file)) - 50
+        if os.path.isfile(self.debug_logfile):
+            self.line = sum(1 for line in open(self.debug_logfile)) - 50
             if self.line < 1:
                 self.line = 1
         else:
@@ -789,7 +792,7 @@ class MainWindow(multiprocessing.Process):
 
     def update_alarm_window(self):
         # Determine size of logfile (number of lines)
-        self.num_lines = sum(1 for line in open(self.display_file))
+        self.num_lines = sum(1 for line in open(self.debug_logfile))
         # If line index is larger than logfile (meaning log file was reset), reset index to match log-file size
         if self.line > (self.num_lines + 1):
             self.line = self.num_lines
@@ -798,7 +801,7 @@ class MainWindow(multiprocessing.Process):
                 self.line = 1
         # Read line from file
         try:
-            self.text = linecache.getline(self.display_file, self.line)
+            self.text = linecache.getline(self.debug_logfile, self.line)
         except:
             print("could not access file")
             self.text = str()
@@ -809,7 +812,7 @@ class MainWindow(multiprocessing.Process):
                 self.text0203b01.insert(tk.END, self.text)
                 self.text0203b01.yview_pickplace("end")
             self.line += 1
-            self.text = linecache.getline(self.display_file, self.line)
+            self.text = linecache.getline(self.debug_logfile, self.line)
             self.iter += 1
         linecache.clearcache()
 
@@ -1280,7 +1283,7 @@ class MainWindow(multiprocessing.Process):
                             self.control_br3lt2.set_indicator_green()                                                                       
                                        
                 elif self.msg_in.type == "999":
-                    self.logger.debug("Kill code received - Shutting down: %s" % self.msg_in.raw)
+                    self.logger.info("Kill code received - Shutting down")
                     self.close_pending = True
             else:
                 self.msg_out_queue.put_nowait(self.msg_in.raw)
@@ -1401,4 +1404,4 @@ class MainWindow(multiprocessing.Process):
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window
-            #self.window.destroy()
+            self.window.destroy()

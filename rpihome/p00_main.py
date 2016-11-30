@@ -92,7 +92,8 @@ class MainProcess(object):
         self.p02_alive_mem = None
         self.p02_queue = multiprocessing.Queue(-1)
         self.p02 = MainWindow(self.p02_queue, self.p00_queue, self.log_queue, name="p02_gui",
-                              displayfile=self.debug_logfile,
+                              debug_logfile=self.debug_logfile,
+                              info_logfile=self.info_logfile,
                               enable=self.enable)
         self.p02.start()
         self.p02_modtime = os.path.getmtime(os.path.join(self.process_path, "p02_gui.py"))
@@ -157,66 +158,67 @@ class MainProcess(object):
                 if self.msg_in.dest == "00":
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
-                        #self.logger.debug("heartbeat received")
+                        self.logger.debug("heartbeat received")
                     elif self.msg_in.type == "999":
-                        #self.logger.debug("Kill code received - Shutting down")
+                        self.logger.info("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                
                 # Message forwarding to p01
                 if self.msg_in.dest == "01":
                     self.p01_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p01 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p01 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p02
                 if self.msg_in.dest == "02":
                     self.p02_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p02 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p02 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p11
                 elif self.msg_in.dest == "11":
                     self.p11_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p11 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p11 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p13
                 elif self.msg_in.dest == "13":
                     self.p13_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p13 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p13 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p15
                 elif self.msg_in.dest == "15":
                     self.p15_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p15 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p15 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p16
                 elif self.msg_in.dest == "16":
                     self.p16_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p16 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p16 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 # Message forwarding to p17
                 elif self.msg_in.dest == "17":
                     self.p17_queue.put_nowait(self.msg_in.raw)
-                    #self.logger.debug("Transfered message [%s] to p17 queue", self.msg_in.raw)
+                    self.logger.debug("Transfered message [%s] to p17 queue", self.msg_in.raw)
                     if self.msg_in.type == "900" or self.msg_in.type == "999":
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        #self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
+                        self.logger.debug("Transfered message [%s] to internal work queue", self.msg_in.raw)
                 self.msg_in = Message()
             else:
+                self.msg_in = Message()
                 self.in_msg_loop = False
 
 
@@ -358,8 +360,9 @@ class MainProcess(object):
 
 
             # Close process
-            if self.close_pending is True or (
-                    datetime.datetime.now() > (self.last_hb + datetime.timedelta(seconds=30))):
+            if self.close_pending is True:
+                self.main_loop = False
+            elif datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30):
                 self.main_loop = False
 
             # Pause before next process run

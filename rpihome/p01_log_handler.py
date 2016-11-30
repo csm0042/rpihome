@@ -7,13 +7,15 @@ from modules.message import Message
 
 # Log Handler Process ******************************************************************************
 def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile):
-    logger = listener_configurer(__name__, debug_logfile, info_logfile)
     #logger = worker_configurer(__name__, log_queue)
+    logger = listener_configurer(__name__, debug_logfile, info_logfile)
+
     close_pending = False
     msg_in = Message()
     log_record = None
     last_log_record = None
     last_hb = datetime.datetime.now()
+    shutdown_time = None
     in_msg_loop = bool()
 
     # Main process loop
@@ -36,9 +38,9 @@ def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile
                     logger.debug("")
                 # If message is a kill-code, set the close_pending flag so the process can close out gracefully 
                 elif msg_in.type == "999":
-                    logger.debug("Kill code received - Shutting down %s", msg_in)
+                    logger.info("Kill code received - Shutting down %s", msg_in)
+                    shutdown_time = datetime.datetime.now()
                     close_pending = True
-                    in_msg_loop = False
             else:
                 # If message isn't destined for this process, drop it into the queue for the main process so it can re-forward it to the proper recipient.
                 out_queue.put_nowait(msg_in.raw)
@@ -60,8 +62,13 @@ def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile
         
 
         # Only close down process once incoming message queue is empty
-        if (close_pending is True and msg_in == None and in_queue.empty() is True) or (datetime.datetime.now() > last_hb + datetime.timedelta(seconds=30)):
-            break
+        if close_pending is True:
+            if shutdown_time is not None:
+                if datetime.datetime.now() > shutdown_time + datetime.timedelta(seconds=5):
+                    if in_queue.empty() is True:
+                        in_msg_loop = False
+        elif datetime.datetime.now() > last_hb + datetime.timedelta(seconds=30):
+            in_msg_loop = False
         
         # Delay before re-running loop
         time.sleep(0.013)

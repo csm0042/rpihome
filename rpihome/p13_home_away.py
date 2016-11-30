@@ -75,7 +75,7 @@ class HomeProcess(multiprocessing.Process):
                     if self.msg_in.type == "001":
                         self.last_hb = datetime.datetime.now()
                     elif self.msg_in.type == "999":
-                        self.logger.debug("Kill code received - Shutting down")
+                        self.logger.info("Kill code received - Shutting down")
                         self.close_pending = True
                         self.in_msg_loop = False
                     else:
@@ -189,8 +189,9 @@ class HomeProcess(multiprocessing.Process):
                 self.run_commands()
 
             # Close process
-            if (self.close_pending is True or
-                    datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30)):
+            if self.close_pending is True:
+                self.main_loop = False
+            elif datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30):
                 self.main_loop = False
 
             # Pause before next process run
