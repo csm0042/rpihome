@@ -1,9 +1,9 @@
 import logging
 
 
-def listener_configurer(name, debug_logfile, info_logfile):
-    logger = logging.getLogger(name)
-    logger.handlers = []
+def listener_configurer(debug_logfile, info_logfile):
+    root = logging.getLogger()
+    root.handlers = []
     # Create desired handlers
     debug_handler = logging.handlers.TimedRotatingFileHandler(debug_logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
     info_handler = logging.handlers.TimedRotatingFileHandler(info_logfile, when="h", interval=1, backupCount=24, encoding=None, delay=False, utc=False, atTime=None)
@@ -21,17 +21,15 @@ def listener_configurer(name, debug_logfile, info_logfile):
     info_handler.setLevel(logging.INFO)
     console_handler.setLevel(logging.INFO)
     # Add handlers to root logger
-    logger.addHandler(debug_handler)
-    logger.addHandler(info_handler)
-    logger.addHandler(console_handler)
-    return logger
+    root.addHandler(debug_handler)
+    root.addHandler(info_handler)
+    root.addHandler(console_handler)
 
 
 
-def worker_configurer(name, queue):
+def worker_configurer(queue):
     handler = logging.handlers.QueueHandler(queue)
-    logger = logging.getLogger()
-    logger.handlers = []
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-    return logger
+    root = logging.getLogger()
+    root.handlers = []
+    root.addHandler(handler)
+    root.setLevel(logging.DEBUG)

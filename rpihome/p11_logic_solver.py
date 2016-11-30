@@ -48,8 +48,8 @@ class LogicProcess(multiprocessing.Process):
         self.msg_in_queue = in_queue
         self.msg_out_queue = out_queue
         # Initialize logging
-        self.logger = worker_configurer(__name__, log_queue)
-        #self.logger = logging.getLogger(__name__)
+        worker_configurer(log_queue)
+        self.logger = logging.getLogger(__name__)
         # Set default input parameter values
         self.name = "undefined"
         # Update default elements based on any parameters passed in

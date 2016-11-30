@@ -64,7 +64,8 @@ class MainProcess(object):
         self.nest_username = str()
         self.nest_password = str()
         # Initialize logging
-        self.logger = worker_configurer(__name__, self.log_queue)
+        worker_configurer(self.log_queue)
+        self.logger = logging.getLogger(__name__)
         # Spawn individual processes
         self.create_log_process()
         self.create_gui_process()
