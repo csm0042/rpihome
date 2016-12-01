@@ -273,3 +273,4 @@ class WemoProcess(multiprocessing.Process):
 
         # Shut down logger before exiting process
         pass
+        self.logger.info("Shutdown complete")

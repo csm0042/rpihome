@@ -97,10 +97,11 @@ class MainWindow(multiprocessing.Process):
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.logger.debug("Added \"on-close\" handler")
         # Run mainloop() to activate gui and begin monitoring its inputs
-        self.logger.info("Started gui mainloop")
+        self.logger.info("Main loop started")
         self.window.mainloop()  
         # Close logger once window closes
-        pass         
+        pass 
+        self.logger.info("Shutdown complete")        
 
 
     def draw_window(self):

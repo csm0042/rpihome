@@ -7,7 +7,6 @@ from modules.message import Message
 
 # Log Handler Process ******************************************************************************
 def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile):
-    #logger = worker_configurer(__name__, log_queue)
     listener_configurer(debug_logfile, info_logfile)
     logger = logging.getLogger(__name__)
 
@@ -74,5 +73,7 @@ def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile
         
         # Delay before re-running loop
         time.sleep(0.013)
+    pass
+    logger.info("Shutdown complete")
 
 

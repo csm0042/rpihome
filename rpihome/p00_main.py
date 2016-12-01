@@ -346,6 +346,7 @@ class MainProcess(object):
 
     def run(self):
         """ Actual process loop.  Runs whenever start() method is called """
+        self.logger.info("Main loop started")
         self.main_loop = True
         while self.main_loop is True:
             # Process incoming messages
@@ -372,6 +373,7 @@ class MainProcess(object):
 
         # Shut down logger before exiting process
         pass
+        self.logger.info("Shutdown complete")
 
 
 
