@@ -73,6 +73,7 @@ class NestProcess(multiprocessing.Process):
         """ Method to cycle through incoming message queue, filtering out heartbeats and
         mis-directed messages.  Messages corrected destined for this process are loaded
         into the work queue """
+        # Main process loop
         self.in_msg_loop = True
         while self.in_msg_loop is True:
             try:
@@ -158,7 +159,7 @@ class NestProcess(multiprocessing.Process):
             self.username = linecache.getline(self.credentials_file, 1)
             self.password = linecache.getline(self.credentials_file, 2)
         else:
-            self.logger.debug("Credential file NOT found, continuing with default values")
+            self.logger.warning("Credential file NOT found, continuing with default values")
             self.username = "username"
             self.password = "password"
         # clean up extracted data
@@ -174,7 +175,7 @@ class NestProcess(multiprocessing.Process):
             return True
         except:
             self.nest = None
-            self.logger.debug("Could not connect to NEST account")
+            self.logger.error("Could not connect to NEST account")
             return False
 
 
@@ -191,10 +192,10 @@ class NestProcess(multiprocessing.Process):
                 self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)
                 return self.result
             except:
-                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??"
         else:
-            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
             return "??,??,??,??" 
 
 
@@ -212,10 +213,10 @@ class NestProcess(multiprocessing.Process):
                 self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                
                 return self.result
             except:
-                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??"
         else:
-            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
             return "??,??,??,??"             
 
 
@@ -233,10 +234,10 @@ class NestProcess(multiprocessing.Process):
                 self.logger.debug("Data successfully obtained.  Returning [%s] to main" % self.result)                       
                 return self.result
             except:
-                self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+                self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
                 return "??,??,??,??" 
         else:
-            self.logger.debug("Failure reading tomorrow's forecast data from NEST device")
+            self.logger.warning("Failure reading tomorrow's forecast data from NEST device")
             return "??,??,??,??"           
 
 
@@ -264,7 +265,6 @@ class NestProcess(multiprocessing.Process):
             # Pause before next process run
             time.sleep(0.097)
 
-        # Shut down logger before exiting process
-        pass
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")
         

@@ -63,15 +63,15 @@ class Wemo_lrlt2(DeviceWemo):
             # If after 5am but before sunrise + the offset minutes
             if self.dt.time() >= datetime.time(5,0) and self.dt.time() <= datetime.time(22,0):
                 if self.state is False:
-                    self.logger.debug("Turning on lrlt2")
+                    self.logger.info("Turning on lrlt2")
                 self.state = True
             else:
                 if self.state is True:
-                    self.logger.debug("Turning off lrlt2")
+                    self.logger.info("Turning off lrlt2")
                 self.state = False
         else:
             if self.state is True:
-                self.logger.debug("Turning off lrlt2")
+                self.logger.info("Turning off lrlt2")
             self.state = False
         # Return result
         return self.state          

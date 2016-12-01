@@ -72,15 +72,25 @@ class Wemo_ewlt1(DeviceWemo):
             if self.homeNew is True:
                 # If after 5am but before sunrise + the offset minutes
                 if self.dt <= self.sunrise + self.sunriseOffset:
+                    if self.state is False:
+                        self.logger.info("Turning on ewlt1")
                     self.state = True
                 # If after sunset + the offset minutes but before 10pm  
-                elif self.dt >= self.sunset + self.sunsetOffset:              
+                elif self.dt >= self.sunset + self.sunsetOffset: 
+                    if self.state is False:
+                        self.logger.info("Turning on ewlt1")             
                     self.state = True
                 else:
+                    if self.state is True:
+                        self.logger.info("Turning off ewlt1")
                     self.state = False
             else:
+                if self.state is True:
+                    self.logger.info("Turning off ewlt1")
                 self.state = False
         else:
+            if self.state is True:
+                self.logger.info("Turning off ewlt1")
             self.state = False
         # Return result
         return self.state                 

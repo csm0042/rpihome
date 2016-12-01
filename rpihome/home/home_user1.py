@@ -43,41 +43,67 @@ class HomeUser1(HomeGeneral):
         # Monday
         if self.dt.weekday() == 0:
             if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                if self.yes is False:
+                    self.logger.info("User1 just got home")
                 self.yes = True
             else:
+                if self.yes is True:
+                    self.logger.info("User1 is no longer home")
                 self.yes = False
         # Tuesday
         elif self.dt.weekday() == 1:
             if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                if self.yes is False:
+                    self.logger.info("User1 just got home")
                 self.yes = True
             else:
+                if self.yes is True:
+                    self.logger.info("User1 is no longer home")
                 self.yes = False            
         # Wednesday
         elif self.dt.weekday() == 2:
             if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                if self.yes is False:
+                    self.logger.info("User1 just got home")
                 self.yes = True
             else:
+                if self.yes is True:
+                    self.logger.info("User1 is no longer home")
                 self.yes = False            
         # Thursday
         elif self.dt.weekday() == 3:
             if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                if self.yes is False:
+                    self.logger.info("User1 just got home")
                 self.yes = True
             else:
+                if self.yes is True:
+                    self.logger.info("User1 is no longer home")
                 self.yes = False            
         # Friday
         elif self.dt.weekday() == 4:
             if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                if self.yes is False:
+                    self.logger.info("User1 just got home")
                 self.yes = True
             else:
+                if self.yes is True:
+                    self.logger.info("User1 is no longer home")
                 self.yes = False            
         # Saturday
         elif self.dt.weekday() == 5:
+            if self.yes is False:
+                self.logger.info("User1 just got home")
             self.yes = True           
         # Sunday
         elif self.dt.weekday() == 6:
+            if self.yes is False:
+                self.logger.info("User1 just got home")
             self.yes = True          
         # Invalid day
         else:
+            if self.yes is False:
+                self.logger.info("User1 just got home")
             self.yes = True 
         # Return result
         return self.yes  
@@ -98,9 +124,13 @@ class HomeUser1(HomeGeneral):
         # Use correct rule-set based on home/away decision mode
         # mode == 0 represents a mode of "force away"
         if self.mode == 0:
+            if self.yes is True:
+                self.logger.info("User1 is no longer home")
             self.yes = False
         # mode == 1 represents a mode of "force home"
         elif self.mode == 1:
+            if self.yes is False:
+                self.logger.info("User1 is home")
             self.yes = True
         # mode == 2 determines home/away based on each user's typical schedule
         elif self.mode == 2:
@@ -116,7 +146,7 @@ class HomeUser1(HomeGeneral):
             self.by_ping_with_delay(datetime=self.dt, ip=self.ip)
             self.by_schedule(datetime=self.dt)                      
         else:
-            self.logger.debug("Cannot make home/away decision based on invalid mode") 
+            self.logger.error("Cannot make home/away decision based on invalid mode") 
         # Return result
         return self.yes        
 

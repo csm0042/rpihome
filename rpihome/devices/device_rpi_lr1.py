@@ -50,26 +50,44 @@ class RPImain(DeviceRPI):
             if self.homeArray[0] is True:
                 if self.homeArray[1] is True or self.homeArray[2] is True:
                     if datetime.time(5,30) <= self.dt.time() <= datetime.time(22,0):
+                        if self.state is False:
+                            self.logger.info("Turning on rpi screen")
                         self.state = True
                     else:
+                        if self.state is True:
+                            self.logger.info("Turning off rpi screen")
                         self.state = False
                 else:
                     if datetime.time(6,30) <= self.dt.time() <= datetime.time(22,0):
+                        if self.state is False:
+                            self.logger.info("Turning on rpi screen")
                         self.state = True
                     else:
+                        if self.state is True:
+                            self.logger.info("Turning off rpi screen")
                         self.state = False 
             else:
+                if self.state is True:
+                    self.logger.info("Turning off rpi screen")
                 self.state = False
         elif 5 <= self.dt.weekday() <= 6:
             if self.home is True:
                 if datetime.time(6,30) <= self.dt.time() <= datetime.time(22,0):
+                    if self.state is False:
+                        self.logger.info("Turning on rpi screen")
                     self.state = True
                 else:
+                    if self.state is True:
+                        self.logger.info("Turning off rpi screen")
                     self.state = False
             else:
+                if self.state is True:
+                    self.logger.info("Turning off rpi screen")
                 self.state = False               
         # Invalid day selection
         else:
+            if self.state is True:
+                self.logger.info("Turning off rpi screen")
             self.state = False
         # Return result
         return self.state           

@@ -75,35 +75,55 @@ class HomeUser2(HomeGeneral):
                 if self.dt.date().isocalendar()[1] % 2 == 1:
                     # Home before 7am or after 5pm
                     if self.dt.time() < datetime.time(7,0) or self.dt.time() >= datetime.time(17,0):
+                        if self.yes is False:
+                            self.logger.info("User2 is now home")
                         self.yes = True
                     else:
+                        if self.yes is True:
+                            self.logger.info("User2 is no longer home")
                         self.yes = False                    
                 else:
                     # Home only before 7am
                     if self.dt.time() < datetime.time(7,0):
+                        if self.yes is False:
+                            self.logger.info("User2 is now home")
                         self.yes = True
                     else:
+                        if self.yes is True:
+                            self.logger.info("User2 is no longer home")
                         self.yes = False
             else:
+                if self.yes is True:
+                    self.logger.info("User2 is no longer home")
                 self.yes = False          
         # Saturday
         elif self.dt.weekday() == 5:
             if 2016 <= self.dt.date().isocalendar()[0] <= 2017:
                 # If odd number week (custody week)
                 if self.dt.date().isocalendar()[1] % 2 == 1:
+                    if self.yes is False:
+                        self.logger.info("User2 is now home")
                     self.yes = True 
                 else:
+                    if self.yes is True:
+                        self.logger.info("User2 is no longer home")
                     self.yes = False          
         # Sunday
         elif self.dt.weekday() == 6:
             if 2016 <= self.dt.date().isocalendar()[0] <= 2017:
                 # If odd number week (custody week)
                 if self.dt.date().isocalendar()[1] % 2 == 1:
+                    if self.yes is False:
+                        self.logger.info("User2 is now home")
                     self.yes = True 
                 else:
+                    if self.yes is True:
+                        self.logger.info("User2 is no longer home")
                     self.yes = False           
         # Invalid day
         else:
+            if self.yes is True:
+                self.logger.info("User2 is no longer home")
             self.yes = False
         # Return result
         return self.yes   
@@ -124,9 +144,13 @@ class HomeUser2(HomeGeneral):
         # Use correct rule-set based on home/away decision mode
         # mode == 0 represents a mode of "force away"
         if self.mode == 0:
+            if self.yes is True:
+                self.logger.info("User2 is no longer home")            
             self.yes = False
         # mode == 1 represents a mode of "force home"
         elif self.mode == 1:
+            if self.yes is False:
+                self.logger.info("User2 is home")
             self.yes = True
         # mode == 2 determines home/away based on each user's typical schedule
         elif self.mode == 2:
@@ -142,7 +166,7 @@ class HomeUser2(HomeGeneral):
             self.by_ping_with_delay(datetime=self.dt, ip=self.ip)
             self.by_schedule(datetime=self.dt)           
         else:
-            self.logger.debug("Cannot make home/away decision based on invalid mode") 
+            self.logger.error("Cannot make home/away decision based on invalid mode") 
         # Return result
         return self.yes             
 

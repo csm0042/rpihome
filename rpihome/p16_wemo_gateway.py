@@ -134,7 +134,7 @@ class WemoProcess(multiprocessing.Process):
                     self.logger.debug("Get status query successfully returned value of: %s", str(self.status))
                     self.msg_to_send.payload = str(self.status)
                 else:
-                    self.logger.debug("Device [%s] did not respond to Get status query", self.msg_to_process.name)
+                    self.logger.warning("Device [%s] did not respond to Get status query", self.msg_to_process.name)
                     self.msg_to_send.payload = ""
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 self.logger.debug("Sending get-status successful message: [%s]", self.msg_to_send.raw)
@@ -155,7 +155,7 @@ class WemoProcess(multiprocessing.Process):
         try:
             self.port = pywemo.ouimeaux_device.probe_wemo(address)
         except:
-            self.logger.debug("Error discovering port of wemo device at address: %s", address)
+            self.logger.warning("Error discovering port of wemo device at address: %s", address)
             self.port = None
         # If port is found, probe device for type and other attributes
         if self.port is not None:
@@ -165,13 +165,13 @@ class WemoProcess(multiprocessing.Process):
             try:
                 self.device = pywemo.discovery.device_from_description(self.url, None)
             except:
-                self.logger.debug("Error discovering attributes for device at address: %s, port: %s", address, str(self.port))
+                self.logger.warning("Error discovering attributes for device at address: %s, port: %s", address, str(self.port))
                 self.device = None
         else:
-            self.logger.debug("No wemo device detected at: %s", address)
+            self.logger.warning("No wemo device detected at: %s", address)
         # If device is found and probe was successful, check existing device list to
         # determine if device is already present in list
-        if self.device is not None:
+        if self.port is not None and self.device is not None:
             print("Device: " + str(self.device))
             if self.device.name.find(name) != -1:
                 self.logger.debug("Discovery successful for wemo device: %s at: %s, port: %s", name, address, str(self.port))
@@ -179,7 +179,7 @@ class WemoProcess(multiprocessing.Process):
                 for index, device in enumerate(self.device_list):
                     if self.device.name == device.name:
                         self.found = True
-                        self.logger.debug("Device: %s already exists in device list at address: %s and port: %s", self.device.name, address, self.port)
+                        self.logger.warning("Device: %s already exists in device list at address: %s and port: %s", self.device.name, address, self.port)
                 # If not found in list, add it
                 if self.found is False:
                     self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.device.name, address, self.port)
@@ -189,9 +189,9 @@ class WemoProcess(multiprocessing.Process):
                 else:
                     return None
             else:
-                self.logger.debug("Device name mis-match between found device and configuration")
+                self.logger.error("Device name mis-match between found device and configuration")
         else:
-            self.logger.debug("Device was not found")
+            #self.logger.debug("Device was not found")
             return None
 
 
@@ -209,7 +209,7 @@ class WemoProcess(multiprocessing.Process):
                 return True
         # If match is not found, log error and continue
         if self.found is False:
-            self.logger.debug("Could not find device: %s on the network", name)
+            self.logger.warning("Could not find device: %s on the network", name)
             return False           
 
 
@@ -227,7 +227,7 @@ class WemoProcess(multiprocessing.Process):
                 return True
         # If match is not found, log error and continue
         if self.found is False:
-            self.logger.debug("Could not find device: %s on the network", name)
+            self.logger.warning("Could not find device: %s on the network", name)
             return False
 
 
@@ -245,7 +245,7 @@ class WemoProcess(multiprocessing.Process):
                 self.state = device.get_state(force_update=True)
                 return self.state
             if self.found is False:
-                self.logger.debug("Could not find device: %s", self.msg_in.name)
+                self.logger.warning("Could not find device: %s", self.msg_in.name)
                 return None               
 
 
@@ -271,6 +271,5 @@ class WemoProcess(multiprocessing.Process):
             # Pause before next process run
             time.sleep(0.097)
 
-        # Shut down logger before exiting process
-        pass
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")

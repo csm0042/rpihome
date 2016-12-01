@@ -197,6 +197,5 @@ class HomeProcess(multiprocessing.Process):
             # Pause before next process run
             time.sleep(0.097)
 
-        # Shut down logger before exiting process
-        pass
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")

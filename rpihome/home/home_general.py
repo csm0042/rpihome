@@ -57,7 +57,7 @@ class HomeGeneral(object):
         if isinstance(value, bool) is True or value == None:
             self.__yes = value
         else:
-            self.logger.debug("Invalid type attmpted to load into self.yes (should be type bool or None)")
+            self.logger.error("Invalid type attmpted to load into self.yes (should be type bool or None)")
 
     @property
     def mem(self):
@@ -77,7 +77,7 @@ class HomeGeneral(object):
             self.__mode = value
         else:
             self.__mode = 2
-            self.logger.debug("Invalid mode entered.  Defaulting to mode=2 (by schedule)")        
+            self.logger.error("Invalid mode entered.  Defaulting to mode=2 (by schedule)")        
 
     @property
     def mac(self):
@@ -88,7 +88,7 @@ class HomeGeneral(object):
         if isinstance(value, str) is True:
             self.__mac = value
         else:
-            self.logger.debug("Invalid mac id entered")
+            self.logger.error("Invalid mac id entered")
             self.__mac = "00:00:00:00:00:00"
 
     @property
@@ -102,7 +102,7 @@ class HomeGeneral(object):
             self.__ip = value
         except:
             self.__ip = "192.168.1.1"
-            self.logger.debug("Invalid IP address entered")
+            self.logger.error("Invalid IP address entered")
 
     @property
     def home_time(self):
@@ -113,7 +113,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__home_time = value 
         else:
-            self.logger.debug("Invalid value entered for self.home_time.  Leaving value unchanged") 
+            self.logger.error("Invalid value entered for self.home_time.  Leaving value unchanged") 
 
     @property
     def last_seen(self):
@@ -124,7 +124,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__last_seen = value 
         else:
-            self.logger.debug("Invalid value entered for self.last_seen.  Leaving value unchanged")  
+            self.logger.error("Invalid value entered for self.last_seen.  Leaving value unchanged")  
 
     @property
     def last_arp(self):
@@ -135,7 +135,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__last_arp = value 
         else:
-            self.logger.debug("Invalid value entered for self.last_arp.  Leaving value unchanged")  
+            self.logger.error("Invalid value entered for self.last_arp.  Leaving value unchanged")  
 
     @property
     def last_ping(self):
@@ -146,7 +146,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__last_ping = value 
         else:
-            self.logger.debug("Invalid value entered for self.last_ping.  Leaving value unchanged")                    
+            self.logger.error("Invalid value entered for self.last_ping.  Leaving value unchanged")                    
 
     @property
     def dt(self):
@@ -157,7 +157,7 @@ class HomeGeneral(object):
         if isinstance(value, datetime.datetime) is True:
             self.__dt = value
         else:
-            self.logger.debug("Improper type attmpted to load into self.dt")
+            self.logger.error("Improper type attmpted to load into self.dt")
 
     @property
     def output(self):
@@ -176,7 +176,7 @@ class HomeGeneral(object):
         if isinstance(value, int) is True:
             self.__index = value
         else:
-            self.logger.debug("Tried to load a non-integer value into self.index")                
+            self.logger.error("Tried to load a non-integer value into self.index")                
 
 
     def by_arp(self, **kwargs):      
@@ -206,9 +206,13 @@ class HomeGeneral(object):
             self.last_seen = self.dt
         # Determine if device was seen recently enough to be considered "home"
         if self.dt <= self.last_seen + datetime.timedelta(minutes=30):
+            if self.yes is False:
+                self.logger.info("Mac ID [%s] just got home")
             self.yes = True
         else:
             self.logger.debug("Mac ID [%s] not found for the past 30 minutes.  Setting state to \"away\"", self.mac)
+            if self.yes is True:
+                self.logger.info("Mac ID [%s] is no longer home")
             self.yes = False
         # Return result
         return self.yes

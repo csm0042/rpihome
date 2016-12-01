@@ -66,15 +66,25 @@ class Wemo_drlt1(DeviceWemo):
             if self.homeArray[0] is True:
                 if self.homeArray[1] is True or self.homeArray[2] is True:
                     if datetime.time(5,50) <= self.dt.time() <= datetime.time(6,30):
+                        if self.state is False:
+                            self.logger.info("Turning on drlt1")
                         self.state = True
                     else:
+                        if self.state is True:
+                            self.logger.info("Turning off drlt1")
                         self.state = False
                 else:
                     if datetime.time(6,30) <= self.dt.time() <= datetime.time(7,0):
+                        if self.state is False:
+                            self.logger.info("Turning on drlt1")
                         self.state = True
                     else:
+                        if self.state is True:
+                            self.logger.info("Turning off drlt1")
                         self.state = False
             else:
+                if self.state is True:
+                    self.logger.info("Turning off drlt1")
                 self.state = False
         # Return result
         return self.state

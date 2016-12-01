@@ -59,23 +59,39 @@ class Wemo_br3lt2(DeviceWemo):
         if 0 <= self.dt.weekday() <= 4:
             if self.home is True:
                 if self.dt.time() >= datetime.time(19,0):
+                    if self.state is False:
+                        self.logger.info("Turning on br3lt2 screen")
                     self.state = True
                 elif self.dt.time() <= datetime.time(6,30):
+                    if self.state is False:
+                        self.logger.info("Turning on br3lt2 screen")
                     self.state = True
                 else:
+                    if self.state is True:
+                        self.logger.info("Turning off br3lt2 screen")
                     self.state = False
             else:
+                if self.state is True:
+                    self.logger.info("Turning off br3lt2 screen")
                 self.state = False
         # Saturday - Sunday
         elif 5 <= self.dt.weekday() <= 6:
             if self.home is True:
                 if self.dt.time() >= datetime.time(19,0):
+                    if self.state is False:
+                        self.logger.info("Turning on br3lt2 screen")
                     self.state = True
                 elif self.dt.time() <= datetime.time(6,30):
+                    if self.state is False:
+                        self.logger.info("Turning on br3lt2 screen")
                     self.state = True
                 else:
+                    if self.state is True:
+                        self.logger.info("Turning off br3lt2 screen")
                     self.state = False
             else:
+                if self.state is True:
+                    self.logger.info("Turning off br3lt2 screen")
                 self.state = False
         # Return result
         return self.state              

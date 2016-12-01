@@ -166,7 +166,7 @@ class LogicProcess(multiprocessing.Process):
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                     self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
                 else:
-                    self.logger.debug("Message 020 ACK from NEST service contained no info to display")
+                    self.logger.warning("Message 020 ACK from NEST service contained no info to display")
 
             # Process current forecast request ack
             elif self.msg_to_process.type == "021A":
@@ -176,7 +176,7 @@ class LogicProcess(multiprocessing.Process):
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                     self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)
                 else:
-                    self.logger.debug("Message 021 ACK from NEST service contained no info to display")                    
+                    self.logger.warning("Message 021 ACK from NEST service contained no info to display")                    
 
             # Process tomorrow forecast request ack
             elif self.msg_to_process.type == "022A":
@@ -186,30 +186,31 @@ class LogicProcess(multiprocessing.Process):
                     self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                     self.logger.debug("Forwarding ACK message [%s] to gui to update display", self.msg_to_process.raw)                
                 else:
-                    self.logger.debug("Message 022 ACK from NEST service contained no info to display")                    
+                    self.logger.warning("Message 022 ACK from NEST service contained no info to display")
+
             # Process user "home/away" messages                              
             elif self.msg_to_process.type == "100":
                 if self.msg_to_process.name == "user1":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[0] = False
-                        self.logger.debug("User1 is no longer home")
+                        self.logger.info("User1 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[0] = True
-                        self.logger.debug("User1 is home")
+                        self.logger.info("User1 is home")
                 if self.msg_to_process.name == "user2":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[1] = False
-                        self.logger.debug("User2 is no longer home")
+                        self.logger.info("User2 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[1] = True
-                        self.logger.debug("User2 is home")
+                        self.logger.info("User2 is home")
                 if self.msg_to_process.name == "user3":
                     if self.msg_to_process.payload == "0":
                         self.homeArray[2] = False
-                        self.logger.debug("User3 is no longer home")
+                        self.logger.info("User3 is no longer home")
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[2] = True
-                        self.logger.debug("User3 is home")
+                        self.logger.info("User3 is home")
             # Process device discovery successful messages
             elif self.msg_to_process.type == "160A":
                 self.logger.debug("ACK received for 160 message: [%s]", self.msg_to_process.raw)
@@ -358,6 +359,5 @@ class LogicProcess(multiprocessing.Process):
             # Pause before next process run
             time.sleep(0.097)
 
-        # Shut down logger before exiting process
-        pass
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")

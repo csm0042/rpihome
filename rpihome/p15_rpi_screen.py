@@ -116,8 +116,7 @@ class RpiProcess(multiprocessing.Process):
             except:
                 self.logger.debug("Command [%s] failed", str(self.command))
         else:
-            self.logger.debug(
-                "Error sending command [%s] to terminal.  Not on linux machine",
+            self.logger.error("Error sending command [%s] to terminal.  Not on linux machine",
                 str(self.command))
 
 
@@ -143,6 +142,5 @@ class RpiProcess(multiprocessing.Process):
             # Pause before next process run
             time.sleep(0.021)
 
-        # Shut down logger before exiting process
-        pass
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")

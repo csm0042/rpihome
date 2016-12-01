@@ -99,8 +99,7 @@ class MainWindow(multiprocessing.Process):
         # Run mainloop() to activate gui and begin monitoring its inputs
         self.logger.info("Main loop started")
         self.window.mainloop()  
-        # Close logger once window closes
-        pass 
+        # Send final log message when process exits
         self.logger.info("Shutdown complete")        
 
 
@@ -1347,61 +1346,61 @@ class MainWindow(multiprocessing.Process):
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="17", type="999").raw)
                 self.logger.debug("Kill code sent to p17_nest_gateway process")
             except:
-                self.logger.debug("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
+                self.logger.warning("Could not send kill-code to p17_nest_gateway process.  Queue already closed")
             # Kill p16 (wemo gateway)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="16", type="999").raw)
                 self.logger.debug("Kill code sent to p16_wemo_gateway process") 
             except:
-                self.logger.debug("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
+                self.logger.warning("Could not send kill-code to p16_wemo_gateway process.  Queue already closed")           
             # Kill p15 (rpi screen)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="15", type="999").raw)
                 self.logger.debug("Kill code sent to p15_rpi_screen process")  
             except:
-                self.logger.debug("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
+                self.logger.warning("Could not send kill-code to p15_rpi_screen process.  Queue already closed")                
             # Kill p14 (motion detector)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="14", type="999").raw)
                 self.logger.debug("Kill code sent to p14_motion process") 
             except:
-                self.logger.debug("Could not send kill-code to p14_motion process.  Queue already closed")                
+                self.logger.warning("Could not send kill-code to p14_motion process.  Queue already closed")                
             # Kill p13 (home / away)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="13", type="999").raw)
                 self.logger.debug("Kill code sent to p13_home_away process")   
             except:
-                self.logger.debug("Could not send kill-code to p13_home_away process.  Queue already closed")                
+                self.logger.warning("Could not send kill-code to p13_home_away process.  Queue already closed")                
             # Kill p12 (db interface)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="12", type="999").raw)
                 self.logger.debug("Kill code sent to p12_db_interface process") 
             except:
-                self.logger.debug("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
+                self.logger.warning("Could not send kill-code to p12_db_interface process.  Queue already closed")                                                         
             # Kill p11 (logic solver)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="11", type="999").raw)
                 self.logger.debug("Kill code sent to p11_logic_solver process")
             except:
-                self.logger.debug("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
+                self.logger.warning("Could not send kill-code to p11_logic_solver process.  Queue already closed")                
             # Kill p02 (gui)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="02", type="999").raw)
                 self.logger.debug("Kill code sent to p02_gui process")  
             except:
-                self.logger.debug("Could not send kill-code to p02_gui process.  Queue already closed")
+                self.logger.warning("Could not send kill-code to p02_gui process.  Queue already closed")
             # Kill p01 (log handler)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="01", type="999").raw)
                 self.logger.debug("Kill code sent to p01_log_handler process")  
             except:
-                self.logger.debug("Could not send kill-code to p01_log_handler process.  Queue already closed")
+                self.logger.warning("Could not send kill-code to p01_log_handler process.  Queue already closed")
             # Kill p00 (main)
             try:
                 self.msg_out_queue.put_nowait(message.Message(source="02", dest="00", type="999").raw)   
                 self.logger.debug("Kill code sent to p00_main process")
             except:
-                self.logger.debug("Could not send kill-code to p00_main process.  Queue already closed")                
+                self.logger.warning("Could not send kill-code to p00_main process.  Queue already closed")                
             # Close msg out queue
             self.msg_out_queue.close()
             # Close application main window

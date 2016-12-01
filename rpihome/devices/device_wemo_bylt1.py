@@ -59,7 +59,7 @@ class Wemo_bylt1(DeviceWemo):
         # Decision tree to automatically time-out light after 15 minutes in the "on" state
         if self.status == 1:
             if datetime.datetime.now() >= self.statusChangeTS + self.timeout:
-                self.state = 0
+                self.state = False
                 self.state_mem = None
                 self.status = None
                 self.statusChangeTS = None
