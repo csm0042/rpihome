@@ -8,7 +8,8 @@ from modules.message import Message
 # Log Handler Process ******************************************************************************
 def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile):
     #logger = worker_configurer(__name__, log_queue)
-    logger = listener_configurer(__name__, debug_logfile, info_logfile)
+    listener_configurer(debug_logfile, info_logfile)
+    logger = logging.getLogger(__name__)
 
     close_pending = False
     msg_in = Message()
@@ -57,7 +58,8 @@ def listener_process(in_queue, out_queue, log_queue, debug_logfile, info_logfile
 
         # Get log handler, then pass it the log message from the queue
         if isinstance(log_record, logging.LogRecord) is True:
-            logger.handle(log_record)
+            master_logger = logging.getLogger(log_record.name)
+            master_logger.handle(log_record)
             log_record = None
         
 
