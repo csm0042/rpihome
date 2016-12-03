@@ -44,9 +44,11 @@ class WemoProcess(multiprocessing.Process):
                     self.name = value
         # Initialize parent class 
         multiprocessing.Process.__init__(self, name=self.name)
-        # Create remaining class elements        
+        # Create remaining class elements
+        self.work_queue_empty = True
         self.work_queue = multiprocessing.Queue(-1)
         self.msg_in = message.Message()
+        self.msg_in_empty = True
         self.msg_to_process = message.Message()
         self.msg_to_send = message.Message()
         self.last_hb = datetime.datetime.now()
@@ -54,6 +56,7 @@ class WemoProcess(multiprocessing.Process):
         self.main_loop = bool()
         self.device = None
         self.device_list = []
+        self.last_update = datetime.datetime.now()
         self.close_pending = False    
 
 
@@ -68,6 +71,7 @@ class WemoProcess(multiprocessing.Process):
             except:
                 self.in_msg_loop = False
             if len(self.msg_in.raw) > 4:
+                self.msg_in_empty = False
                 self.logger.debug("Processing message [%s] from incoming message queue",
                                   self.msg_in.raw)
                 if self.msg_in.dest == "16":
@@ -86,6 +90,7 @@ class WemoProcess(multiprocessing.Process):
                     self.logger.debug("Redirecting message [%s] back to main", self.msg_in.raw)
                 self.msg_in = message.Message()
             else:
+                self.msg_in_empty = True
                 self.msg_in = message.Message()
                 self.in_msg_loop = False
 
@@ -99,6 +104,7 @@ class WemoProcess(multiprocessing.Process):
             pass
         # If there is a message to process, do so
         if len(self.msg_to_process.raw) > 4:
+            self.work_queue_empty = False
             self.logger.debug("Processing message [%s] from internal work queue",
                               self.msg_to_process.raw)
 
@@ -127,22 +133,29 @@ class WemoProcess(multiprocessing.Process):
 
             # Get Wemo state
             if self.msg_to_process.type == "162":
-                self.logger.debug("Sending \"request state\" command to device: %s", self.msg_to_process.name)
-                self.status = self.query_status(self.msg_to_process.name)
-                self.msg_to_send = message.Message(source="16", dest=self.msg_to_process.source, type="162A", name=self.msg_to_process.name)
-                if self.status is not None:
-                    self.logger.debug("Get status query successfully returned value of: %s", str(self.status))
-                    self.msg_to_send.payload = str(self.status)
-                else:
-                    self.logger.warning("Device [%s] did not respond to Get status query", self.msg_to_process.name)
-                    self.msg_to_send.payload = ""
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.logger.debug("Sending get-status successful message: [%s]", self.msg_to_send.raw)
-
+                self.msg_162(self.msg_to_process.name, self.msg_to_process.source)
+            
             # Clear msg-to-process string
             self.msg_to_process = message.Message()
         else:
-            self.msg_to_process = message.Message()
+            self.work_queue_empty = True
+            self.msg_to_process = message.Message()                
+
+    
+    def msg_162(self, name, dest):
+        self.logger.debug("Sending \"request state\" command to device: %s", name)
+        self.status = self.query_status(name)
+        self.msg_to_send = message.Message(source="16", dest=dest, type="162A", name=name)
+        if self.status is not None:
+            self.logger.debug("Get status query successfully returned value of: %s", self.status)
+            self.msg_to_send.payload = self.status
+        else:
+            self.logger.warning("Device [%s] did not respond to Get status query", name)
+            self.msg_to_send.payload = ""
+        # send response
+        self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+        self.logger.debug("Sending get-status successful message: [%s]", self.msg_to_send.raw)
+
 
 
     def discover_device(self, name, address):
@@ -159,7 +172,6 @@ class WemoProcess(multiprocessing.Process):
             self.port = None
         # If port is found, probe device for type and other attributes
         if self.port is not None:
-            print("port: " + str(self.port))
             self.logger.debug("Found wemo device at: %s on port: %s", address, str(self.port))
             self.url = 'http://%s:%i/setup.xml' % (address, self.port)
             try:
@@ -172,7 +184,6 @@ class WemoProcess(multiprocessing.Process):
         # If device is found and probe was successful, check existing device list to
         # determine if device is already present in list
         if self.port is not None and self.device is not None:
-            print("Device: " + str(self.device))
             if self.device.name.find(name) != -1:
                 self.logger.debug("Discovery successful for wemo device: %s at: %s, port: %s", name, address, str(self.port))
                 self.found = False
@@ -185,13 +196,14 @@ class WemoProcess(multiprocessing.Process):
                     self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.device.name, address, self.port)
                     self.device_list.append(copy.copy(self.device))
                     self.logger.debug("New device [%s] detected.  Adding to list of known devices", self.device.name)
+                    self.logger.debug("Updated device list: %s", str(self.device_list))
                     return self.device
                 else:
                     return None
             else:
                 self.logger.error("Device name mis-match between found device and configuration")
         else:
-            #self.logger.debug("Device was not found")
+            self.logger.warning("Device was not found")
             return None
 
 
@@ -242,11 +254,13 @@ class WemoProcess(multiprocessing.Process):
             # originating process
             if device.name.find(name) != -1:
                 self.found = True
-                self.state = device.get_state(force_update=True)
+                self.logger.debug("Found device [%s] in existing device list", name)
+                self.state = str(device.get_state(force_update=True))
+                self.logger.debug("Returning status [%s] to main program", self.state)
                 return self.state
-            if self.found is False:
-                self.logger.warning("Could not find device: %s", self.msg_in.name)
-                return None               
+        if self.found is False:
+            self.logger.warning("Could not find device [%s] in existing device list", name)
+            return None               
 
 
     def run(self):
@@ -261,6 +275,14 @@ class WemoProcess(multiprocessing.Process):
             # Process tasks in internal work queue
             if self.close_pending is False:
                 self.process_work_queue()
+
+            if self.close_pending is False:
+                if self.msg_in_empty is True and self.work_queue_empty is True:
+                    if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=5):
+                        self.last_update = datetime.datetime.now()
+                        # Update each "known" device
+                        for i, j in enumerate(self.device_list):
+                            self.msg_162(j.name, "02")
 
             # Close process
             if self.close_pending is True:

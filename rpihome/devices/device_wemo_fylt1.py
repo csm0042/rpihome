@@ -9,7 +9,7 @@ import logging
 import multiprocessing
 import time
 from .device_wemo import DeviceWemo
-from ..modules.schedule import Week
+from rpihome.modules.schedule import Week
 
 
 # Authorship Info *****************************************************************************************************
@@ -204,12 +204,12 @@ class Wemo_fylt1(DeviceWemo):
                 self.logger.error("Invalid keyword used in schedule input data")
         
         # Based on the evaluation of the rules, set the final output state
-        if self.temp_state is True and self.state is Not True:
+        if self.temp_state != self.state and self.temp_state is True:
             self.logger.info("Turning on device [fylt1]")
             self.state = True
-        elif self.temp_state is False and self.state is Not False:
+        elif self.temp_state != self.state and self.temp_state is False:
             self.logger.info("Turning off device [fylt1]")
             self.state = False
         # Return result
-        return self.state            
+        return self.state        
                     

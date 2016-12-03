@@ -68,7 +68,7 @@ class MainWindow(multiprocessing.Process):
         self.last_update = datetime.datetime.now() + datetime.timedelta(seconds=30)
         self.datetime_to_go = str()
         self.time_remaining = str()
-        self.scanWemo = True
+        self.scanWemo = False
         self.current_conditions = ["??"] * 4
         self.current_forecast = ["??"] * 4
         self.tomorrow_forecast = ["??"] * 4
@@ -1290,37 +1290,7 @@ class MainWindow(multiprocessing.Process):
                 self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                
             pass  
             self.msg_in = message.Message()
-
-        # Send periodic querries to field devices to get current status
-        if self.close_pending is False and self.scanWemo is True and self.frame050301b_packed is True and self.msg_in_queue.empty():
-            if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=15):
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="fylt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="bylt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="ewlt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="cclt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="lrlt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="drlt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br1lt2")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br2lt2")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt1")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.msg_to_send = message.Message(source="02", dest="16", type="162", name="br3lt2")
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.last_update = datetime.datetime.now()
-        
-              
+                  
 
         # If a close is pending, wait until all messages have been processed before closing down the window
         # Otherwise schedule another run of the "after" process 
@@ -1333,7 +1303,7 @@ class MainWindow(multiprocessing.Process):
             if self.frame0203b_packed is True:
                 self.update_alarm_window()
             # Re-schedule after task to run again in another 1000ms
-            self.window.after(500, self.after_tasks)
+            self.window.after(51, self.after_tasks)
             #self.logger.debug("Re-scheduled next after event")
         pass
 

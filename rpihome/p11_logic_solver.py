@@ -71,7 +71,6 @@ class LogicProcess(multiprocessing.Process):
         self.in_msg_loop = bool()
         self.main_loop = bool()
         self.close_pending = False
-        #self.create_devices()
         self.create_home_flags()
 
 
@@ -85,9 +84,9 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_lrlt1 = device_wemo_lrlt1.Wemo_lrlt1("lrlt1", "192.168.86.25", self.msg_out_queue)
         self.wemo_lrlt2 = device_wemo_lrlt2.Wemo_lrlt2("lrlt2", "192.168.86.33", self.msg_out_queue)
         self.wemo_drlt1 = device_wemo_drlt1.Wemo_drlt1("drlt1", "192.168.86.26", self.msg_out_queue)
-        self.wemo_br1lt1 = device_wemo_br1lt1.Wemo_br1lt1("br1lt1", "192.168.86.27", self.msg_out_queue)
+        #self.wemo_br1lt1 = device_wemo_br1lt1.Wemo_br1lt1("br1lt1", "192.168.86.27", self.msg_out_queue)
         self.wemo_br1lt2 = device_wemo_br1lt2.Wemo_br1lt2("br1lt2", "192.168.86.28", self.msg_out_queue)
-        self.wemo_br2lt1 = device_wemo_br2lt1.Wemo_br2lt1("br2lt1", "192.168.86.29", self.msg_out_queue)
+        #self.wemo_br2lt1 = device_wemo_br2lt1.Wemo_br2lt1("br2lt1", "192.168.86.29", self.msg_out_queue)
         self.wemo_br2lt2 = device_wemo_br2lt2.Wemo_br2lt2("br2lt2", "192.168.86.30", self.msg_out_queue)
         self.wemo_br3lt1 = device_wemo_br3lt1.Wemo_br3lt1("br3lt1", "192.168.86.31", self.msg_out_queue)
         self.wemo_br3lt2 = device_wemo_br3lt2.Wemo_br3lt2("br3lt2", "192.168.86.32", self.msg_out_queue)
@@ -211,6 +210,7 @@ class LogicProcess(multiprocessing.Process):
                     elif self.msg_to_process.payload == "1":
                         self.homeArray[2] = True
                         self.logger.info("User3 is home")
+            
             # Process device discovery successful messages
             elif self.msg_to_process.type == "160A":
                 self.logger.debug("ACK received for 160 message: [%s]", self.msg_to_process.raw)
@@ -220,6 +220,7 @@ class LogicProcess(multiprocessing.Process):
                     self.logger.debug("Sending message [%s] to gui app to add control widget for device: [%s]", self.msg_to_send.raw, self.msg_to_process.name)
                 else:
                     self.logger.debug("ACK reports device was not found.  No further action being taken")
+            
             # Process device create messages                                        
             elif self.msg_to_process.type == "168":
                 self.create_devices()
@@ -280,21 +281,21 @@ class LogicProcess(multiprocessing.Process):
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_br1lt1.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+        #self.wemo_br1lt1.check_rules(datetime=datetime.datetime.now(),
+        #                            homeArray=self.homeArray,
+        #                            utcOffset=self.utc_offset,
+        #                            sunriseOffset=datetime.timedelta(minutes=0),
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br1lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_br2lt1.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+        #self.wemo_br2lt1.check_rules(datetime=datetime.datetime.now(),
+        #                            homeArray=self.homeArray,
+        #                            utcOffset=self.utc_offset,
+        #                            sunriseOffset=datetime.timedelta(minutes=0),
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br2lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
@@ -322,9 +323,9 @@ class LogicProcess(multiprocessing.Process):
         self.wemo_lrlt1.command()
         self.wemo_lrlt2.command()
         self.wemo_drlt1.command()
-        self.wemo_br1lt1.command()
+        #self.wemo_br1lt1.command()
         self.wemo_br1lt2.command()
-        self.wemo_br2lt1.command()
+        #self.wemo_br2lt1.command()
         self.wemo_br2lt2.command()
         self.wemo_br3lt1.command()
         self.wemo_br3lt2.command()
