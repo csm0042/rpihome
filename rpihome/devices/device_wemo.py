@@ -44,16 +44,16 @@ class DeviceWemo(Device):
         of sending the same command over and over again """
         if self.state != self.state_mem:
             if self.state is True:
-                self.msg_to_send = Message(source="11", dest="16", type="160", name=self.name, payload=self.address)
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.logger.debug("Sending command to wemo gateway to discover device: %s", self.name)
+                #self.msg_to_send = Message(source="11", dest="16", type="160", name=self.name, payload=self.address)
+                #self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                #self.logger.debug("Sending command to wemo gateway to discover device: %s", self.name)
                 self.msg_to_send = Message(source="11", dest="16", type="161", name=self.name, payload="on")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 self.logger.debug("Sending command to wemo gateway to turn ON device: %s", self.name)
             else:
-                self.msg_to_send = Message(source="11", dest="16", type="160", name=self.name, payload=self.address)
-                self.msg_out_queue.put_nowait(self.msg_to_send.raw)
-                self.logger.debug("Sending command to wemo gateway to discover device: %s", self.name)
+                #self.msg_to_send = Message(source="11", dest="16", type="160", name=self.name, payload=self.address)
+                #self.msg_out_queue.put_nowait(self.msg_to_send.raw)
+                #self.logger.debug("Sending command to wemo gateway to discover device: %s", self.name)
                 self.msg_to_send = Message(source="11", dest="16", type="161", name=self.name, payload="off")
                 self.msg_out_queue.put_nowait(self.msg_to_send.raw)
                 self.logger.debug("Sending command to wemo gateway to turn OFF device: %s", self.name)

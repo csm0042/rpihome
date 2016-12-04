@@ -62,7 +62,7 @@ class MainWindow(multiprocessing.Process):
         self.msg_in = message.Message()
         self.msg_to_send = message.Message()
         self.close_pending = False
-        self.last_hb = time.time()
+        self.last_hb = datetime.datetime.now()
         self.index = 0
         self.time_to_go = datetime.time(6,30)
         self.last_update = datetime.datetime.now() + datetime.timedelta(seconds=30)
@@ -1176,7 +1176,7 @@ class MainWindow(multiprocessing.Process):
             if self.msg_in.dest == "02":
                 
                 if self.msg_in.type == "001":
-                    self.last_hb = time.time()
+                    self.last_hb = datetime.datetime.now()
                 
                 elif self.msg_in.type == "002":
                     if self.msg_in.source == "01":
@@ -1294,7 +1294,10 @@ class MainWindow(multiprocessing.Process):
 
         # If a close is pending, wait until all messages have been processed before closing down the window
         # Otherwise schedule another run of the "after" process 
-        if ((self.close_pending is True) and (len(self.msg_in.raw) == 0) and (self.msg_in_queue.empty() is True)) or (time.time() > (self.last_hb + 30)):
+        if ((self.close_pending is True) and (len(self.msg_in.raw) == 0) and (self.msg_in_queue.empty() is True)):
+            self.window.destroy()
+        elif datetime.datetime.now() > (self.last_hb + datetime.timedelta(seconds=30)):
+            self.logger.critical("Comm timeout - shutting down")
             self.window.destroy()
         else:
             # Update visual aspects of main window (text, etc)

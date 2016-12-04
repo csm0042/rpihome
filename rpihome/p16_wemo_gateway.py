@@ -56,6 +56,7 @@ class WemoProcess(multiprocessing.Process):
         self.main_loop = bool()
         self.device = None
         self.device_list = []
+        self.index = 0
         self.last_update = datetime.datetime.now()
         self.close_pending = False    
 
@@ -276,18 +277,24 @@ class WemoProcess(multiprocessing.Process):
             if self.close_pending is False:
                 self.process_work_queue()
 
+            # Update device status periodically
             if self.close_pending is False:
                 if self.msg_in_empty is True and self.work_queue_empty is True:
-                    if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=5):
+                    if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=1):
                         self.last_update = datetime.datetime.now()
-                        # Update each "known" device
-                        for i, j in enumerate(self.device_list):
-                            self.msg_162(j.name, "02")
+                        # Check index pointer against device list length to prevent overflow
+                        if len(self.device_list) > 0:
+                            if self.index > (len(self.device_list) - 1):
+                                self.index = 0
+                            # Check one device each scan
+                            self.msg_162(self.device_list[self.index].name, "02")
+                            self.index += 1
 
             # Close process
             if self.close_pending is True:
                 self.main_loop = False
             elif datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30):
+                self.logger.critical("Comm timeout - shutting down")
                 self.main_loop = False
 
             # Pause before next process run

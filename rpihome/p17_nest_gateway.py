@@ -260,6 +260,7 @@ class NestProcess(multiprocessing.Process):
             if self.close_pending is True:
                 self.main_loop = False
             elif datetime.datetime.now() > self.last_hb + datetime.timedelta(seconds=30):
+                self.logger.critical("Comm timeout - shutting down")
                 self.main_loop = False
 
             # Pause before next process run
