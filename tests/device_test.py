@@ -2,6 +2,7 @@ from unittest import TestCase
 import datetime
 import multiprocessing
 from rpihome.devices.device import Device
+from rpihome.modules.schedule import Day, Week, OnRange, Condition
 
 
 class TestDevice(TestCase):
@@ -82,3 +83,47 @@ class TestDevice(TestCase):
         self.homeTime = [datetime.datetime.now(), datetime.datetime.now(), datetime.datetime.now()]      
         self.assertIsInstance(self.homeArray[1], bool)
         self.assertIsInstance(self.homeTime[1], datetime.datetime)
+
+
+    def test_check_custom_rules(self):
+        # Create condition(s)
+        self.condition = Condition(condition="user1", state="true")
+        # Create two time ranges to use on different days
+        self.on_range_1 = OnRange(ontime=datetime.time(6,30), offtime=datetime.time(7,0), condition=self.condition)
+        self.on_range_2 = OnRange(ontime=datetime.time(5,40), offtime=datetime.time(6,30), condition=self.condition)
+        # Create each day's schedule
+        self.monday = Day(date=datetime.date(2016,12,5), onrange=self.on_range_1)
+        self.tuesday = Day(date=datetime.date(2016,12,6), onrange=self.on_range_1)
+        self.wednesday = Day(date=datetime.date(2016,12,7), onrange=self.on_range_1)
+        self.thursday = Day(date=datetime.date(2016,12,8), onrange=self.on_range_2)
+        self.friday = Day(date=datetime.date(2016,12,9), onrange=self.on_range_2)
+        # Create overall week's schedule
+        self.schedule = Week(monday=self.monday, tuesday=self.tuesday, wednesday=self.wednesday, thursday=self.thursday, friday=self.friday)
+        self.test_data = []
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(6,29)),
+            [True, True, True], False))
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(6,31)),
+            [True, True, True], True))
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(6,59)),
+            [True, True, True], True))
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(7,1)),
+            [True, True, True], False))
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(6,45)),
+            [True, True, True], True))
+        self.test_data.append((
+            datetime.datetime.combine(datetime.date(2016,12,5), datetime.time(6,45)),
+            [False, True, True], False))
+        # Check each data set against it's anticipated result
+        for i, j in enumerate(self.test_data):
+            self.device.check_custom_rules(datetime=j[0],
+                                           homeArray=j[1],
+                                           utcOffset=datetime.timedelta(hours=-6), 
+                                           sunriseOffset=datetime.timedelta(minutes=0),
+                                           sunsetOffset=datetime.timedelta(minutes=0),
+                                           schedule=self.schedule)
+            self.assertEqual(self.device.state, j[2])          

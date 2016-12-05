@@ -7,6 +7,7 @@ import datetime
 import logging
 from rpihome.modules.sun import Sun
 from rpihome.modules.message import Message
+from rpihome.modules.schedule import Day, Week, OnRange, Condition
 
 
 # Authorship Info *********************************************************************************
@@ -159,38 +160,120 @@ class Device(object):
             self.logger.error("Improper type attmpted to load into self.utcOffset \
                           (should be type: datetime.timedelta)")
 
-    @property
-    def sunriseOffset(self):
-        return self.__sunriseOffset
 
-    @sunriseOffset.setter
-    def sunriseOffset(self, value):
-        if isinstance(value, datetime.timedelta) is True:
-            self.__sunriseOffset = value
+    def check_conditions(self, condition_array):
+        """ This method checks all ancilary conditions in an array associated with each on/off time pair.  It keeps a count of each condition that passes.  Once all have been checked, it determines if they have all passed if the number of successful checks equals the size of the condtion array """
+        self.check_int = 0
+        self.logger.debug("Checking condition tree")
+        # iterate through all conditions in array and check them against their desired states
+        for k, m in enumerate(condition_array):
+            if m.conditon.lower() == "user1":
+                self.logger.debug("Condition #[%s] is [%s]", str(k), m.condition)
+                if m.state.lower() == "true":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[0] is True:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[0]))                        
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[0]))                        
+                elif m.state.lower() == "false":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[0] is False:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[0]))                         
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[0]))                        
+            elif m.condition.lower() == "user2":
+                if m.state.lower() == "true":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[2] is True:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[2]))                        
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[2]))                        
+                elif m.state.lower() == "false":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[2] is False:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[2]))
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[2]))
+            elif m.condition.lower() == "user3":                
+                if m.state.lower() == "true":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[3] is True:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[3]))
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[3]))
+                elif m.state.lower() == "false":
+                    self.logger.debug("Desired state is [%s]", m.state)
+                    if self.homeArray[3] is False:
+                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[3]))
+                        self.check_int += 1
+                    else:
+                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[3]))                        
+        # Once all conditions are checked, if the number of condition-state pairs that passed equal the number of conditions, then all passed.
+        if self.check_int == len(condition_array):
+            self.logger.debug("All checks passed")
+            return True
         else:
-            self.logger.error("Improper type attmpted to load into self.sunriseOffset \
-                          (should be type: datetime.timedelta)")
+            self.logger.debug("Not all checks passed")
+            return False
 
-    @property
-    def sunsetOffset(self):
-        return self.__sunsetOffset
 
-    @sunsetOffset.setter
-    def sunsetOffset(self, value):
-        if isinstance(value, datetime.timedelta) is True:
-            self.__sunsetOffset = value
-        else:
-            self.logger.error("Improper type attmpted to load into self.sunsetOffset \
-                          (should be type: datetime.timedelta)")
-
-    @property
-    def timeout(self):
-        return self.__timeout
-
-    @timeout.setter
-    def timeout(self, value):
-        if isinstance(value, datetime.timedelta) is True:
-            self.__timeout = value
-        else:
-            self.logger.error("Improper type attmpted to load into self.timeout \
-                          (should be type: datetime.timedelta)")
+    def check_custom_rules(self, **kwargs):
+        """ This method contains the rule-set that controls external security lights """
+        self.home = False
+        # Process on_range variables if present   
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                if key == "datetime":
+                    self.dt = value
+                if key == "homeArray":
+                    self.homeArray = value 
+                if key == "homeTime":
+                    self.homeTime = value                    
+                if key == "home":
+                    self.home = value 
+                if key == "utcOffset":
+                    self.utcOffset = value
+                if key == "sunriseOffset":
+                    self.sunriseOffset = value
+                if key == "sunsetOffset":
+                    self.sunsetOffset = value   
+                if key == "timeout":
+                    self.timeout = value
+                if key == "schedule":
+                    self.schedule = value
+        # Calculate sunrise / sunset times
+        self.sunrise = datetime.datetime.combine(self.dt.date(), self.s.sunrise(self.dt, self.utcOffset))
+        self.sunset = datetime.datetime.combine(self.dt.date(), self.s.sunset(self.dt, self.utcOffset)) 
+        # Decision tree to determine if screen should be awake or not
+        self.temp_state = False
+        self.today = self.schedule.day[self.dt.weekday()]
+        
+        # Iterate through possible multipe on/off time pairs for today
+        for i, j in enumerate(self.today.on_range):
+            # Replace any keywords in the on and off times with their equivalent actual time values
+            j = self.replace_keywords(j)
+            # Verify all required substitutions have been made so comparison can be made
+            if isinstance(j.on_time, datetime.time()) and isinstance(j.off_time, datetime.time()):
+                # Check if current time falls between the on and off times
+                if j.on_time <= self.dt.time() <= j.off_time:
+                    # If the current time falls within the range, check extra condtion array
+                    if self.check_conditions(j.condition) is True:
+                        # If all extra conditions are true, enable device output
+                        self.temp_state = True
+            else:
+                self.logger.error("Invalid keyword used in schedule input data")
+        
+        # Based on the evaluation of the rules, set the final output state
+        if self.temp_state != self.state and self.temp_state is True:
+            self.logger.info("Turning on device [fylt1]")
+            self.state = True
+        elif self.temp_state != self.state and self.temp_state is False:
+            self.logger.info("Turning off device [fylt1]")
+            self.state = False
+        # Return result
+        return self.state                                    

@@ -9,7 +9,6 @@ import logging
 import multiprocessing
 import time
 from .device_wemo import DeviceWemo
-from rpihome.modules.schedule import Week
 
 
 # Authorship Info *****************************************************************************************************
