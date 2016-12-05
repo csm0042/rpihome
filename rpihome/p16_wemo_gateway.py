@@ -187,20 +187,19 @@ class WemoProcess(multiprocessing.Process):
         if self.port is not None and self.device is not None:
             if self.device.name.find(name) != -1:
                 self.logger.debug("Discovery successful for wemo device: %s at: %s, port: %s", name, address, str(self.port))
-                self.found = False
+                # Search device list to determine if device already exists
                 for index, device in enumerate(self.device_list):
                     if self.device.name == device.name:
-                        self.found = True
-                        self.logger.warning("Device: %s already exists in device list at address: %s and port: %s", self.device.name, address, self.port)
+                        self.logger.debug("Device: %s already exists in device list at address: %s and port: %s", self.device.name, address, self.port)
+                        self.device_list[index] = copy.copy(device)
+                        self.logger.debug("Replacing old device [%s] record in know device list with updated device attributes", self.device.name)
+                        break
+                else:
                 # If not found in list, add it
-                if self.found is False:
-                    self.logger.debug("Found wemo device name: %s at: %s, port: %s", self.device.name, address, self.port)
+                    self.logger.debug("Device [%s] not previously discovered.  Adding to known device list", self.device.name)
                     self.device_list.append(copy.copy(self.device))
-                    self.logger.debug("New device [%s] detected.  Adding to list of known devices", self.device.name)
                     self.logger.debug("Updated device list: %s", str(self.device_list))
                     return self.device
-                else:
-                    return None
             else:
                 self.logger.error("Device name mis-match between found device and configuration")
         else:
@@ -261,7 +260,7 @@ class WemoProcess(multiprocessing.Process):
                 return self.state
         if self.found is False:
             self.logger.warning("Could not find device [%s] in existing device list", name)
-            return None               
+            return None          
 
 
     def run(self):

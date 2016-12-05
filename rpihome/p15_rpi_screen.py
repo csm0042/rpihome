@@ -78,7 +78,7 @@ class RpiProcess(multiprocessing.Process):
                         self.in_msg_loop = False
                     else:
                         self.work_queue.put_nowait(self.msg_in.raw)
-                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in)                        
+                        self.logger.debug("Moving message [%s] over to internal work queue", self.msg_in.raw)                        
                 else:
                     self.msg_out_queue.put_nowait(self.msg_in.raw)
                     self.logger.debug("Redirecting message [%s] back to main" % self.msg_in.raw)                    
