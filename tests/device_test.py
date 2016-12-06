@@ -1,6 +1,7 @@
 from unittest import TestCase
 import datetime
 import multiprocessing
+if __name__ == "__main__": sys.path.append("..")
 from rpihome.devices.device import Device
 from rpihome.modules.schedule import Day, Week, OnRange, Condition
 

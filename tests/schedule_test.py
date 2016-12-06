@@ -1,53 +1,104 @@
+#!/usr/bin/python3
+""" schedule_test.py:   
+""" 
+
+# Import Required Libraries (Standard, Third Party, Local) ****************************************
+import copy
 import datetime
+import logging
+import multiprocessing
 import unittest
 import sys
 
 if __name__ == "__main__": sys.path.append("..")
 from rpihome.modules.schedule import Condition, OnRange, Day, Week
+from rpihome.devices.device import Device
 
 
+# Define test class *******************************************************************************
 class Test_Schedule(unittest.TestCase):
     def setUp(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("\n\nStarting log\n")
         self.condition = Condition()
         self.on_range = OnRange()
-        self.week = Week()
-
-    def test_schedule_condition(self):
-        self.condition = Condition(condition="user1", state="true")
-        self.assertEqual(self.condition.condition, "user1")
-        self.assertEqual(self.condition.state, "true")
-
-    def test_schedule_on_range(self):
-        self.condition = [Condition(condition="user1", state="true")]
-        self.on_range = [OnRange(ontime=datetime.time(7,30), offtime=datetime.time(7,45), condition=self.condition)]
-        self.assertEqual(self.on_range[0].on_time, datetime.time(7,30))
-        self.assertEqual(self.on_range[0].off_time, datetime.time(7,45))
-        self.assertEqual(self.on_range[0].condition[0].condition, "user1")
-        self.assertEqual(self.on_range[0].condition[0].state, "true")
-        self.assertEqual(len(self.on_range[0].condition), 1)
+        self.week = Week(logger=self.logger)
+        self.dt = datetime.datetime.now()
+        self.home_array = [True, True, True]
+        self.utc_offset = datetime.timedelta(hours=-6)
+        self.schedule = Week()
+        self.test_queue = multiprocessing.Queue(-1)
+        self.device = Device("test_device", self.test_queue, logger=self.logger)
+        self.on_range_array = []
 
     def test_schedule_day(self):
-        self.condition1_1 = Condition(condition="user1", state="true")
-        self.condition1_2 = Condition(condition="user2", state="false")
-        self.condition1_3 = Condition(condition="user3", state="false")
-        self.cond_array1 = [self.condition1_1, self.condition1_2, self.condition1_3]
-        self.on_range1 = OnRange(ontime=datetime.time(6,30), offtime=datetime.time(7,0), condition=self.cond_array1)
-        self.condition2_1 = Condition(condition="user1", state="true")
-        self.condition2_2 = Condition(condition="user2", state="true")
-        self.condition2_3 = Condition(condition="user3", state="false")
-        self.cond_array2 = [self.condition2_1, self.condition2_2, self.condition2_3]
-        self.on_range2 = OnRange(ontime=datetime.time(6,30), offtime=datetime.time(7,0), condition=self.cond_array2)
-        self.condition3_1 = Condition(condition="user1", state="true")
-        self.condition3_2 = Condition(condition="user2", state="false")
-        self.condition3_3 = Condition(condition="user3", state="true")                
-        self.cond_array3 = [self.condition3_1, self.condition3_2, self.condition3_3]
-        self.on_range3 = OnRange(ontime=datetime.time(6,30), offtime=datetime.time(7,0), condition=self.cond_array3)
-        self.on_range_array = [self.on_range1, self.on_range2, self.on_range3]
-        self.day = Day(date=datetime.date(2016,12,5), onrange=self.on_range_array)
+        self.schedule = Week()
+        self.on_range_array = []
 
-        self.assertEqual(len(self.day.on_range), 3)
-        self.assertEqual(len(self.day.on_range[0].condition), 3)
+        self.on_range = OnRange(ontime=datetime.time(6, 30),
+                                offtime=datetime.time(7, 0),
+                                condition=[Condition(condition="user1", state="true"),
+                                           Condition(condition="user2", state="false"),
+                                           Condition(condition="user3", state="false")])
+        self.on_range_array.append(copy.copy(self.on_range))
 
-        
+        self.on_range = OnRange(ontime=datetime.time(5, 40),
+                                offtime=datetime.time(6, 30),
+                                condition=[Condition(condition="user1", state="true"),
+                                           Condition(condition="user2", state="true")])
+        self.on_range_array.append(copy.copy(self.on_range))
+
+        self.on_range = OnRange(ontime=datetime.time(5, 40),
+                                offtime=datetime.time(6, 30),
+                                condition=[Condition(condition="user1", state="true"),
+                                           Condition(condition="user3", state="true")])
+        self.on_range_array.append(copy.copy(self.on_range))
+
+        self.schedule.monday.on_range = self.on_range_array
+
+        # Check combo 1 - all three home, before lights turn on
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(5, 39))
+        self.home_array = [True, True, True]
+        self.utc_offset = datetime.timedelta(hours=-6)
+        self.device.check_custom_rules(datetime=self.dt,
+                                       homeArray=self.home_array,
+                                       utcOffset=self.utc_offset,
+                                       schedule=self.schedule)
+        self.assertEqual(self.device.state, False)
+
+        # Check combo 1 - all three home, after lights turn on
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(5, 41))
+        self.home_array = [True, True, True]
+        self.utc_offset = datetime.timedelta(hours=-6)
+        self.device.check_custom_rules(datetime=self.dt,
+                                       homeArray=self.home_array,
+                                       utcOffset=self.utc_offset,
+                                       schedule=self.schedule)
+        self.assertEqual(self.device.state, True)
+
+        # Check combo 1 - all three home, before lights turn off
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(6, 29))
+        self.home_array = [True, True, True]
+        self.utc_offset = datetime.timedelta(hours=-6)
+        self.device.check_custom_rules(datetime=self.dt,
+                                       homeArray=self.home_array,
+                                       utcOffset=self.utc_offset,
+                                       schedule=self.schedule)
+        self.assertEqual(self.device.state, True)
+
+        # Check combo 1 - all three home, after lights turn off
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(6, 31))
+        self.home_array = [True, True, True]
+        self.utc_offset = datetime.timedelta(hours=-6)
+        self.device.check_custom_rules(datetime=self.dt,
+                                       homeArray=self.home_array,
+                                       utcOffset=self.utc_offset,
+                                       schedule=self.schedule)
+        self.assertEqual(self.device.state, False)
+
+
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout)
+    logger = logging.getLogger(__name__)
+    logger.level = logging.DEBUG
     unittest.main()

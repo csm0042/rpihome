@@ -46,6 +46,7 @@ class Device(object):
         self.sunsetOffset = datetime.timedelta(minutes=0)
         self.timeout = datetime.timedelta(minutes=-15)
         self.msg_to_send = Message()
+        self.check_int = int()
 
 
     @property
@@ -57,7 +58,8 @@ class Device(object):
         if isinstance(value, str) is True:
             self.__name = value
         else:
-            self.logger.error("Improper type attmpted to load into self.name (should be type: str)")
+            self.logger.error(
+                "Improper type attmpted to load into self.name (should be type: str)")
 
     @property
     def state(self):
@@ -68,7 +70,8 @@ class Device(object):
         if isinstance(value, bool) is True:
             self.__state = value
         else:
-            self.logger.error("Improper type attmpted to load into self.state (should be type: bool)")
+            self.logger.error(
+                "Improper type attmpted to load into self.state (should be type: bool)")
 
     @property
     def state_mem(self):
@@ -79,7 +82,8 @@ class Device(object):
         if isinstance(value, bool) is True or value == None:
             self.__state_mem = value
         else:
-            self.logger.error("Improper type attmpted to load into self.state_mem (should be type: bool/None)")
+            self.logger.error(
+                "Improper type attmpted to load into self.state_mem (should be type: bool/None)")
 
     @property
     def status(self):
@@ -90,7 +94,8 @@ class Device(object):
         if isinstance(value, int) is True:
             self.__status = value
         else:
-            self.logger.error("Improper type attmpted to load into self.status (should be type: int)")
+            self.logger.error(
+                "Improper type attmpted to load into self.status (should be type: int)")
 
     @property
     def statusChangeTS(self):
@@ -161,8 +166,33 @@ class Device(object):
                           (should be type: datetime.timedelta)")
 
 
+    def replace_keywords(self, on_range):
+        """ This method takes a specific OnRange structure and checks its on and off trigger times to see if they match certain keywords (eg: sunset).  If a keyword is found, the value is replaced with the actual time that should be associated with that keyword based on the time of year """
+        self.logger.debug("Checking on and off times for keyword substitutions")
+        if isinstance(on_range.on_time, str):
+            self.logger.debug("Keyword detected in place of time in on-time")
+            if on_range.on_time.lower() == "sunrise":
+                self.logger.debug("Replacing [sunrise] keyword in on-time with today's sunrise time: ", str(self.sunrise.time()))
+                on_range.on_time = self.sunrise.time()
+            elif on_range.on_time.lower() == "sunset":
+                self.logger.debug("Replacing [sunset] keyword in on-time with today's sunrise time: ", str(self.sunset.time()))
+                on_range.on_time = self.sunset.time()
+        if isinstance(on_range.off_time, str):
+            self.logger.debug("Keyword detected in place of time in off-time")
+            if on_range.off_time.lower() == "sunrise":
+                self.logger.debug("Replacing [sunrise] keyword in off-time with today's sunrise time: ", str(self.sunrise.time()))
+                on_range.off_time = self.sunrise.time()
+            elif on_range.off_time.lower() == "sunset":
+                self.logger.debug("Replacing [sunset] keyword in off-time with today's sunrise time: ", str(self.sunset.time()))
+                on_range.off_time = self.sunset.time()
+        return on_range                          
+
+
     def check_conditions(self, condition_array):
-        """ This method checks all ancilary conditions in an array associated with each on/off time pair.  It keeps a count of each condition that passes.  Once all have been checked, it determines if they have all passed if the number of successful checks equals the size of the condtion array """
+        """
+        This method checks all ancilary conditions in an array associated with each on/off time
+        pair.
+        """
         self.check_int = 0
         self.logger.debug("Checking condition tree")
         # iterate through all conditions in array and check them against their desired states
@@ -172,17 +202,21 @@ class Device(object):
                 if m.state.lower() == "true":
                     self.logger.debug("Desired state is [%s]", m.state)
                     if self.homeArray[0] is True:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[0]))                        
+                        self.logger.debug("Actual state is [%s] - check passes",
+                                          str(self.homeArray[0]))
                         self.check_int += 1
                     else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[0]))                        
+                        self.logger.debug("Actual state is [%s] - check failed",
+                                          str(self.homeArray[0]))
                 elif m.state.lower() == "false":
                     self.logger.debug("Desired state is [%s]", m.state)
                     if self.homeArray[0] is False:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[0]))                         
+                        self.logger.debug("Actual state is [%s] - check passes",
+                                          str(self.homeArray[0]))
                         self.check_int += 1
                     else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[0]))                        
+                        self.logger.debug("Actual state is [%s] - check failed",
+                                          str(self.homeArray[0]))
             elif m.condition.lower() == "user2":
                 if m.state.lower() == "true":
                     self.logger.debug("Desired state is [%s]", m.state)
@@ -252,13 +286,15 @@ class Device(object):
         # Decision tree to determine if screen should be awake or not
         self.temp_state = False
         self.today = self.schedule.day[self.dt.weekday()]
+        self.logger.debug("Schedule: %s", self.today)
         
         # Iterate through possible multipe on/off time pairs for today
         for i, j in enumerate(self.today.on_range):
+            self.logger.debug("Iterating through on-ranges: %s", j)
             # Replace any keywords in the on and off times with their equivalent actual time values
             j = self.replace_keywords(j)
             # Verify all required substitutions have been made so comparison can be made
-            if isinstance(j.on_time, datetime.time()) and isinstance(j.off_time, datetime.time()):
+            if isinstance(j.on_time, datetime.time) and isinstance(j.off_time, datetime.time):
                 # Check if current time falls between the on and off times
                 if j.on_time <= self.dt.time() <= j.off_time:
                     # If the current time falls within the range, check extra condtion array
