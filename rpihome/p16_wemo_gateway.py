@@ -279,7 +279,7 @@ class WemoProcess(multiprocessing.Process):
             # Update device status periodically
             if self.close_pending is False:
                 if self.msg_in_empty is True and self.work_queue_empty is True:
-                    if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=1):
+                    if datetime.datetime.now() > self.last_update + datetime.timedelta(seconds=60):
                         self.last_update = datetime.datetime.now()
                         # Check index pointer against device list length to prevent overflow
                         if len(self.device_list) > 0:
