@@ -24,15 +24,29 @@ class Condition(object):
     """ A class consisting of a conditoin to be checked and the desired state to pass """
     def __init__(self, logger=None, **kwargs):
         self.logger = logger or logging.getLogger(__name__)
+        self.__andor = str()
         self.__condition = str()
         self.__state = str()
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
+                if key == "andor":
+                    self.andor = value                
                 if key == "condition":
                     self.condition = value
                 if key == "state":
                     self.state = value
+
+    @property
+    def andor(self):
+        """ Returns the condition type to be checked """
+        return self.__andor
+
+    @andor.setter
+    def andor(self, value):
+        """ Sets the condition type to be checked """
+        if isinstance(value, str):
+            self.__andor = value
 
     @property
     def condition(self):
@@ -109,20 +123,38 @@ class OnRange(object):
         elif isinstance(value, Condition):
             self.__condition = [value]
 
+    def add_condition(self, andor=None, condition=None, state=None):
+        """ Adds a condition to the list of conditions associated with a given on/off time pair """
+        self.__condition.append(Condition(andor=andor, condition=condition, state=state))
+
+    def clear_all_conditions(self):
+        """ Clears condition list for a given on/off time pair """
+        self.__condition.clear()
+
+    def remove_condition(self, index):
+        """ Removes a specific condition from the condition list based on its position in the list (index) """
+        try:
+            self.__condition.pop(index)
+        except:
+            pass
+
+        
+
+
 
 class Day(object):
     """ Single day schedule """
     def __init__(self, logger=None, **kwargs):
         self.logger = logger or logging.getLogger(__name__)
         self.date = datetime.datetime.now().date()
-        self.__on_range = [OnRange()]
+        self.__range = []
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "date":
                     self.date = value
-                if key == "on_range":
-                    self.on_range = value
+                if key == "range":
+                    self.range = value
 
     @property
     def date(self):
@@ -136,17 +168,54 @@ class Day(object):
             self.__date = value
 
     @property
-    def on_range(self):
+    def range(self):
         """ Returns entire week's schedule' """
-        return self.__on_range
+        return self.__range
 
-    @on_range.setter
-    def on_range(self, value):
+    @range.setter
+    def range(self, value):
         """ Sets entire week's schedule' """
         if isinstance(value, list):
-            self.__on_range = value
+            self.__range = value
         elif isinstance(value, OnRange):
-            self.__on_range = [value]
+            self.__range = [value]
+
+    def add_range(self, on_time, off_time):
+        """ Adds a condition to the list of conditions associated with a given on/off time pair """
+        self.__range.append(OnRange(on_time=on_time, off_time=off_time))
+
+    def clear_all_ranges(self):
+        """ Clears condition list for a given on/off time pair """
+        self.__range.clear()
+
+    def remove_range(self, index):
+        """ Removes a specific condition from the condition list based on its position in the list (index) """
+        try:
+            self.__range.pop(index)
+        except:
+            pass       
+
+    def add_range_with_conditions(self, on_time, off_time, conditions=None):      
+        self.__range.append(OnRange(on_time=on_time, off_time=off_time))
+        self.index = len(self.__range) - 1
+        # Add single conditions passed in as a tuple
+        if isinstance(conditions, tuple):
+            self.logger.debug("single condition passed in with on and off time")
+            if len(conditions) == 3:
+                self.__range[self.index].add_condition(andor=conditions[0],
+                                                       condition=conditions[1],
+                                                       state=conditions[2])
+        # Add multiple conditions passed in as an array of tuples
+        if isinstance(conditions, list):
+            self.logger.debug("Multiple conditions passed in with on and off time")
+            for i, j in enumerate(conditions):
+                if isinstance(j, tuple):
+                    if len(j) == 3:
+                        self.logger.debug("Adding condition: %s %s = %s", j[0], j[1], j[2])
+                        self.__range[self.index].add_condition(andor=j[0],
+                                                               condition=j[1],
+                                                               state=j[2])
+                     
 
 
 class Week(object):

@@ -19,86 +19,117 @@ from rpihome.devices.device import Device
 class Test_Schedule(unittest.TestCase):
     def setUp(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("\n\nStarting log\n")
-        self.condition = Condition()
-        self.on_range = OnRange()
-        self.week = Week(logger=self.logger)
-        self.dt = datetime.datetime.now()
-        self.home_array = [True, True, True]
-        self.utc_offset = datetime.timedelta(hours=-6)
         self.schedule = Week()
-        self.test_queue = multiprocessing.Queue(-1)
-        self.device = Device("test_device", self.test_queue, logger=self.logger)
-        self.on_range_array = []
+        self.logger.debug("Finished running setup")
 
-    def test_schedule_day(self):
-        self.schedule = Week()
-        self.on_range_array = []
 
-        self.on_range = OnRange(ontime=datetime.time(6, 30),
-                                offtime=datetime.time(7, 0),
-                                condition=[Condition(condition="user1", state="true"),
-                                           Condition(condition="user2", state="false"),
-                                           Condition(condition="user3", state="false")])
-        self.on_range_array.append(copy.copy(self.on_range))
+    def test_data_structure_before_load(self):
+        self.logger.debug("Testing structure of data object immediately after creation")
+        self.assertEqual(len(self.schedule.day), 7)
+        self.assertEqual(len(self.schedule.day[0].range), 0)
+        self.assertEqual(len(self.schedule.monday.range), 0)
+        self.assertEqual(len(self.schedule.day[1].range), 0)
+        self.assertEqual(len(self.schedule.tuesday.range), 0)
+        self.assertEqual(len(self.schedule.day[2].range), 0)
+        self.assertEqual(len(self.schedule.wednesday.range), 0)
+        self.assertEqual(len(self.schedule.day[3].range), 0)
+        self.assertEqual(len(self.schedule.thursday.range), 0) 
+        self.assertEqual(len(self.schedule.day[4].range), 0)
+        self.assertEqual(len(self.schedule.friday.range), 0)
+        self.assertEqual(len(self.schedule.day[5].range), 0)
+        self.assertEqual(len(self.schedule.saturday.range), 0)
+        self.assertEqual(len(self.schedule.day[6].range), 0)
+        self.assertEqual(len(self.schedule.sunday.range), 0)
 
-        self.on_range = OnRange(ontime=datetime.time(5, 40),
-                                offtime=datetime.time(6, 30),
-                                condition=[Condition(condition="user1", state="true"),
-                                           Condition(condition="user2", state="true")])
-        self.on_range_array.append(copy.copy(self.on_range))
 
-        self.on_range = OnRange(ontime=datetime.time(5, 40),
-                                offtime=datetime.time(6, 30),
-                                condition=[Condition(condition="user1", state="true"),
-                                           Condition(condition="user3", state="true")])
-        self.on_range_array.append(copy.copy(self.on_range))
+    def test_range_load(self):
+        self.logger.debug("Testing loading of a single range to a single day")
+        self.schedule.monday.add_range(on_time=datetime.time(5, 40), off_time=datetime.time(6, 30))
+        self.assertEqual(len(self.schedule.day[0].range), 1)
+        self.assertEqual(len(self.schedule.monday.range), 1)
+        self.assertEqual(len(self.schedule.monday.range[0].condition), 0)
+        self.assertEqual(self.schedule.monday.range[0].on_time, datetime.time(5, 40))
+        self.assertEqual(self.schedule.monday.range[0].off_time, datetime.time(6, 30))
 
-        self.schedule.monday.on_range = self.on_range_array
 
-        # Check combo 1 - all three home, before lights turn on
-        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(5, 39))
-        self.home_array = [True, True, True]
-        self.utc_offset = datetime.timedelta(hours=-6)
-        self.device.check_custom_rules(datetime=self.dt,
-                                       homeArray=self.home_array,
-                                       utcOffset=self.utc_offset,
-                                       schedule=self.schedule)
-        self.assertEqual(self.device.state, False)
+    def test_condition_load(self):
+        self.logger.debug("Testing the addition of a condition to a single day's single on-range")
+        self.schedule.monday.add_range(on_time=datetime.time(5, 40), off_time=datetime.time(6, 30))
+        self.schedule.monday.range[0].add_condition(condition="user1", state="true")
+        self.assertEqual(len(self.schedule.day[0].range), 1)
+        self.assertEqual(len(self.schedule.monday.range), 1)
+        self.assertEqual(len(self.schedule.monday.range[0].condition), 1)
+        self.assertEqual(self.schedule.monday.range[0].on_time, datetime.time(5, 40))
+        self.assertEqual(self.schedule.monday.range[0].off_time, datetime.time(6, 30))
+        self.assertEqual(self.schedule.monday.range[0].condition[0].condition, "user1")
+        self.assertEqual(self.schedule.monday.range[0].condition[0].state, "true")
 
-        # Check combo 1 - all three home, after lights turn on
-        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(5, 41))
-        self.home_array = [True, True, True]
-        self.utc_offset = datetime.timedelta(hours=-6)
-        self.device.check_custom_rules(datetime=self.dt,
-                                       homeArray=self.home_array,
-                                       utcOffset=self.utc_offset,
-                                       schedule=self.schedule)
-        self.assertEqual(self.device.state, True)
 
-        # Check combo 1 - all three home, before lights turn off
-        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(6, 29))
-        self.home_array = [True, True, True]
-        self.utc_offset = datetime.timedelta(hours=-6)
-        self.device.check_custom_rules(datetime=self.dt,
-                                       homeArray=self.home_array,
-                                       utcOffset=self.utc_offset,
-                                       schedule=self.schedule)
-        self.assertEqual(self.device.state, True)
+    def test_load_multiple_ranges_single_day(self):
+        self.logger.debug("Testing data loading multiple ranges for a single day")
+        self.schedule.monday.add_range(on_time=datetime.time(5, 40), off_time=datetime.time(6, 30))
+        self.schedule.monday.range[0].add_condition(andor="and", condition="user1", state="true")
+        self.schedule.monday.range[0].add_condition(andor="and", condition="user2", state="true")
+        self.schedule.monday.range[0].add_condition(andor="or", condition="user3", state="true")
+        self.schedule.monday.add_range(on_time=datetime.time(6, 30), off_time=datetime.time(7, 0))
+        self.schedule.monday.range[1].add_condition(andor="and", condition="user1", state="true")
+        self.schedule.monday.range[1].add_condition(andor="and", condition="user2", state="false")
+        self.schedule.monday.range[1].add_condition(andor="and", condition="user3", state="false")
+        self.assertEqual(len(self.schedule.monday.range), 2)
+        self.assertEqual(len(self.schedule.monday.range[0].condition), 3)
+        self.assertEqual(len(self.schedule.monday.range[1].condition), 3)
+        self.assertEqual(self.schedule.monday.range[0].on_time, datetime.time(5, 40))
+        self.assertEqual(self.schedule.monday.range[0].off_time, datetime.time(6, 30))
+        self.assertEqual(self.schedule.monday.range[1].on_time, datetime.time(6, 30))
+        self.assertEqual(self.schedule.monday.range[1].off_time, datetime.time(7, 0))
 
-        # Check combo 1 - all three home, after lights turn off
-        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 5), datetime.time(6, 31))
-        self.home_array = [True, True, True]
-        self.utc_offset = datetime.timedelta(hours=-6)
-        self.device.check_custom_rules(datetime=self.dt,
-                                       homeArray=self.home_array,
-                                       utcOffset=self.utc_offset,
-                                       schedule=self.schedule)
-        self.assertEqual(self.device.state, False)
+
+    def test_complex_load_single_day(self):
+        self.logger.debug("testing complex loading of on/off range data with conditions for a single day")
+        self.schedule.monday.date = datetime.date(2016, 12, 5)
+        self.schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 40),
+                                                       off_time=datetime.time(6, 30),
+                                                       conditions=[("and", "user1", "true"),
+                                                                   ("and", "user2", "true"),
+                                                                   ("or", "user3", "true")])
+        self.schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 30),
+                                                       off_time=datetime.time(7, 0),
+                                                       conditions=[("and", "user1", "true"),
+                                                                   ("and", "user2", "false"),
+                                                                   ("and", "user3", "false")])
+        self.assertEqual(self.schedule.monday.date, datetime.date(2016, 12, 5))
+        self.assertEqual(len(self.schedule.monday.range), 2)
+        self.assertEqual(len(self.schedule.monday.range[0].condition), 3)
+        self.assertEqual(len(self.schedule.monday.range[1].condition), 3)
+        self.assertEqual(self.schedule.monday.range[0].on_time, datetime.time(5, 40))
+        self.assertEqual(self.schedule.monday.range[0].off_time, datetime.time(6, 30))
+        self.assertEqual(self.schedule.monday.range[0].condition[0].andor, "and")
+        self.assertEqual(self.schedule.monday.range[0].condition[0].condition, "user1")
+        self.assertEqual(self.schedule.monday.range[0].condition[0].state, "true")
+        self.assertEqual(self.schedule.monday.range[0].condition[1].andor, "and")
+        self.assertEqual(self.schedule.monday.range[0].condition[1].condition, "user2")
+        self.assertEqual(self.schedule.monday.range[0].condition[1].state, "true")
+        self.assertEqual(self.schedule.monday.range[0].condition[2].andor, "or")
+        self.assertEqual(self.schedule.monday.range[0].condition[2].condition, "user3")
+        self.assertEqual(self.schedule.monday.range[0].condition[2].state, "true")                
+        self.assertEqual(self.schedule.monday.range[1].on_time, datetime.time(6, 30))
+        self.assertEqual(self.schedule.monday.range[1].off_time, datetime.time(7, 0))
+        self.assertEqual(self.schedule.monday.range[1].condition[0].andor, "and")
+        self.assertEqual(self.schedule.monday.range[1].condition[0].condition, "user1")
+        self.assertEqual(self.schedule.monday.range[1].condition[0].state, "true")
+        self.assertEqual(self.schedule.monday.range[1].condition[1].andor, "and")
+        self.assertEqual(self.schedule.monday.range[1].condition[1].condition, "user2")
+        self.assertEqual(self.schedule.monday.range[1].condition[1].state, "false")
+        self.assertEqual(self.schedule.monday.range[1].condition[2].andor, "and")
+        self.assertEqual(self.schedule.monday.range[1].condition[2].condition, "user3")
+        self.assertEqual(self.schedule.monday.range[1].condition[2].state, "false")         
+        
+        
 
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout)
     logger = logging.getLogger(__name__)
     logger.level = logging.DEBUG
+    logger.debug("\n\nStarting log\n")
     unittest.main()
