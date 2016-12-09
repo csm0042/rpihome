@@ -11,7 +11,7 @@ import unittest
 import sys
 
 if __name__ == "__main__": sys.path.append("..")
-from rpihome.modules.schedule import Condition, OnRange, Day, Week
+from rpihome.modules.schedule import Condition, OnRange, Day, Week, GoogleSheetsSchedule, GoogleSheetToSched
 from rpihome.devices.device import Device
 
 
@@ -122,7 +122,18 @@ class Test_Schedule(unittest.TestCase):
         self.assertEqual(self.schedule.monday.range[1].condition[1].state, "false")
         self.assertEqual(self.schedule.monday.range[1].condition[2].andor, "and")
         self.assertEqual(self.schedule.monday.range[1].condition[2].condition, "user3")
-        self.assertEqual(self.schedule.monday.range[1].condition[2].state, "false")         
+        self.assertEqual(self.schedule.monday.range[1].condition[2].state, "false")
+
+
+    def test_google_sheets_read(self):
+        self.google_sheets_reader = GoogleSheetsSchedule()
+        self.records = self.google_sheets_reader.read_data()
+        self.schedule_builder = GoogleSheetToSched(self.logger)
+        self.schedule_builder.main(self.records)
+
+            
+
+
         
         
 
