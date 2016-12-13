@@ -337,6 +337,23 @@ class Week(object):
         if isinstance(value, Day):
             self.__day[6] = value
 
+    def match_all_to_monday(self):
+        self.tuesday = copy.copy(self.monday)
+        self.wednesday = copy.copy(self.monday)
+        self.thursday = copy.copy(self.monday)
+        self.friday = copy.copy(self.monday)
+        self.saturday = copy.copy(self.monday)
+        self.sunday = copy.copy(self.monday)
+
+    def match_all_wd_to_monday(self):
+        self.tuesday = copy.copy(self.monday)
+        self.wednesday = copy.copy(self.monday)
+        self.thursday = copy.copy(self.monday)
+        self.friday = copy.copy(self.monday)
+
+    def match_all_we_to_saturday(self):
+        self.sunday = copy.copy(self.saturday)              
+
 
 class GoogleSheetsSchedule(object):
     """ Class and methods necessary to read a schedule from a google sheets via google's api' """
