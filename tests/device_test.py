@@ -86,7 +86,7 @@ class TestDevice(TestCase):
         self.assertIsInstance(self.homeTime[1], datetime.datetime)
 
 
-    def test_check_custom_rules(self):
+    def test_check_rules(self):
         # Create condition(s)
         self.condition = Condition(condition="user1", state="true")
         # Create two time ranges to use on different days

@@ -5,6 +5,7 @@
 
 # Import Required Libraries (Standard, Third Party, Local) ****************************************
 from __future__ import print_function
+import copy
 import datetime
 import logging
 import httplib2
@@ -56,7 +57,8 @@ class Condition(object):
     def andor(self, value):
         """ Sets the condition type to be checked """
         if isinstance(value, str):
-            self.__andor = value
+            if value.lower() == "and" or value.lower() == "or":
+                self.__andor = value.lower()
 
     @property
     def condition(self):
@@ -67,7 +69,7 @@ class Condition(object):
     def condition(self, value):
         """ Sets the condition to be checked """
         if isinstance(value, str):
-            self.__condition = value
+            self.__condition = value.lower()
 
     @property
     def state(self):
@@ -78,7 +80,9 @@ class Condition(object):
     def state(self, value):
         """ Sets the desired state to be checked against """
         if isinstance(value, str):
-            self.__state = value
+            if value.lower() == "true" or value.lower() == "false":
+                self.__state = value.lower()
+
 
 
 class OnRange(object):
@@ -87,7 +91,7 @@ class OnRange(object):
         self.logger = logger or logging.getLogger(__name__)
         self.__on_time = datetime.time()
         self.__off_time = datetime.time()
-        self.__condition = []
+        self.__condition = [Condition()]
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -108,6 +112,8 @@ class OnRange(object):
         """ Sets on time for a single on/off value pair """
         if isinstance(value, datetime.time):
             self.__on_time = value
+        elif isinstance(value, datetime.datetime):
+            self.__on_time = value.time()
 
     @property
     def off_time(self):
@@ -119,6 +125,8 @@ class OnRange(object):
         """ Sets off time for a single on/off value pair """
         if isinstance(value, datetime.time):
             self.__off_time = value
+        elif isinstance(value, datetime.datetime):
+            self.__off_time = value.time()      
 
     @property
     def condition(self):
@@ -129,7 +137,7 @@ class OnRange(object):
     def condition(self, value):
         """ Sets the condition array for a single on/off value pair """
         if isinstance(value, list):
-            self.__condition = value
+            self.__condition = value[:]
         elif isinstance(value, Condition):
             self.__condition = [value]
 
@@ -154,14 +162,14 @@ class Day(object):
     def __init__(self, logger=None, **kwargs):
         self.logger = logger or logging.getLogger(__name__)
         self.date = datetime.datetime.now().date()
-        self.__range = []
+        self.__on_range = [OnRange()]
         # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "date":
                     self.date = value
-                if key == "range":
-                    self.range = value
+                if key == "on_range":
+                    self.on_range = value
 
     @property
     def date(self):
@@ -173,62 +181,43 @@ class Day(object):
         """ Sets entire week's schedule' """
         if isinstance(value, datetime.date):
             self.__date = value
+        elif isinstance(value, datetime.datetime):
+            self.__date = value.date()
 
     @property
-    def range(self):
+    def on_range(self):
         """ Returns entire week's schedule' """
-        return self.__range
+        return self.__on_range
 
-    @range.setter
-    def range(self, value):
+    @on_range.setter
+    def on_range(self, value):
         """ Sets entire week's schedule' """
         if isinstance(value, list):
-            self.__range = value
+            self.__on_range = value[:]
         elif isinstance(value, OnRange):
-            self.__range = [value]
+            self.__on_range = [value]
 
-    def add_range(self, on_time, off_time):
+    def add_range(self, on_time, off_time, condition):
         """ Adds a condition to the list of conditions associated with a given on/off time pair """
-        self.__range.append(OnRange(on_time=on_time, off_time=off_time))
+        self.__on_range.append(OnRange(on_time=on_time, off_time=off_time, condition=condition))
 
     def clear_all_ranges(self):
         """ Clears condition list for a given on/off time pair """
-        self.__range.clear()
+        self.__on_range.clear()
 
     def remove_range(self, index):
         """ Removes a specific condition from the condition list based on its position in the list (index) """
         try:
-            self.__range.pop(index)
+            self.__on_range.pop(index)
         except:
             pass       
-
-    def add_range_with_conditions(self, on_time, off_time, conditions=None):      
-        self.__range.append(OnRange(on_time=on_time, off_time=off_time))
-        self.index = len(self.__range) - 1
-        # Add single conditions passed in as a tuple
-        if isinstance(conditions, tuple):
-            self.logger.debug("single condition passed in with on and off time")
-            if len(conditions) == 3:
-                self.__range[self.index].add_condition(andor=conditions[0],
-                                                       condition=conditions[1],
-                                                       state=conditions[2])
-        # Add multiple conditions passed in as an array of tuples
-        if isinstance(conditions, list):
-            self.logger.debug("Multiple conditions passed in with on and off time")
-            for i, j in enumerate(conditions):
-                if isinstance(j, tuple):
-                    if len(j) == 3:
-                        self.logger.debug("Adding condition: %s %s = %s", j[0], j[1], j[2])
-                        self.__range[self.index].add_condition(andor=j[0],
-                                                               condition=j[1],
-                                                               state=j[2])
 
 
 class Week(object):
     """ Weekly schedule with on/off times and extra conditions for a single device """
     def __init__(self, logger=None, **kwargs):
         self.logger = logger or logging.getLogger(__name__)
-        self.__day = [Day()] * 7
+        self.__day = [Day() for i in range(7)]
          # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -258,7 +247,7 @@ class Week(object):
     def day(self, value):
         """ Sets entire week's schedule' """
         if isinstance(value, list):
-            self.__day = value
+            self.__day = value[:]
 
     @property
     def monday(self):
@@ -335,174 +324,4 @@ class Week(object):
     def sunday(self, value):
         """ Set's the schedule for Sunday """
         if isinstance(value, Day):
-            self.__day[6] = value
-
-    def match_all_to_monday(self):
-        self.tuesday = copy.copy(self.monday)
-        self.wednesday = copy.copy(self.monday)
-        self.thursday = copy.copy(self.monday)
-        self.friday = copy.copy(self.monday)
-        self.saturday = copy.copy(self.monday)
-        self.sunday = copy.copy(self.monday)
-
-    def match_all_wd_to_monday(self):
-        self.tuesday = copy.copy(self.monday)
-        self.wednesday = copy.copy(self.monday)
-        self.thursday = copy.copy(self.monday)
-        self.friday = copy.copy(self.monday)
-
-    def match_all_we_to_saturday(self):
-        self.sunday = copy.copy(self.saturday)              
-
-
-class GoogleSheetsSchedule(object):
-    """ Class and methods necessary to read a schedule from a google sheets via google's api' """
-    def __init__(self, logger=None):
-        self.logger = logger or logging.getLogger(__name__)
-        try:
-            import argparse
-            self.flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-        except ImportError:
-            self.flags = None
-        self.home_dir = str()
-        self.credential_dir = str()
-        self.store = str()
-        self.credentials = str()
-        self.path = str()
-        self.CLIENT_SECRET_FILE = str()
-        self.SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-        self.CLIENT_SECRET_FILE = 'client_secret.json'
-        self.APPLICATION_NAME = 'Device Schedule via Google Sheets API'
-
-
-    def get_credentials(self):
-        """
-        Gets valid user credentials from storage.
-        If nothing has been stored, or if the stored credentials are invalid, the OAuth2 flow is completed to obtain the new credentials. 
-        Returns: Credentials, the obtained credential.
-        """
-        self.home_dir = os.path.expanduser('~')
-        self.credential_dir = os.path.join(self.home_dir, '.credentials')
-        if not os.path.exists(self.credential_dir):
-            self.logger.debug("Creating directory: %s", self.credential_dir)
-            os.makedirs(self.credential_dir)
-        self.credential_path = os.path.join(self.credential_dir,
-                                    'sheets.googleapis.com-python-quickstart.json')
-        self.logger.debug("Setting credential path to: %s", self.credential_path)
-        self.store = Storage(self.credential_path)
-        self.logger.debug("Setting store to: %s", self.store)
-        self.credentials = self.store.get()
-        self.logger.debug("Getting credentials from store")
-        if not self.credentials or self.credentials.invalid:
-            self.logger.debug("Credentials not in store")
-            self.path = os.path.dirname(sys.argv[0])
-            self.logger.debug("System path is: %s", self.path)
-            self.CLIENT_SECRET_FILE = os.path.join(self.path, "client_secret.json")
-            self.logger.debug("Looking for json file at: %s", self.CLIENT_SECRET_FILE)
-            self.flow = client.flow_from_clientsecrets(self.CLIENT_SECRET_FILE, self.SCOPES)
-            self.flow.user_agent = self.APPLICATION_NAME
-            if self.flags:
-                self.credentials = tools.run_flow(self.flow, self.store, self.flags)
-            else: # Needed only for compatibility with Python 2.6
-                self.credentials = tools.run(self.flow, self.store)
-            self.logger.debug('Storing credentials to ' + self.credential_path)
-        self.logger.debug("Returning credentials to main program")
-        return self.credentials
-
-
-    def read_data(self, sheet_id=None, sheet_range=None):
-        """
-        Returns all data from a specific sheet using the google sheets API
-        """
-        self.credentials = self.get_credentials()
-        self.http = self.credentials.authorize(httplib2.Http())
-        self.discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?version=v4')
-        self.service = discovery.build('sheets', 'v4',
-                                       http=self.http,
-                                       discoveryServiceUrl=self.discoveryUrl)
-        # Set sheet name and range to read
-        if sheet_id is not None:
-            self.spreadsheetId = sheet_id
-        else:
-            self.spreadsheetId = '1LJpDC0wMv3eXQtJvHNav_Yty4PQcylthOxXig3_Bwu8'
-        self.logger.debug("Using sheet id: %s", self.spreadsheetId)
-        if sheet_range is not None:
-            self.rangeName = sheet_range
-        else:
-            self.rangeName = "fylt1!A3:L"
-        self.logger.debug("Reading data from range: %s", self.rangeName)
-        # Read data from sheet/range specified
-        self.result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=self.rangeName).execute()
-        self.values = self.result.get('values', [])
-        self.logger.debug("Read from table: %s", self.values)
-
-        if not self.values:
-            self.logger.debug("No data found.  Returning NONE to main")
-            return None
-        else:
-            self.logger.debug("Returning data to main")
-            return self.values
-
-
-class GoogleSheetToSched(object):
-    """ class and methods used to covert a list of records from a specifically formatted google sheet, into a schedule for the current calendar Week
-    """
-    def __init__(self, logger=None):
-        self.logger = logger or logging.getLogger(__name__)
-        self.date = datetime.date
-
-
-    def convert_date(self, record):
-        self.record = record
-        self.regex1 = r"(\d{4})\-(0?[1-9]|[1][012])\-(0?[1-9]|[12][0-9]|3[01])"
-        self.regex2 = r"(\d{4})\/(0?[1-9]|[1][012])\/(0?[1-9]|[12][0-9]|3[01])"
-        if re.search(self.regex1, self.record[0]):
-            self.logger.debug("Data in day field is a date using a '-' as a separator")
-            self.split_date = self.record[0].split("-")
-            self.record[0] = datetime.date(int(self.split_date[0]),
-                                           int(self.split_date[1]),
-                                           int(self.split_date[2]))
-            self.logger.debug("Updating to datetime.date data type: %s", self.record[0])
-        elif re.search(self.regex2, self.record[0]):
-            self.logger.debug("Data in day field is a date using a '/' as a separator")
-            self.split_date = self.record[0].split("/")
-            self.record[0] = datetime.date(int(self.split_date[0]),
-                                           int(self.split_date[1]),
-                                           int(self.split_date[2]))
-            self.logger.debug("Updating to datetime.date data type: %s", self.record[0])
-        else:
-            self.logger.debug("Data in day field is not a specific date")
-        return self.record
-
-
-        
-        
-
-    def main(self, records):
-        """ Don't really know what to call this yet, but this will be the main decoder sequence' """
-        self.records = records
-        self.logger.debug("\n\nDecoding starting for record set:\n%s", self.records)
-        # First step is to convert all dates in the leading column of the data to datetime objects
-        for index, record in enumerate(self.records):
-            self.record = self.convert_date(record)
-            self.records[index] = self.record
-        self.logger.debug("\n\nUpdated record-set:\n%s", self.records)
-        # Next step is to determine the week start and end dates of this current week.  This information will be used to filter out specific date assignments outside of this range
-        self.dt_now = datetime.datetime.now()
-        self.day = self.dt_now.weekday()
-        self.dt_monday = self.dt_now + datetime.timedelta(days=-self.day)
-        self.logger.debug("week starts on: %s", self.dt_monday.date())
-        self.dt_sunday = self.dt_monday + datetime.timedelta(days=6)
-        self.logger.debug("week ends on: %s", self.dt_sunday.date())
-        # Now search the record list and remove any items that have specific dates in their day data fields, but don't fall within the range of the current week being considered
-        for index, record in enumerate(self.records):
-            if isinstance(record[0], datetime.date):
-                if record[0] < self.dt_monday.date() or record[0] > self.dt_sunday.date():
-                    self.logger.debug("Record [%s] falls outside of range and will be discarded", record)
-                    self.records.pop(index)
-        self.logger.debug("Updated record list: %s", self.records)
-        # We are now left with only data from the schedule that in some way applies to this week.  Now we apply the records to each day based on a pre-defined priority
-
-
-                
-
+            self.__day[6] = value      
