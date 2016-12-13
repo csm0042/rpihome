@@ -276,6 +276,7 @@ class WemoProcess(multiprocessing.Process):
             if self.close_pending is False:
                 self.process_work_queue()
 
+            """
             # Update device status periodically
             if self.close_pending is False:
                 if self.msg_in_empty is True and self.work_queue_empty is True:
@@ -288,6 +289,7 @@ class WemoProcess(multiprocessing.Process):
                             # Check one device each scan
                             self.msg_162(self.device_list[self.index].name, "02")
                             self.index += 1
+            """
 
             # Close process
             if self.close_pending is True:
