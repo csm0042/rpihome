@@ -193,71 +193,48 @@ class Device(object):
         This method checks all ancilary conditions in an array associated with each on/off time
         pair.
         """
-        self.check_int = 0
-        self.logger.debug("Checking condition tree")
-        # iterate through all conditions in array and check them against their desired states
-        for k, m in enumerate(condition_array):
-            if m.conditon.lower() == "user1":
-                self.logger.debug("Condition #[%s] is [%s]", str(k), m.condition)
-                if m.state.lower() == "true":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[0] is True:
-                        self.logger.debug("Actual state is [%s] - check passes",
-                                          str(self.homeArray[0]))
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed",
-                                          str(self.homeArray[0]))
-                elif m.state.lower() == "false":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[0] is False:
-                        self.logger.debug("Actual state is [%s] - check passes",
-                                          str(self.homeArray[0]))
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed",
-                                          str(self.homeArray[0]))
-            elif m.condition.lower() == "user2":
-                if m.state.lower() == "true":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[2] is True:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[2]))                        
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[2]))                        
-                elif m.state.lower() == "false":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[2] is False:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[2]))
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[2]))
-            elif m.condition.lower() == "user3":                
-                if m.state.lower() == "true":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[3] is True:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[3]))
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[3]))
-                elif m.state.lower() == "false":
-                    self.logger.debug("Desired state is [%s]", m.state)
-                    if self.homeArray[3] is False:
-                        self.logger.debug("Actual state is [%s] - check passes", str(self.homeArray[3]))
-                        self.check_int += 1
-                    else:
-                        self.logger.debug("Actual state is [%s] - check failed", str(self.homeArray[3]))                        
-        # Once all conditions are checked, if the number of condition-state pairs that passed equal the number of conditions, then all passed.
-        if self.check_int == len(condition_array):
-            self.logger.debug("All checks passed")
+        self.code_to_execute = str()
+        self.logger.debug("Building if statement")
+        # iterate through all conditions in array and create custom if statement
+        for index, cond in enumerate(condition_array):
+            if len(self.code_to_execute) == 0:
+                self.code_to_execute.append("if ")
+            else:
+                self.code_to_execute.append(self.condition_sub(cond.andor))
+                self.code_to_execute.append(" ")
+            self.code_to_execute.append(self.condition_sub(cond.condition))
+            self.code_to_execute.append(" ")
+            self.code_to_execute.append(self.condition_sub(cond.state))
+        self.code_to_execute.append(":")
+        self.logger.debug("Built custom if statement: [%s]", self.code_to_execute)
+        if exec(self.code_to_execute) is True:
+            self.logger.debug("Statement evaluates TRUE")
             return True
         else:
-            self.logger.debug("Not all checks passed")
+            self.logger.debug("Statement evaluates FALSE")
             return False
 
 
+    def condition_sub(self, keyword):
+        """ This method is used to substitute tag variable names for keywords in the condition evaluation method """
+        if keyword == "user1":
+            return "self.homeArray[0]"
+        elif keyword == "user2":
+            return "self.homeArray[2]"
+        elif keyword == "user3":
+            return "self.homeArray[3]"
+        elif keyword == "true":
+            return "True"
+        elif keyword == "false":
+            return "False"
+        elif keyword == "and":
+            return "and"
+        elif keyword == "or":
+            return "or"      
+     
+
     def check_custom_rules(self, **kwargs):
-        """ This method contains the rule-set that controls external security lights """
+        """ This method evaluates a custom rule-set provided by a schedule data class """
         self.home = False
         # Process on_range variables if present   
         if kwargs is not None:
@@ -295,21 +272,28 @@ class Device(object):
             j = self.replace_keywords(j)
             # Verify all required substitutions have been made so comparison can be made
             if isinstance(j.on_time, datetime.time) and isinstance(j.off_time, datetime.time):
-                # Check if current time falls between the on and off times
-                if j.on_time <= self.dt.time() <= j.off_time:
-                    # If the current time falls within the range, check extra condtion array
-                    if self.check_conditions(j.condition) is True:
-                        # If all extra conditions are true, enable device output
-                        self.temp_state = True
+                if j.on_time < j.off_time:
+                    # Check if current time falls between the on and off times
+                    if j.on_time <= self.dt.time() <= j.off_time:
+                        # If the current time falls within the range, check extra condtion array
+                        if self.check_conditions(j.condition) is True:
+                            # If all extra conditions are true, enable device output
+                            self.temp_state = True
+                else:
+                    if self.dt.time() < j.off_time or self.dt.time() >= self.on_time:
+                        # If the current time falls within the range, check extra condtion array
+                        if self.check_conditions(j.condition) is True:
+                            # If all extra conditions are true, enable device output
+                            self.temp_state = True
             else:
                 self.logger.error("Invalid keyword used in schedule input data")
         
         # Based on the evaluation of the rules, set the final output state
         if self.temp_state != self.state and self.temp_state is True:
-            self.logger.info("Turning on device [fylt1]")
+            self.logger.info("Turning on device [%s]", self.name)
             self.state = True
         elif self.temp_state != self.state and self.temp_state is False:
-            self.logger.info("Turning off device [fylt1]")
+            self.logger.info("Turning off device [%s]", self.name)
             self.state = False
         # Return result
         return self.state                                    
