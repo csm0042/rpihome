@@ -46,7 +46,7 @@ class Device(object):
         self.sunsetOffset = datetime.timedelta(minutes=0)
         self.timeout = datetime.timedelta(minutes=-15)
         self.msg_to_send = Message()
-        self.check_int = int()
+        self.schedule = Week()
 
 
     @property
@@ -58,8 +58,7 @@ class Device(object):
         if isinstance(value, str) is True:
             self.__name = value
         else:
-            self.logger.error(
-                "Improper type attmpted to load into self.name (should be type: str)")
+            self.logger.error("Improper type attmpted to load into self.name (should be type: str)")
 
     @property
     def state(self):
@@ -98,15 +97,38 @@ class Device(object):
                 "Improper type attmpted to load into self.status (should be type: int)")
 
     @property
-    def statusChangeTS(self):
-        return self.__statusChangeTS
+    def home(self):
+        return self.__home
 
-    @statusChangeTS.setter
-    def statusChangeTS(self, value):
-        if isinstance(value, datetime.datetime) is True:
-            self.__statusChangeTS = value
+    @home.setter
+    def home(self, value):
+        if isinstance(value, bool) is True or value == None:
+            self.__home = value
         else:
-            self.logger.error("Improper type attmpted to load into self.statusChangeTS (should be: datetime)")
+            self.logger.error("Improper type attmpted to load into self.home (should be type: bool or None)")
+
+    @property
+    def homeArray(self):
+        return self.__homeArray
+
+    @homeArray.setter
+    def homeArray(self, value):
+        if isinstance(value, list) is True:
+            self.__homeArray = value[:]
+        else:
+            self.logger.error("Improper type attmpted to load into self.homeArray \
+                          (should be type: list)")
+    
+    @property
+    def homeNew(self):
+        return self.__homeNew
+
+    @homeNew.setter
+    def homeNew(self, value):
+        if isinstance(value, bool) is True or value == None:
+            self.__homeNew = value
+        else:
+            self.logger.error("Improper type attmpted to load into self.homeNew (should be type: bool or None)")                          
 
     @property
     def online(self):
@@ -131,27 +153,15 @@ class Device(object):
             self.logger.error("Improper type attmpted to load into self.dt")
 
     @property
-    def home(self):
-        return self.__home
+    def statusChangeTS(self):
+        return self.__statusChangeTS
 
-    @home.setter
-    def home(self, value):
-        if isinstance(value, bool) is True or value == None:
-            self.__home = value
+    @statusChangeTS.setter
+    def statusChangeTS(self, value):
+        if isinstance(value, datetime.datetime) is True:
+            self.__statusChangeTS = value
         else:
-            self.logger.error("Improper type attmpted to load into self.home (should be type: bool or None)")
-
-    @property
-    def homeArray(self):
-        return self.__homeArray
-
-    @homeArray.setter
-    def homeArray(self, value):
-        if isinstance(value, list) is True:
-            self.__homeArray = value
-        else:
-            self.logger.error("Improper type attmpted to load into self.homeArray \
-                          (should be type: list)")
+            self.logger.error("Improper type attmpted to load into self.statusChangeTS (should be: datetime)")
 
     @property
     def utcOffset(self):
@@ -164,6 +174,17 @@ class Device(object):
         else:
             self.logger.error("Improper type attmpted to load into self.utcOffset \
                           (should be type: datetime.timedelta)")
+
+    @property
+    def schedule(self):
+        return self.__schedule
+
+    @schedule.setter
+    def schedule(self, value):
+        if isinstance(value, Week) is True:
+            self.__schedule = value
+        else:
+            self.logger.error("Improper type attempted to load into self.schedule (should be type Week())")
      
 
     def check_rules(self, **kwargs):
