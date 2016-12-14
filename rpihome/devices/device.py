@@ -7,7 +7,6 @@ import datetime
 import logging
 from rpihome.modules.sun import Sun
 from rpihome.modules.message import Message
-from rpihome.modules.schedule import Day, Week, OnRange, Condition
 
 
 # Authorship Info *********************************************************************************
