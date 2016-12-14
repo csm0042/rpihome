@@ -8,7 +8,6 @@ import datetime
 import logging
 from .device import Device
 from rpihome.modules.message import Message
-from rpihome.modules.schedule import Week
 
 
 
