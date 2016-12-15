@@ -11,6 +11,7 @@ import unittest
 if __name__ == "__main__": sys.path.append("..")
 from rpihome.devices.device import Device
 from rpihome.modules.schedule import Day, Week, OnRange, Condition
+from rpihome.modules.sun import Sun
 
 
 # Define test class *******************************************************************************
@@ -99,57 +100,94 @@ class TestDevice(unittest.TestCase):
         self.assertIsInstance(self.device.utcOffset, datetime.timedelta)
         self.assertEqual(self.device.utcOffset, datetime.timedelta(hours=-6))
 
+
+    def load_schedule(self):
+        self.device.schedule = Week(
+            monday=Day(
+                date=datetime.date(2016,12,12),
+                on_range=[OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=[Condition(andor="and", condition="user1", state="true"), 
+                               Condition(andor="or", condition="user2", state="true"),
+                               Condition(andor="or", condition="user3", state="true")]),
+                          OnRange(
+                    on_time=datetime.time(16, 0),
+                    off_time=datetime.time(18, 0),
+                    condition=[Condition(andor="and", condition="user1", state="true"), 
+                               Condition(andor="and", condition="user2", state="false"),
+                               Condition(andor="and", condition="user3", state="false")])]),
+            tuesday=Day(
+                date=datetime.date(2016,12,13),
+                on_range=OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=Condition(andor="and", condition="user1", state="true"))),
+            wednesday=Day(
+                date=datetime.date(2016,12,14),
+                on_range=OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=Condition(andor="and", condition="user1", state="true"))),
+            thursday=Day(
+                date=datetime.date(2016,12,15),
+                on_range=OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=Condition(andor="and", condition="user1", state="true"))),
+            friday=Day(
+                date=datetime.date(2016,12,16),
+                on_range=OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=Condition(andor="and", condition="user1", state="true"))),
+            saturday=Day(
+                date=datetime.date(2016,12,17),
+                on_range=OnRange(
+                    on_time=datetime.time(12, 0),
+                    off_time=datetime.time(14, 0),
+                    condition=Condition(andor="and", condition="user1", state="true"))),
+            sunday=Day(
+                date=datetime.date(2016,12,18),
+                on_range=OnRange(
+                    on_time=self.sun.sunrise(
+                        when=datetime.date(2016,12,18), 
+                        offset=datetime.timedelta(hours=-6)),
+                    off_time=self.sun.sunset(
+                        when=datetime.date(2016,12,18), 
+                        offset=datetime.timedelta(hours=-6)),
+                    condition=Condition(andor="and", condition="user1", state="true"))))
+
+
     def test_schedule(self):
-        self.device.schedule = Week(monday=Day(date=datetime.date(2016,12,12),
-                                    on_range=OnRange(on_time=datetime.time(12, 0),
-                                                     off_time=datetime.time(14, 0),
-                                                     condition=Condition(andor="and",
-                                                                         condition="user1",
-                                                                         state="true"))),
-                         tuesday=Day(date=datetime.date(2016,12,13),
-                                     on_range=OnRange(on_time=datetime.time(12, 0),
-                                                      off_time=datetime.time(14, 0),
-                                                      condition=Condition(andor="and",
-                                                                          condition="user1",
-                                                                          state="true"))),
-                         wednesday=Day(date=datetime.date(2016,12,14),
-                                       on_range=OnRange(on_time=datetime.time(12, 0),
-                                                        off_time=datetime.time(14, 0),
-                                                        condition=Condition(andor="and",
-                                                                            condition="user1",
-                                                                            state="true"))),
-                         thursday=Day(date=datetime.date(2016,12,15),
-                                      on_range=OnRange(on_time=datetime.time(12, 0),
-                                                       off_time=datetime.time(14, 0),
-                                                       condition=Condition(andor="and",
-                                                                           condition="user1",
-                                                                           state="true"))),
-                         friday=Day(date=datetime.date(2016,12,16),
-                                    on_range=OnRange(on_time=datetime.time(12, 0),
-                                                     off_time=datetime.time(14, 0),
-                                                     condition=Condition(andor="and",
-                                                                         condition="user1",
-                                                                         state="true"))),
-                         saturday=Day(date=datetime.date(2016,12,17),
-                                      on_range=OnRange(on_time=datetime.time(12, 0),
-                                                       off_time=datetime.time(14, 0),
-                                                       condition=Condition(andor="and",
-                                                                           condition="user1",
-                                                                           state="true"))),
-                         sunday=Day(date=datetime.date(2016,12,18),
-                                    on_range=OnRange(on_time=datetime.time(12, 0),
-                                                     off_time=datetime.time(14, 0),
-                                                     condition=Condition(andor="and",
-                                                                         condition="user1",
-                                                                         state="true"))))
+        self.sun = Sun()
+        self.load_schedule()
         self.assertEqual(self.device.schedule.monday.date, datetime.date(2016, 12, 12))
-        self.assertEqual(len(self.device.schedule.monday.on_range), 1)
+        self.assertEqual(len(self.device.schedule.monday.on_range), 2)
         self.assertEqual(self.device.schedule.monday.on_range[0].on_time, datetime.time(12, 0))
         self.assertEqual(self.device.schedule.monday.on_range[0].off_time, datetime.time(14, 0))
-        self.assertEqual(len(self.device.schedule.monday.on_range[0].condition), 1)
+        self.assertEqual(len(self.device.schedule.monday.on_range[0].condition), 3)
         self.assertEqual(self.device.schedule.monday.on_range[0].condition[0].andor, "and")
         self.assertEqual(self.device.schedule.monday.on_range[0].condition[0].condition, "user1")
         self.assertEqual(self.device.schedule.monday.on_range[0].condition[0].state, "true")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[1].andor, "or")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[1].condition, "user2")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[1].state, "true")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[2].andor, "or")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[2].condition, "user3")
+        self.assertEqual(self.device.schedule.monday.on_range[0].condition[2].state, "true")
+        self.assertEqual(self.device.schedule.monday.on_range[1].on_time, datetime.time(16, 0))
+        self.assertEqual(self.device.schedule.monday.on_range[1].off_time, datetime.time(18, 0))
+        self.assertEqual(len(self.device.schedule.monday.on_range[1].condition), 3)
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[0].andor, "and")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[0].condition, "user1")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[0].state, "true")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[1].andor, "and")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[1].condition, "user2")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[1].state, "false")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[2].andor, "and")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[2].condition, "user3")
+        self.assertEqual(self.device.schedule.monday.on_range[1].condition[2].state, "false")                     
         self.assertEqual(self.device.schedule.tuesday.date, datetime.date(2016, 12, 13))
         self.assertEqual(len(self.device.schedule.tuesday.on_range), 1)
         self.assertEqual(self.device.schedule.tuesday.on_range[0].on_time, datetime.time(12, 0))
@@ -192,12 +230,71 @@ class TestDevice(unittest.TestCase):
         self.assertEqual(self.device.schedule.saturday.on_range[0].condition[0].state, "true")
         self.assertEqual(self.device.schedule.sunday.date, datetime.date(2016, 12, 18))
         self.assertEqual(len(self.device.schedule.sunday.on_range), 1)
-        self.assertEqual(self.device.schedule.sunday.on_range[0].on_time, datetime.time(12, 0))
-        self.assertEqual(self.device.schedule.sunday.on_range[0].off_time, datetime.time(14, 0))
+        self.assertEqual(self.device.schedule.sunday.on_range[0].on_time, self.sun.sunrise(when=datetime.date(2016,12,18), offset=datetime.timedelta(hours=-6)))
+        self.assertEqual(self.device.schedule.sunday.on_range[0].off_time, self.sun.sunset(when=datetime.date(2016,12,18), offset=datetime.timedelta(hours=-6)))
         self.assertEqual(len(self.device.schedule.sunday.on_range[0].condition), 1)
         self.assertEqual(self.device.schedule.sunday.on_range[0].condition[0].andor, "and")
         self.assertEqual(self.device.schedule.sunday.on_range[0].condition[0].condition, "user1")
         self.assertEqual(self.device.schedule.sunday.on_range[0].condition[0].state, "true")
+
+
+    def test_eval_user(self):
+        self.sun = Sun()
+        self.load_schedule()
+        self.homeArray = [False, True, True, True]
+        self.result = self.device.eval_user(self.device.schedule.monday.on_range[0].condition[0], self.homeArray[0])
+        self.assertEqual(self.result, ("and", False))
+        self.result = self.device.eval_user(self.device.schedule.monday.on_range[0].condition[1], self.homeArray[2])
+        self.assertEqual(self.result, ("or", True))
+
+
+    def test_eval_conditions(self):
+        self.sun = Sun()
+        self.load_schedule()
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [False, True, True, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [True, True, False, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)  
+        self.device.homeArray = [True, True, True, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [True, True, False, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [False, True, True, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [False, True, False, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [False, True, False, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), False)
+        self.device.schedule.monday.on_range[0].condition[1].andor="and"
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [True, True, False, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), True)
+        self.device.homeArray = [True, True, False, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[0].condition), False)
+        # 2nd on-range
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
+        self.device.homeArray = [False, True, True, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
+        self.device.homeArray = [True, True, False, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)  
+        self.device.homeArray = [True, True, True, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
+        self.device.homeArray = [True, True, False, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), True)
+        self.device.homeArray = [False, True, True, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
+        self.device.homeArray = [False, True, False, True]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
+        self.device.homeArray = [False, True, False, False]
+        self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)                              
+
+
+
+
 
 
 

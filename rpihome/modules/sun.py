@@ -31,13 +31,17 @@ class Sun:
         self.lat=lat  
         self.long=long  
     
-    def sunrise(self,when=None, offset=timedelta(hours=0)):  
+    def sunrise(self, when=None, offset=timedelta(hours=0)):  
         """ 
         return the time of sunrise as a datetime.time object when is a datetime.datetime object. If none is given 
         a local time zone is assumed (including daylight saving if present) 
-        """  
+        """
         if when is None : 
-            when = datetime.now()  
+            when = datetime.now()
+        else:
+            when = datetime.combine(when, time(12,0))
+
+          
         self.__preptime(when)  
         self.__calc()  
         self.sunrise_UTC_h, self.sunrise_UTC_m, self.sunrise_UTC_s = Sun.__timefromdecimalday(self.sunrise_t)
@@ -49,9 +53,11 @@ class Sun:
             self.sunrise_adj = datetime.combine((date.today()+ timedelta(days=1)), self.sunrise_UTC) + offset  
         return self.sunrise_adj.time()
     
-    def sunset(self,when=None, offset=timedelta(hours=0)):  
+    def sunset(self, when=None, offset=timedelta(hours=0)):  
         if when is None : 
-            when = datetime.now()  
+            when = datetime.now() 
+        else:
+            when = datetime.combine(when, time(12,0))             
         self.__preptime(when)  
         self.__calc()  
         self.sunset_UTC_h, self.sunset_UTC_m, self.sunset_UTC_s = Sun.__timefromdecimalday(self.sunset_t)
@@ -63,9 +69,11 @@ class Sun:
             self.sunset_adj = datetime.combine((date.today()+ timedelta(days=1)), self.sunset_UTC) + offset        
         return self.sunset_adj.time()
     
-    def solarnoon(self,when=None, offset=timedelta(hours=0)):  
+    def solarnoon(self, when=None, offset=timedelta(hours=0)):  
         if when is None : 
             when = datetime.now()  
+        else:
+            when = datetime.combine(when, time(12,0))            
         self.__preptime(when)  
         self.__calc()  
         self.solarnoon_UTC_h, self.solarnoon_UTC_m, self.solarnoon_UTC_s = Sun.__timefromdecimalday(self.solarnoon_t)

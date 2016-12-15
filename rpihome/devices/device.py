@@ -40,6 +40,7 @@ class Device(object):
         self.homeArray = []
         self.homeTime = []
         self.homeNew = False
+        self.result = 0
         self.s = Sun(lat=38.566, long=-90.410)
         self.utcOffset = datetime.timedelta(hours=0)
         self.sunriseOffset = datetime.timedelta(minutes=0)
@@ -184,8 +185,8 @@ class Device(object):
         if isinstance(value, Week) is True:
             self.__schedule = value
         else:
-            self.logger.error("Improper type attempted to load into self.schedule (should be type Week())")
-     
+            self.logger.error("Improper type attempted to load into self.schedule (should be type Week())")                
+
 
     def check_rules(self, **kwargs):
         """ This method evaluates a custom rule-set provided by a schedule data class
@@ -212,124 +213,88 @@ class Device(object):
                     self.timeout = value
                 if key == "schedule":
                     self.schedule = value
-        # Calculate sunrise / sunset times
-        self.sunrise = datetime.datetime.combine(self.dt.date(), self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(self.dt.date(), self.s.sunset(self.dt, self.utcOffset)) 
-        # Decision tree to determine if screen should be awake or not
-        self.temp_state = False
+
+        # Pull today's data from schedule to evaluate
         self.today = self.schedule.day[self.dt.weekday()]
         self.logger.debug("Schedule: %s", self.today)
-        
-        # Iterate through possible multipe on/off time pairs for today
-        for index, onRange in enumerate(self.today.on_range):
-            self.logger.debug("Iterating through on-ranges: %s", onRange)
-            # Replace any keywords in the on and off times with their equivalent actual time values
-            onRange = self.replace_keywords(onRange)
-            # Verify all required substitutions have been made so comparison can be made
-            if isinstance(onRange.on_time, datetime.time) and isinstance(onRange.off_time, datetime.time):
-                # Evaluate rule
-                if onRange.on_time < onRange.off_time:
-                    self.logger.debug("on-time for device is earlier in the day than the off time (not an overnight event)")
-                    # Check if current time falls between the on and off times (daytime events)
-                    if onRange.on_time <= self.dt.time() <= onRange.off_time:
-                        self.logger.debug("Current time is within acceptable range for device to turn on.  Checking auxilary conditons")
-                        # If the current time falls within the range, check extra condtion array
-                        if self.check_conditions(onRange.condition) is True:
-                            self.logger.debug("Auxilary conditions evaluate TRUE")
-                            # If all extra conditions are true, enable device output
-                            self.logger.debug("Device should be turned ON")
-                            self.temp_state = True
-                        else:
-                            self.logger.debug("Auxilary conditions evaluate FALSE")
-                else:
-                    self.logger.debug("on-time for device is later in the day than the off time (overnight event)")
-                    # Check if current time falls between the on and off times (overnight events)
-                    if self.dt.time() < onRange.off_time or self.dt.time() >= onRange.on_time:
-                        self.logger.debug("Current time is within acceptable range for device to turn on.  Checking auxilary conditons")
-                        # If the current time falls within the range, check extra condtion array
-                        if self.check_conditions(onRange.condition) is True:
-                            self.logger.debug("Auxilary conditions evaluate TRUE")
-                            # If all extra conditions are true, enable device output
-                            self.logger.debug("Device should be turned ON")
-                            self.temp_state = True
-                        else:
-                            self.logger.debug("Auxilary conditions evaluate FALSE")
-            else:
-                self.logger.error("Invalid keyword used in schedule input data")
-        
+
+        # Check each on_range associated with this device and day in the schedule.  If any evaluate true, then the device should be turned on.  If none evaluate true, the device will remain off (or turn off if previously on)
+        self.result = 0
+        for index, on_range in enumerate(self.today.on_range):
+            self.result = self.eval_on_range(self.dt, on_range, self.result)
+
         # Based on the evaluation of the rules, set the final output state
-        if self.temp_state != self.state and self.temp_state is True:
-            self.logger.info("Turning on device [%s]", self.name)
-            self.state = True
-        elif self.temp_state != self.state and self.temp_state is False:
+        if self.result == 0 and self.state is not False:
             self.logger.info("Turning off device [%s]", self.name)
             self.state = False
+        elif self.result > 0 and self.state is not True:
+            self.logger.info("Turning on device [%s]", self.name)
+            self.state = True
+
         # Return result
         return self.state
 
 
-    def replace_keywords(self, on_range):
-        """ This method takes a specific OnRange structure and checks its on and off trigger times to see if they match certain keywords (eg: sunset).  If a keyword is found, the value is replaced with the actual time that should be associated with that keyword based on the time of year
-        """
-        self.logger.debug("Checking on and off times for keyword substitutions")
-        if isinstance(on_range.on_time, str):
-            self.logger.debug("Keyword detected in place of time in on-time")
-            if on_range.on_time.lower() == "sunrise":
-                self.logger.debug("Replacing [sunrise] keyword in on-time with today's sunrise time: ", str(self.sunrise.time()))
-                on_range.on_time = self.sunrise.time()
-            elif on_range.on_time.lower() == "sunset":
-                self.logger.debug("Replacing [sunset] keyword in on-time with today's sunrise time: ", str(self.sunset.time()))
-                on_range.on_time = self.sunset.time()
-        if isinstance(on_range.off_time, str):
-            self.logger.debug("Keyword detected in place of time in off-time")
-            if on_range.off_time.lower() == "sunrise":
-                self.logger.debug("Replacing [sunrise] keyword in off-time with today's sunrise time: ", str(self.sunrise.time()))
-                on_range.off_time = self.sunrise.time()
-            elif on_range.off_time.lower() == "sunset":
-                self.logger.debug("Replacing [sunset] keyword in off-time with today's sunrise time: ", str(self.sunset.time()))
-                on_range.off_time = self.sunset.time()
-        return on_range          
+    def eval_on_range(self, dt_current, on_range, result):
+        """ This method evaluates a single on-range and its associated conditons and determines if it's true or not """
+        if on_range.on_time <= on_range.off_time:
+            # Device turns on and then back off in the same Day
+            if dt_current.time() >= on_range.on_time and dt_current.time() < onrange.off_time:
+                # If true, current time falls between defined on and off times
+                if self.eval_conditions(on_range.condition) is true:
+                    result += 1
+        elif on_range.on_time > on_range.off_time:
+            # This assignment represents an overnight assignment and must be evaluated differently
+            if dt_current.time() >= on_range.on_time or dt_current.time() < on_range.off_time:
+                # If true, current time falls between defined on and off times
+                if self.eval_conditions(on_range.condition) is true:
+                    result += 1
+        # Return result (a non-zero result means the range and associated conditions passed)
+        return result
 
 
-    def check_conditions(self, condition_array):
-        """ This method checks all ancilary conditions in an array associated with each on/off time pair
-        """
-        self.code_to_execute = str()
-        self.logger.debug("Building if statement")
-        # iterate through all conditions in array and create custom if statement
-        for index, cond in enumerate(condition_array):
-            if len(self.code_to_execute) == 0:
-                self.code_to_execute.append("if ")
+    def eval_conditions(self, conditions):
+        self.result = ()
+        self.result_list = []
+        # Create a list of individual condition results
+        for i, cond in enumerate(conditions):
+            if cond.condition.lower() == "user1":
+                self.result_list.append(self.eval_user(cond, self.homeArray[0]))
+            elif cond.condition.lower() == "user2":
+                self.result_list.append(self.eval_user(cond, self.homeArray[2]))
+            elif cond.condition.lower() == "user3":
+                self.result_list.append(self.eval_user(cond, self.homeArray[3]))
+        # Build combined if statement
+        self.statement = str()
+        for i, result in enumerate(self.result_list):
+            if i == 0:
+                self.statement = self.statement + str(result[1])
             else:
-                self.code_to_execute.append(self.condition_sub(cond.andor))
-                self.code_to_execute.append(" ")
-            self.code_to_execute.append(self.condition_sub(cond.condition))
-            self.code_to_execute.append(" ")
-            self.code_to_execute.append(self.condition_sub(cond.state))
-        self.code_to_execute.append(":")
-        self.logger.debug("Built custom if statement: [%s]", self.code_to_execute)
-        if exec(self.code_to_execute) is True:
-            self.logger.debug("Statement evaluates TRUE")
-            return True
-        else:
-            self.logger.debug("Statement evaluates FALSE")
-            return False
+                self.statement = self.statement + " " + str(result[0] + " " + str(result[1]))
+        print(self.statement)
+        print(eval(self.statement))
+        return eval(self.statement)
+        
 
 
-    def condition_sub(self, keyword):
-        """ This method is used to substitute tag variable names for keywords in the condition evaluation method
-        """
-        if keyword == "user1":
-            return "self.homeArray[0]"
-        elif keyword == "user2":
-            return "self.homeArray[2]"
-        elif keyword == "user3":
-            return "self.homeArray[3]"
-        elif keyword == "true":
-            return "True"
-        elif keyword == "false":
-            return "False"
-        elif keyword == "and":
-            return "and"
-        elif keyword == "or":
-            return "or"                                                
+    def eval_user(self, cond, home_flag):
+        self.result = None
+        if cond.state.lower() == "true":
+            if home_flag is True:
+                self.result = (cond.andor, True)
+            elif home_flag is False:
+                self.result = (cond.andor, False)
+        elif cond.state.lower() == "false":
+            if home_flag is True:
+                self.result = (cond.andor, False)
+            elif home_flag is False:
+                self.result = (cond.andor, True)
+        # Return result
+        return self.result
+              
+        
+
+
+        
+        
+        
