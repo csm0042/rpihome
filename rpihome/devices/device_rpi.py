@@ -5,7 +5,7 @@
 # Import Required Libraries (Standard, Third Party, Local) *****************************************
 import copy
 import logging
-from .device import Device
+from .device_auto import DeviceAuto
 from rpihome.modules.message import Message
 
 
@@ -21,12 +21,15 @@ __status__ = "Development"
 
 
 # Device class *************************************************************************************
-class DeviceRPI(Device):
+class DeviceRPI(DeviceAuto):
     """ Test class and methods for the DeviceRPI class """
     def __init__(self, name, msg_out_queue, logger=None):
-        # Configure logger
+        self.name = name
+        self.msg_out_queue = msg_out_queue
         self.logger = logger or logging.getLogger(__name__)        
-        super().__init__(name, msg_out_queue, self.logger)
+        super().__init__(self.name, self.msg_out_queue, self.logger)
+        self.msg_to_send = Message()
+
 
     def command(self):
         """ This method is used to send a single command to various devices when necessary instead

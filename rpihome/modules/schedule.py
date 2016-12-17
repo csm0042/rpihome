@@ -8,15 +8,10 @@ from __future__ import print_function
 import copy
 import datetime
 import logging
-import httplib2
 import re
 import os
 import sys
 
-from apiclient import discovery
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
 
 
 # Authorship Info *********************************************************************************

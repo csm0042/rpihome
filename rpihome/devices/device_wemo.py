@@ -6,7 +6,7 @@
 import copy
 import datetime
 import logging
-from .device import Device
+from .device_auto import DeviceAuto
 from rpihome.modules.message import Message
 from rpihome.modules.schedule import Week
 
@@ -24,15 +24,16 @@ __status__ = "Development"
 
 
 # Device class ************************************************************************************
-class DeviceWemo(Device):
+class DeviceWemo(DeviceAuto):
     def __init__(self, name, address, msg_out_queue, logger=None):
-        # Configure logger
-        self.logger = logger or logging.getLogger(__name__)        
-        super().__init__(name, msg_out_queue, self.logger)
         self.name = name
         self.address = address
         self.msg_out_queue = msg_out_queue
+        self.logger = logger or logging.getLogger(__name__)        
+        super().__init__(self.name, self.msg_out_queue, self.logger)
+        self.msg_to_send = Message()
         self.discover_device()
+
 
     def discover_device(self):
         self.logger.debug("Sending command to wemo gateway to find device at address: %s", self.address)
