@@ -287,6 +287,57 @@ class TestDevice(unittest.TestCase):
         self.assertEqual(self.device.eval_conditions(self.device.schedule.monday.on_range[1].condition), False)
 
 
+    def test_eval_on_range(self):
+        self.sun = Sun()
+        self.load_schedule()
+        self.device.homeArray = [True, True, True, True]
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(11, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 0)
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 1)
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(15, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 0)
+        self.device.homeArray = [True, False, False, False]        
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 1)
+        self.device.homeArray = [False, False, True, False]        
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 1)
+        self.device.homeArray = [False, False, False, True]        
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 1)
+        self.device.homeArray = [False, False, False, False]        
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.eval_on_range(self.dt, self.device.schedule.monday.on_range[0], 0), 0)
+
+
+
+    def test_check_rules(self):
+        self.sun = Sun()
+        self.load_schedule()
+        self.device.homeArray = [True, True, True, True]
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(11, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), False)
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), True)
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(15, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), False)
+        self.device.homeArray = [False, True, True, True]
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), True)
+        self.device.homeArray = [False, True, False, True]
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), True)
+        self.device.homeArray = [False, True, False, False]
+        self.dt = datetime.datetime.combine(datetime.date(2016, 12, 12), datetime.time(13, 0))
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), False)
+        self.dt = datetime.datetime.combine(datetime.date(2016,12,18), datetime.time(13,0))
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), True)
+        
+
+
+
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout)
     logger = logging.getLogger(__name__)

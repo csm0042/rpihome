@@ -179,6 +179,62 @@ class DeviceAuto(Device):
             self.logger.error("Invalid type attmpted to load into self.result_sum (should by type int)")               
 
 
+    def eval_user(self, cond, home_flag):
+        self.result = None
+        if cond.state.lower() == "true":
+            if home_flag is True:
+                self.result = (cond.andor, True)
+            elif home_flag is False:
+                self.result = (cond.andor, False)
+        elif cond.state.lower() == "false":
+            if home_flag is True:
+                self.result = (cond.andor, False)
+            elif home_flag is False:
+                self.result = (cond.andor, True)
+        # Return result
+        return self.result
+
+
+    def eval_conditions(self, conditions):
+        self.result = ()
+        self.result_list = []
+        # Create a list of individual condition results
+        for i, cond in enumerate(conditions):
+            if cond.condition.lower() == "user1":
+                self.result_list.append(self.eval_user(cond, self.homeArray[0]))
+            elif cond.condition.lower() == "user2":
+                self.result_list.append(self.eval_user(cond, self.homeArray[2]))
+            elif cond.condition.lower() == "user3":
+                self.result_list.append(self.eval_user(cond, self.homeArray[3]))
+        # Build combined if statement
+        self.statement = str()
+        for i, result in enumerate(self.result_list):
+            if i == 0:
+                self.statement = self.statement + str(result[1])
+            else:
+                self.statement = self.statement + " " + str(result[0] + " " + str(result[1]))
+        return eval(self.statement)
+
+
+    def eval_on_range(self, dt_current, on_range, result):
+        """ This method evaluates a single on-range and its associated conditons and determines if it's true or not """
+        self.result_sum = result
+        if on_range.on_time <= on_range.off_time:
+            # Device turns on and then back off in the same Day
+            if dt_current.time() >= on_range.on_time and dt_current.time() < on_range.off_time:
+                # If true, current time falls between defined on and off times
+                if self.eval_conditions(on_range.condition) is True:
+                    self.result_sum += 1
+        elif on_range.on_time > on_range.off_time:
+            # This assignment represents an overnight assignment and must be evaluated differently
+            if dt_current.time() >= on_range.on_time or dt_current.time() < on_range.off_time:
+                # If true, current time falls between defined on and off times
+                if self.eval_conditions(on_range.condition) is True:
+                    self.result_sum += 1
+        # Return result (a non-zero result means the range and associated conditions passed)
+        return self.result_sum
+
+
     def check_rules(self, **kwargs):
         """ This method evaluates a custom rule-set provided by a schedule data class
         """
@@ -204,16 +260,15 @@ class DeviceAuto(Device):
                     self.timeout = value
                 if key == "schedule":
                     self.schedule = value
-
         # Pull today's data from schedule to evaluate
         self.today = self.schedule.day[self.dt.weekday()]
         self.logger.debug("Schedule: %s", self.today)
-
-        # Check each on_range associated with this device and day in the schedule.  If any evaluate true, then the device should be turned on.  If none evaluate true, the device will remain off (or turn off if previously on)
+        # Check each on_range associated with this device and day in the schedule.  If any evaluate true, 
+        # then the device should be turned on.  If none evaluate true, the device will remain off
+        # (or turn off if previously on)
         self.result = 0
         for index, on_range in enumerate(self.today.on_range):
             self.result = self.eval_on_range(self.dt, on_range, self.result)
-
         # Based on the evaluation of the rules, set the final output state
         if self.result == 0 and self.state is not False:
             self.logger.info("Turning off device [%s]", self.name)
@@ -221,62 +276,8 @@ class DeviceAuto(Device):
         elif self.result > 0 and self.state is not True:
             self.logger.info("Turning on device [%s]", self.name)
             self.state = True
-
         # Return result
         return self.state
-
-
-    def eval_on_range(self, dt_current, on_range, result):
-        """ This method evaluates a single on-range and its associated conditons and determines if it's true or not """
-        if on_range.on_time <= on_range.off_time:
-            # Device turns on and then back off in the same Day
-            if dt_current.time() >= on_range.on_time and dt_current.time() < onrange.off_time:
-                # If true, current time falls between defined on and off times
-                if self.eval_conditions(on_range.condition) is true:
-                    self.result_sum += 1
-        elif on_range.on_time > on_range.off_time:
-            # This assignment represents an overnight assignment and must be evaluated differently
-            if dt_current.time() >= on_range.on_time or dt_current.time() < on_range.off_time:
-                # If true, current time falls between defined on and off times
-                if self.eval_conditions(on_range.condition) is true:
-                    self.result_sum += 1
-        # Return result (a non-zero result means the range and associated conditions passed)
-        return result
-
-
-    def eval_conditions(self, conditions):
-        self.result = ()
-        self.result_list = []
-        # Create a list of individual condition results
-        for i, cond in enumerate(conditions):
-            if cond.condition.lower() == "user1":
-                self.result_list.append(self.eval_user(cond, self.homeArray[0]))
-            elif cond.condition.lower() == "user2":
-                self.result_list.append(self.eval_user(cond, self.homeArray[2]))
-            elif cond.condition.lower() == "user3":
-                self.result_list.append(self.eval_user(cond, self.homeArray[3]))
-        # Build combined if statement
-        self.statement = str()
-        for i, result in enumerate(self.result_list):
-            if i == 0:
-                self.statement = self.statement + str(result[1])
-            else:
-                self.statement = self.statement + " " + str(result[0] + " " + str(result[1]))
-        return eval(self.statement)
         
 
 
-    def eval_user(self, cond, home_flag):
-        self.result = None
-        if cond.state.lower() == "true":
-            if home_flag is True:
-                self.result = (cond.andor, True)
-            elif home_flag is False:
-                self.result = (cond.andor, False)
-        elif cond.state.lower() == "false":
-            if home_flag is True:
-                self.result = (cond.andor, False)
-            elif home_flag is False:
-                self.result = (cond.andor, True)
-        # Return result
-        return self.result
