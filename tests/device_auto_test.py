@@ -334,6 +334,12 @@ class TestDevice(unittest.TestCase):
         self.dt = datetime.datetime.combine(datetime.date(2016,12,18), datetime.time(13,0))
         self.device.homeArray = [True, True, True, True]
         self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), True)
+        self.dt = datetime.datetime.combine(datetime.date(2016,12,18), datetime.time(6,0))
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), False)
+        self.dt = datetime.datetime.combine(datetime.date(2016,12,18), datetime.time(17,30))
+        self.device.homeArray = [True, True, True, True]
+        self.assertEqual(self.device.check_rules(datetime=self.dt, utcOffset=datetime.timedelta(hours=-6)), False)
         
 
 

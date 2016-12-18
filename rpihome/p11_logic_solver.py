@@ -60,7 +60,6 @@ class LogicProcess(multiprocessing.Process):
         self.main_loop = bool()
         self.close_pending = False
         self.create_home_flags()
-        self.create_schedules()
 
 
     def create_home_flags(self):
@@ -74,76 +73,20 @@ class LogicProcess(multiprocessing.Process):
 
     def create_devices(self):
         """ Create devices in home """
-        self.rpi_screen = DeviceRPI("rpi", self.msg_out_queue)
-        self.wemo_fylt1 = DeviceWemo("fylt1", "192.168.86.21", self.msg_out_queue)
-        self.wemo_bylt1 = DeviceWemo("bylt1", "192.168.86.22", self.msg_out_queue)
-        self.wemo_ewlt1 = DeviceWemo("ewlt1", "192.168.86.23", self.msg_out_queue)
-        self.wemo_cclt1 = DeviceWemo("cclt1", "192.168.86.24", self.msg_out_queue)
-        self.wemo_lrlt1 = DeviceWemo("lrlt1", "192.168.86.25", self.msg_out_queue)
-        self.wemo_lrlt2 = DeviceWemo("lrlt2", "192.168.86.33", self.msg_out_queue)
-        self.wemo_drlt1 = DeviceWemo("drlt1", "192.168.86.26", self.msg_out_queue)
-        #self.wemo_br1lt1 = DeviceWemo("br1lt1", "192.168.86.27", self.msg_out_queue)
-        self.wemo_br1lt2 = DeviceWemo("br1lt2", "192.168.86.28", self.msg_out_queue)
-        #self.wemo_br2lt1 = DeviceWemo("br2lt1", "192.168.86.29", self.msg_out_queue)
-        self.wemo_br2lt2 = DeviceWemo("br2lt2", "192.168.86.30", self.msg_out_queue)
-        self.wemo_br3lt1 = DeviceWemo("br3lt1", "192.168.86.31", self.msg_out_queue)
-        self.wemo_br3lt2 = DeviceWemo("br3lt2", "192.168.86.32", self.msg_out_queue)
-
-
-    def create_schedules(self):
-        """ Set's initial schedule for all home devices based on the default rule-set """
-        # Device rpi_screen
-        self.rpi_schedule = Week()
-        self.rpi_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 40), off_time=datetime.time(22, 0), conditions=[("and", "user1", "true"), ("and", "user2", "true"), ("or", "user3", "true")])
-        self.rpi_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 30), off_time=datetime.time(22, 0), conditions=[("and", "user1", "true"), ("and", "user2", "false"), ("or", "user3", "false")])
-        self.rpi_schedule.match_all_to_monday()     
-        # Device fylt1
-        self.fylt1_schedule = Week()
-        self.fylt1_schedule.monday.add_range(on_time="sunset", off_time="sunrise")
-        self.fylt1_schedule.match_all_to_monday()
-        # Device bylt1
-        self.bylt1_schedule = Week()
-        # Device ewlt1
-        self.ewlt1_schedule = Week()
-        # Device cclt1
-        self.cclt1_schedule = Week()
-        self.cclt1_schedule.monday.add_range(on_time="sunset", off_time="sunrise")
-        self.cclt1_schedule.match_all_wd_to_monday()
-        # Device ltlt1
-        self.lrlt1_schedule = Week()
-        # Device lrlt2
-        self.lrlt2_schedule = Week()
-        self.lrlt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 40), off_time=datetime.time(6, 30), conditions=[("and", "user1", "true"), ("and", "user2", "true"), ("or", "user3", "true")])
-        self.lrlt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 30), off_time=datetime.time(7, 00), conditions=[("and", "user1", "true"), ("and", "user2", "false"), ("and", "user3", "false")])
-        self.lrlt2_schedule.match_all_wd_to_monday()
-        # Device drlt1
-        self.drlt1_schedule = Week()
-        # Device br1lt1
-        self.br1lt1_schedule = Week()
-        self.br1lt1_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 50), off_time=datetime.time(6, 40), conditions=[("and", "user1", "true"), ("and", "user2", "true"), ("or", "user3", "true")])
-        self.br1lt1_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 40), off_time=datetime.time(7, 10), conditions=[("and", "user1", "true"), ("and", "user2", "false"), ("and", "user3", "false")])
-        self.br1lt1_schedule.match_all_wd_to_monday()
-        # Device br1lt2
-        self.br1lt2_schedule = Week()
-        self.br1lt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 40), off_time=datetime.time(6, 30), conditions=[("and", "user1", "true"), ("and", "user2", "true"), ("or", "user3", "true")])
-        self.br1lt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 30), off_time=datetime.time(7, 00), conditions=[("and", "user1", "true"), ("and", "user2", "false"), ("and", "user3", "false")])
-        self.br1lt2_schedule.match_all_wd_to_monday()
-        # Device br2lt1
-        self.br2lt1_schedule = Week()
-        self.br2lt1_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 0), off_time=datetime.time(6, 40), conditions=[("and", "user2", "true")])
-        self.br2lt1_schedule.match_all_wd_to_monday()
-        # Device br2lt2
-        self.br2lt2_schedule = Week()
-        self.br2lt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 50), off_time=datetime.time(6, 30), conditions=[("and", "user2", "true")])
-        self.br2lt2_schedule.match_all_wd_to_monday()
-        # Device br3lt1
-        self.br3lt1_schedule = Week()
-        self.br3lt1_schedule.monday.add_range_with_conditions(on_time=datetime.time(6, 0), off_time=datetime.time(6, 40), conditions=[("and", "user3", "true")])
-        self.br3lt1_schedule.match_all_wd_to_monday()
-        # Device br3lt2
-        self.br3lt2_schedule = Week()
-        self.br3lt2_schedule.monday.add_range_with_conditions(on_time=datetime.time(5, 50), off_time=datetime.time(6, 30), conditions=[("and", "user3", "true")])
-        self.br3lt2_schedule.match_all_wd_to_monday()
+        self.rpi_screen = DeviceRPI("rpi", self.msg_out_queue, logger=self.logger)
+        self.wemo_fylt1 = DeviceWemo("fylt1", "192.168.86.21", self.msg_out_queue, logger=self.logger)
+        self.wemo_bylt1 = DeviceWemo("bylt1", "192.168.86.22", self.msg_out_queue, logger=self.logger)
+        self.wemo_ewlt1 = DeviceWemo("ewlt1", "192.168.86.23", self.msg_out_queue, logger=self.logger)
+        self.wemo_cclt1 = DeviceWemo("cclt1", "192.168.86.24", self.msg_out_queue, logger=self.logger)
+        self.wemo_lrlt1 = DeviceWemo("lrlt1", "192.168.86.25", self.msg_out_queue, logger=self.logger)
+        self.wemo_lrlt2 = DeviceWemo("lrlt2", "192.168.86.33", self.msg_out_queue, logger=self.logger)
+        self.wemo_drlt1 = DeviceWemo("drlt1", "192.168.86.26", self.msg_out_queue, logger=self.logger)
+        #self.wemo_br1lt1 = DeviceWemo("br1lt1", "192.168.86.27", self.msg_out_queue, logger=self.logger)
+        self.wemo_br1lt2 = DeviceWemo("br1lt2", "192.168.86.28", self.msg_out_queue, logger=self.logger)
+        #self.wemo_br2lt1 = DeviceWemo("br2lt1", "192.168.86.29", self.msg_out_queue, logger=self.logger)
+        self.wemo_br2lt2 = DeviceWemo("br2lt2", "192.168.86.30", self.msg_out_queue, logger=self.logger)
+        self.wemo_br3lt1 = DeviceWemo("br3lt1", "192.168.86.31", self.msg_out_queue, logger=self.logger)
+        self.wemo_br3lt2 = DeviceWemo("br3lt2", "192.168.86.32", self.msg_out_queue, logger=self.logger)
     
 
     def update_forecast(self):
@@ -289,87 +232,73 @@ class LogicProcess(multiprocessing.Process):
     def run_automation(self):
         """ Run automation rule checks for automatic device output state control """
         self.rpi_screen.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    schedule=self.rpi_schedule)
+                                    homeArray=self.homeArray)
         self.wemo_fylt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.fylt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_bylt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.bylt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_ewlt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0),
-                                    homeTime=self.homeTime,
-                                    schedule=self.ewlt1_schedule)
+                                    homeTime=self.homeTime)
         self.wemo_cclt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.cclt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_lrlt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.lrlt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_lrlt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.lrlt2_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_drlt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.drlt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         #self.wemo_br1lt1.check_rules(datetime=datetime.datetime.now(),
         #                            homeArray=self.homeArray,
         #                            utcOffset=self.utc_offset,
         #                            sunriseOffset=datetime.timedelta(minutes=0),
-        #                            sunsetOffset=datetime.timedelta(minutes=0),
-        #                            schedule=self.br1lt1_schedule)
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br1lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.br1lt2_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         #self.wemo_br2lt1.check_rules(datetime=datetime.datetime.now(),
         #                            homeArray=self.homeArray,
         #                            utcOffset=self.utc_offset,
         #                            sunriseOffset=datetime.timedelta(minutes=0),
-        #                            sunsetOffset=datetime.timedelta(minutes=0),
-        #                            schedule=self.br2lt1_schedule)
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br2lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.br2lt2_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br3lt1.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.br3lt1_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br3lt2.check_rules(datetime=datetime.datetime.now(),
                                     homeArray=self.homeArray,
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0),
-                                    schedule=self.br3lt2_schedule)
+                                    sunsetOffset=datetime.timedelta(minutes=0))
 
 
     def run_commands(self):                                    

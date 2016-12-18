@@ -262,7 +262,6 @@ class DeviceAuto(Device):
                     self.schedule = value
         # Pull today's data from schedule to evaluate
         self.today = self.schedule.day[self.dt.weekday()]
-        self.logger.debug("Schedule: %s", self.today)
         # Check each on_range associated with this device and day in the schedule.  If any evaluate true, 
         # then the device should be turned on.  If none evaluate true, the device will remain off
         # (or turn off if previously on)
