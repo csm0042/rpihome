@@ -123,29 +123,40 @@ class GoogleSheetToSched(object):
     """
     def __init__(self, logger=None):
         self.logger = logger or logging.getLogger(__name__)
-        self.date = datetime.date
+        self.split = []
 
 
-    def convert_date(self, record):
+    def convert_objects(self, record):
         self.record = record
-        self.regex1 = r"(\d{4})\-(0?[1-9]|[1][012])\-(0?[1-9]|[12][0-9]|3[01])"
-        self.regex2 = r"(\d{4})\/(0?[1-9]|[1][012])\/(0?[1-9]|[12][0-9]|3[01])"
-        if re.search(self.regex1, self.record[0]):
-            self.logger.debug("Data in day field is a date using a '-' as a separator")
-            self.split_date = self.record[0].split("-")
-            self.record[0] = datetime.date(int(self.split_date[0]),
-                                           int(self.split_date[1]),
-                                           int(self.split_date[2]))
-            self.logger.debug("Updating to datetime.date data type: %s", self.record[0])
-        elif re.search(self.regex2, self.record[0]):
-            self.logger.debug("Data in day field is a date using a '/' as a separator")
-            self.split_date = self.record[0].split("/")
-            self.record[0] = datetime.date(int(self.split_date[0]),
-                                           int(self.split_date[1]),
-                                           int(self.split_date[2]))
-            self.logger.debug("Updating to datetime.date data type: %s", self.record[0])
-        else:
-            self.logger.debug("Data in day field is not a specific date")
+        # Cycle through all parts of the record, replacing dates and times as appropriate
+        for i, j in enumerate(self.record):
+            # Replace yyyy-mm-dd format with datetime object
+            self.regex = r"(\d{4})\-(0?[1-9]|[1][012])\-(0?[1-9]|[12][0-9]|3[01])"
+            if re.search(self.regex, j):
+                self.logger.debug("Data in fied is a date using a '-' as a separator")
+                self.split = j.split("-")
+                j = datetime.date(int(self.split[0]),
+                                  int(self.split[1]),
+                                  int(self.split[2]))
+                record[i] = j
+            # Replace yyyy/mm/dd format with datetime object
+            self.regex = r"(\d{4})\/(0?[1-9]|[1][012])\/(0?[1-9]|[12][0-9]|3[01])"
+            if re.search(self.regex, j):
+                self.logger.debug("Data in fied is a date using a '/' as a separator")
+                self.split = j.split("/")
+                j = datetime.date(int(self.split[0]),
+                                  int(self.split[1]),
+                                  int(self.split[2]))
+                record[i] = j
+            # Replace hh:mm format with datetime object
+            self.regex = r"\b([01]?[0-9]|2[0-3]):([0-5][0-9])"
+            if re.search(self.regex, j):
+                self.logger.debug("Data in fied is a date using a '/' as a separator")
+                self.split = j.split(":")
+                j = datetime.time(int(self.split[0]),
+                                  int(self.split[1]))
+                record[i] = j              
+
         return self.record
 
 
