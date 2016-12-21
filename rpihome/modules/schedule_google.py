@@ -15,6 +15,7 @@ from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
+from .sun import Sun
 
 
 # Authorship Info *********************************************************************************
@@ -29,7 +30,7 @@ __status__ = "Development"
 
 
 # Class Definitions *******************************************************************************
-class GoogleSheetsSchedule(object):
+class GoogleSheetsInterface(object):
     """ Class and methods necessary to read a schedule from a google sheets via google's api' """
     def __init__(self, logger=None):
         self.logger = logger or logging.getLogger(__name__)
@@ -123,13 +124,16 @@ class GoogleSheetToSched(object):
     """
     def __init__(self, logger=None):
         self.logger = logger or logging.getLogger(__name__)
+        self.sun = Sun(lat=38.566, long=-90.410)
         self.split = []
+        self.ready = [False, False, False, False, False, False, False]
+        self.records_by_day = [None, None, None, None, None, None, None]
 
 
-    def convert_objects(self, record):
-        self.record = record
+    def convert_to_datetimes(self, record):
+        self.record_to_convert = record
         # Cycle through all parts of the record, replacing dates and times as appropriate
-        for i, j in enumerate(self.record):
+        for i, j in enumerate(self.record_to_convert):
             # Replace yyyy-mm-dd format with datetime object
             self.regex = r"(\d{4})\-(0?[1-9]|[1][012])\-(0?[1-9]|[12][0-9]|3[01])"
             if re.search(self.regex, j):
@@ -138,7 +142,7 @@ class GoogleSheetToSched(object):
                 j = datetime.date(int(self.split[0]),
                                   int(self.split[1]),
                                   int(self.split[2]))
-                record[i] = j
+                self.record_to_convert[i] = j
             # Replace yyyy/mm/dd format with datetime object
             self.regex = r"(\d{4})\/(0?[1-9]|[1][012])\/(0?[1-9]|[12][0-9]|3[01])"
             if re.search(self.regex, j):
@@ -147,44 +151,138 @@ class GoogleSheetToSched(object):
                 j = datetime.date(int(self.split[0]),
                                   int(self.split[1]),
                                   int(self.split[2]))
-                record[i] = j
+                self.record_to_convert[i] = j
             # Replace hh:mm format with datetime object
-            self.regex = r"\b([01]?[0-9]|2[0-3]):([0-5][0-9])"
+            self.regex = r"\b([01]?[0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9]))?"
             if re.search(self.regex, j):
                 self.logger.debug("Data in fied is a date using a '/' as a separator")
                 self.split = j.split(":")
                 j = datetime.time(int(self.split[0]),
                                   int(self.split[1]))
-                record[i] = j              
+                self.record_to_convert[i] = j
+            # Replace sunrise keyword with datetime object
+            self.regex = r"\b[Ss]un(-)?[Rr]ise"
+            if re.search(self.regex, j):
+                self.logger.debug("Data in field is a keyword 'sunrise'")
+                j = self.sun.sunrise.time()
+                self.record_to_convert[i] = j
+            # Replace sunset keyword with datetime object
+            self.regex = r"\b[Ss]un(-)?[Ss]et" 
+            if re.search(self.regex, j):
+                self.logger.debug("Data in field is a keyword 'sunset'")
+                j = self.sun.sunset.time()
+                self.record_to_convert[i] = j            
+        # Return updated record
+        return self.self.record_to_convert
 
-        return self.record
+
+    def find_date_specific_date_records(self, raw_records, records_by_day, date):
+        self.records_to_search = raw_records
+        self.records_by_day = records_by_day
+        # Figure out what day of the week was passed in, then set start date to monday of that same week
+        if isinstance(date, datetime.date):
+            self.iso_day = (datetime.datetime.combine(date, datetime.time(0, 0))).weekday()
+        elif isinstance(date, datetime.datetime):
+            self.iso_day = date.weekday()
+        self.start_date = date + datetime.timedelta(days=-self.iso_day)
+        self.end_date = self.start_date + datetime.timedelta(days=6)
+        # Search through list of records for any specific date entries that fall between the start and end dates just calculated
+        for i, j in enumerate(self.records_to_search):
+            if j[0].date() >= self.start_date or j[0].date() <= self.end_date:
+                # Determine what day was found
+                self.day_ptr = (j[0].date()).weekday()
+                # Use that as a pointer to put a copy of that specific record in the proper slot for that day in the list for that week                
+                if self.records_by_day[self.day_ptr] is None:
+                    self.records_by_day[self.day_ptr] = [j]
+                else:
+                    self.records_by_day[self.day_ptr].append(copy.copy(j))
+        # Mark days with records as "ready"
+        for i, j in enumerate(self.records_by_day):
+            if j is not None:
+                self.ready[i] = True
+        # Return updated list
+        return self.records_by_day
+
+    
+    def find_specific_day_records(self, raw_records, records_by_day):
+        self.records_to_search = raw_records
+        self.records_by_day = records_by_day
+        # Cycle through records looking for specific day keywords
+        for i, j in enumerate(self.records_to_search):
+            if re.search(r"\b[Mm][Oo][Nn]([Dd][Aa][Yy])?", j):
+                if self.ready[0] is False:
+                    if self.records_by_day[0] is None:
+                        self.records_by_day[0] = [j]
+                    else:
+                        self.records_by_day[0].append(copy.copy(j))
+            elif re.search(r"\b[Tt][Uu][Ee]([Ss][Dd][Aa][Yy])?", j):
+                if self.ready[1] is False:
+                    if self.records_by_day[1] is None:
+                        self.records_by_day[1] = [j]
+                    else:
+                        self.records_by_day[1].append(copy.copy(j))
+            elif re.search(r"\b[Ww][Ee][Dd]([Nn][Ee][Ss][Dd][Aa][Yy])?", j):
+                if self.ready[2] is False:
+                    if self.records_by_day[2] is None:
+                        self.records_by_day[2] = [j]
+                    else:
+                        self.records_by_day[2].append(copy.copy(j))
+            elif re.search(r"[Tt][Hh][Uu]([Rr])?([Ss][Dd][Aa][Yy])?", j):
+                if self.ready[3] is False:
+                    if self.records_by_day[3] is None:
+                        self.records_by_day[3] = [j]
+                    else:
+                        self.records_by_day[3].append(copy.copy(j))
+            elif re.search(r"[Ff][Rr][Ii]([Dd][Aa][Yy])?", j):
+                if self.ready[4] is False:
+                    if self.records_by_day[4] is None:
+                        self.records_by_day[4] = [j]
+                    else:
+                        self.records_by_day[4].append(copy.copy(j))
+            elif re.search(r"[Ss][Aa][Tt]([Uu][Rr][Dd][Aa][Yy])?", j):
+                if self.ready[5] is False:
+                    if self.records_by_day[5] is None:
+                        self.records_by_day[5] = [j]
+                    else:
+                        self.records_by_day[5].append(copy.copy(j))
+            elif re.search(r"[Ss][Uu][Nn]([Dd][Aa][Yy])?", j):
+                if self.ready[6] is False:
+                    if self.records_by_day[6] is None:
+                        self.records_by_day[6] = [j]
+                    else:
+                        self.records_by_day[6].append(copy.copy(j))
+        # Mark days with records as "ready"
+        for i, j in enumerate(self.records_by_day):
+            if j is not None:
+                self.ready[i] = True
+        # Return updated list
+        return self.records_by_day
 
 
-        
-        
+    def find_weekday_weekend_records(self, raw_records, records_by_day):
+        self.records_to_search = raw_records
+        self.records_by_day = records_by_day
+        # Cycle through records looking for specific day keywords
+        for i, j in enumerate(self.records_to_search):
+            if re.search(r"\b[Ww][Ee][Ee][Kk](-)?([Dd][Aa][Yy])([Ss])?", j):
+                for k in range(0, 5, 1):
+                    if self.ready[k] is False:
+                        if self.records_by_day[k] is None:
+                            self.records_by_day[k] = [j]
+                        else:
+                            self.records_by_day[k].append(copy.copy(j))
+            elif re.search(r"\b[Ww][Ee][Ee][Kk](-)?([Ee][Nn][Dd])([Ss])?", j):
+                for k in range(5, 7, 1):
+                    if self.ready[k] is False:
+                        if self.records_by_day[k] is None:
+                            self.records_by_day[k] = [j]
+                        else:
+                            self.records_by_day[k].append(copy.copy(j))                
+        # Mark days with records as "ready"
+        for i, j in enumerate(self.records_by_day):
+            if j is not None:
+                self.ready[i] = True
+        # Return updated list
+        return self.records_by_day
 
-    def main(self, records):
-        """ Don't really know what to call this yet, but this will be the main decoder sequence' """
-        self.records = records
-        self.logger.debug("\n\nDecoding starting for record set:\n%s", self.records)
-        # First step is to convert all dates in the leading column of the data to datetime objects
-        for index, record in enumerate(self.records):
-            self.record = self.convert_date(record)
-            self.records[index] = self.record
-        self.logger.debug("\n\nUpdated record-set:\n%s", self.records)
-        # Next step is to determine the week start and end dates of this current week.  This information will be used to filter out specific date assignments outside of this range
-        self.dt_now = datetime.datetime.now()
-        self.day = self.dt_now.weekday()
-        self.dt_monday = self.dt_now + datetime.timedelta(days=-self.day)
-        self.logger.debug("week starts on: %s", self.dt_monday.date())
-        self.dt_sunday = self.dt_monday + datetime.timedelta(days=6)
-        self.logger.debug("week ends on: %s", self.dt_sunday.date())
-        # Now search the record list and remove any items that have specific dates in their day data fields, but don't fall within the range of the current week being considered
-        for index, record in enumerate(self.records):
-            if isinstance(record[0], datetime.date):
-                if record[0] < self.dt_monday.date() or record[0] > self.dt_sunday.date():
-                    self.logger.debug("Record [%s] falls outside of range and will be discarded", record)
-                    self.records.pop(index)
-        self.logger.debug("Updated record list: %s", self.records)
-        # We are now left with only data from the schedule that in some way applies to this week.  Now we apply the records to each day based on a pre-defined priority
 

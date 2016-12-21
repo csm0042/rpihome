@@ -10,7 +10,7 @@ import unittest
 import sys
 
 if __name__ == "__main__": sys.path.append("..")
-from rpihome.modules.schedule_google import GoogleSheetsSchedule, GoogleSheetToSched
+from rpihome.modules.schedule_google import GoogleSheetsInterface, GoogleSheetToSched
 
 
 # Define test class *******************************************************************************
@@ -20,10 +20,11 @@ class Test_Schedule(unittest.TestCase):
         pass
 
     def test_google_sheets_read(self):
-        self.google_sheets_reader = GoogleSheetsSchedule()
+        self.google_sheets_reader = GoogleSheetsInterface()
         self.records = self.google_sheets_reader.read_data()
-        self.schedule_builder = GoogleSheetToSched(self.logger)
-        self.schedule_builder.main(self.records)
+        print(self.records)
+        #self.schedule_builder = GoogleSheetToSched(self.logger)
+        #3self.schedule_builder.main(self.records)
 
 
 if __name__ == "__main__":
