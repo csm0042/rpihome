@@ -32,36 +32,36 @@ class Wemo_lrlt2(DeviceWemo):
     def check_rules(self, **kwargs):
         """This method contains the rule-set that controls internal security lights """
         self.home = False
-        # Process input variables if present           
+        # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
                     self.dt = value
                 if key == "homeArray":
-                    self.homeArray = value 
+                    self.homeArray = value
                 if key == "homeTime":
-                    self.homeTime = value                    
+                    self.homeTime = value
                 if key == "home":
-                    self.home = value 
+                    self.home = value
                 if key == "utcOffset":
                     self.utcOffset = value
                 if key == "sunriseOffset":
                     self.sunriseOffset = value
                 if key == "sunsetOffset":
-                    self.sunsetOffset = value   
+                    self.sunsetOffset = value
                 if key == "timeout":
-                    self.timeout = value                    
+                    self.timeout = value
         # Determine if anyone is home
         for h in self.homeArray:
             if h is True:
-                self.home = True        
+                self.home = True
         # Calculate sunrise / sunset times
         self.sunrise = datetime.datetime.combine(self.dt, self.s.sunrise(self.dt, self.utcOffset))
-        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset))                        
+        self.sunset = datetime.datetime.combine(self.dt, self.s.sunset(self.dt, self.utcOffset))
         # Decision tree to determine if screen should be awake or not
         if self.home is True:
             # If after 5am but before sunrise + the offset minutes
-            if self.dt.time() >= datetime.time(5,0) and self.dt.time() <= datetime.time(22,0):
+            if self.dt.time() >= datetime.time(5, 0) and self.dt.time() <= datetime.time(22, 0):
                 if self.state is False:
                     self.logger.info("Turning on lrlt2")
                 self.state = True
@@ -74,4 +74,4 @@ class Wemo_lrlt2(DeviceWemo):
                 self.logger.info("Turning off lrlt2")
             self.state = False
         # Return result
-        return self.state          
+        return self.state

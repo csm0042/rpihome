@@ -34,15 +34,15 @@ class Wemo_drlt1(DeviceWemo):
     def check_rules(self, **kwargs):
         """ This method contains the rule-set that controls external security lights """
         self.home = False
-        # Process input variables if present  
+        # Process input variables if present
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key == "datetime":
                     self.dt = value
                 if key == "homeArray":
-                    self.homeArray = value 
+                    self.homeArray = value
                 if key == "homeTime":
-                    self.homeTime = value                    
+                    self.homeTime = value
                 if key == "home":
                     self.home = value 
                 if key == "utcOffset":
@@ -50,16 +50,16 @@ class Wemo_drlt1(DeviceWemo):
                 if key == "sunriseOffset":
                     self.sunriseOffset = value
                 if key == "sunsetOffset":
-                    self.sunsetOffset = value   
+                    self.sunsetOffset = value
                 if key == "timeout":
-                    self.timeout = value                                                         
+                    self.timeout = value
         # Calculate sunrise / sunset times
         self.sunrise = datetime.datetime.combine(datetime.datetime.today(), self.s.sunrise(self.dt, self.utcOffset))
         self.sunset = datetime.datetime.combine(datetime.datetime.today(), self.s.sunset(self.dt, self.utcOffset)) 
         # Determine if anyone is home
         for h in self.homeArray:
             if h is True:
-                self.home = True        
+                self.home = True
         # Decision tree to determine if screen should be awake or not
         # If before sunrise + 30 minutes
         if 0 <= self.dt.weekday() <= 4:

@@ -266,51 +266,51 @@ class LogicProcess(multiprocessing.Process):
                                     utcOffset=self.utc_offset,
                                     sunriseOffset=datetime.timedelta(minutes=0),
                                     sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_lrlt1.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
-        self.wemo_lrlt2.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))                                    
-        self.wemo_drlt1.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+        ##self.wemo_lrlt1.check_rules(datetime=datetime.datetime.now(),
+        #                            homeArray=self.homeArray,
+        #                            utcOffset=self.utc_offset,
+        #                            sunriseOffset=datetime.timedelta(minutes=0),
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
+        #self.wemo_lrlt2.check_rules(datetime=datetime.datetime.now(),
+        #                            homeArray=self.homeArray,
+        #                            utcOffset=self.utc_offset,
+        #                            sunriseOffset=datetime.timedelta(minutes=0),
+        #                            sunsetOffset=datetime.timedelta(minutes=0))                                    
+        #self.wemo_drlt1.check_rules(datetime=datetime.datetime.now(),
+        #                            homeArray=self.homeArray,
+        #                            utcOffset=self.utc_offset,
+        #                            sunriseOffset=datetime.timedelta(minutes=0),
+        #                            sunsetOffset=datetime.timedelta(minutes=0))
         #self.wemo_br1lt1.check_rules(datetime=datetime.datetime.now(),
         #                            homeArray=self.homeArray,
         #                            utcOffset=self.utc_offset,
         #                            sunriseOffset=datetime.timedelta(minutes=0),
         #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br1lt2.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+                                     homeArray=self.homeArray,
+                                     utcOffset=self.utc_offset,
+                                     sunriseOffset=datetime.timedelta(minutes=0),
+                                     sunsetOffset=datetime.timedelta(minutes=0))
         #self.wemo_br2lt1.check_rules(datetime=datetime.datetime.now(),
         #                            homeArray=self.homeArray,
         #                            utcOffset=self.utc_offset,
         #                            sunriseOffset=datetime.timedelta(minutes=0),
         #                            sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br2lt2.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+                                     homeArray=self.homeArray,
+                                     utcOffset=self.utc_offset,
+                                     sunriseOffset=datetime.timedelta(minutes=0),
+                                     sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br3lt1.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+                                     homeArray=self.homeArray,
+                                     utcOffset=self.utc_offset,
+                                     sunriseOffset=datetime.timedelta(minutes=0),
+                                     sunsetOffset=datetime.timedelta(minutes=0))
         self.wemo_br3lt2.check_rules(datetime=datetime.datetime.now(),
-                                    homeArray=self.homeArray,
-                                    utcOffset=self.utc_offset,
-                                    sunriseOffset=datetime.timedelta(minutes=0),
-                                    sunsetOffset=datetime.timedelta(minutes=0))
+                                     homeArray=self.homeArray,
+                                     utcOffset=self.utc_offset,
+                                     sunriseOffset=datetime.timedelta(minutes=0),
+                                     sunsetOffset=datetime.timedelta(minutes=0))
 
 
     def run_commands(self):                                    
